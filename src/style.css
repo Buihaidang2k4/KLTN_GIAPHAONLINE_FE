@@ -1,79 +1,37 @@
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+@import "tailwindcss";
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* Đường nối giữa các node */
+:deep(.link) {
+  stroke: #cbd5e1 !important;
+  stroke-width: 2px;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
+/* Màu thẻ Nam */
+:deep(.NAM rect) {
+  fill: #f0f9ff !important;
+  stroke: #0ea5e9 !important;
 }
 
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
+/* Màu thẻ Nữ */
+:deep(.NU rect) {
+  fill: #fff1f2 !important;
+  stroke: #f43f5e !important;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+/* Hiệu ứng bo tròn ảnh trong thẻ dọc */
+:deep(.node image) {
+  clip-path: inset(0% round 10px 10px 0 0); /* Bo góc trên cho ảnh */
 }
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+/* 2. Cấu hình ảnh vuông có bo góc nhẹ */
+:deep(.node image) {
+  /* Xóa clip-path circle nếu còn */
+  clip-path: none !important; 
+  /* Thêm bo góc cho ảnh bằng CSS (chỉ hoạt động trên một số trình duyệt với SVG) */
+  /* Cách tốt nhất là chỉnh trực tiếp trong template SVG rx/ry như code trên */
 }
 
-.card {
-  padding: 2em;
-}
-
-#app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+/* 3. Hiệu ứng đổ bóng cho toàn bộ node */
+:deep(.node) {
+  filter: drop-shadow(0 4px 3px rgb(0 0 0 / 0.07));
 }
