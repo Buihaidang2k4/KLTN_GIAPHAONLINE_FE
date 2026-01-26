@@ -1,28 +1,31 @@
-import { toast } from 'vue-sonner'
+import { toast } from "vue-sonner";
 
 export const notify = {
-  success(message: string) {
-    toast.success(message)
+  success: (message: string, title = "Success") => {
+    toast.success(message, {
+      description: title,
+      duration: 2000,
+    });
   },
 
-  error(message: string) {
-    toast.error(message)
+  error: (message: string, title = "Error") => {
+    toast.error(message, {
+      description: title,
+      duration: 2000,
+    });
   },
 
-  warning(message: string) {
-    toast.warning(message)
+  info: (message: string, title = "Info") => {
+    toast(message, {
+      description: title,
+      duration: 2000,
+    });
   },
 
-  info(message: string) {
-    toast.info(message)
+  warning: (message: string, title = "Warning") => {
+    toast.warning(message, {
+      description: title,
+      duration: 2000,
+    });
   },
-
-  apiError(error: any) {
-    const message =
-      error?.response?.data?.message ||
-      error?.message ||
-      'Đã xảy ra lỗi hệ thống'
-
-    toast.error(message)
-  }
-}
+};

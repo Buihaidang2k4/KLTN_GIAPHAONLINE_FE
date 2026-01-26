@@ -1,37 +1,24 @@
 @import "tailwindcss";
 
-/* Đường nối giữa các node */
-:deep(.link) {
-  stroke: #cbd5e1 !important;
-  stroke-width: 2px;
-}
 
-/* Màu thẻ Nam */
-:deep(.NAM rect) {
+/* Màu thẻ Nam - Chỉ nhắm vào khung chính */
+.NAM>rect {
   fill: #f0f9ff !important;
   stroke: #0ea5e9 !important;
 }
 
-/* Màu thẻ Nữ */
-:deep(.NU rect) {
+/* Màu thẻ Nữ - Chỉ nhắm vào khung chính */
+.NU>rect {
   fill: #fff1f2 !important;
   stroke: #f43f5e !important;
 }
 
-/* Hiệu ứng bo tròn ảnh trong thẻ dọc */
-:deep(.node image) {
-  clip-path: inset(0% round 10px 10px 0 0); /* Bo góc trên cho ảnh */
+/* Hiệu ứng bo tròn ảnh */
+.node image {
+  clip-path: none !important;
 }
 
-/* 2. Cấu hình ảnh vuông có bo góc nhẹ */
-:deep(.node image) {
-  /* Xóa clip-path circle nếu còn */
-  clip-path: none !important; 
-  /* Thêm bo góc cho ảnh bằng CSS (chỉ hoạt động trên một số trình duyệt với SVG) */
-  /* Cách tốt nhất là chỉnh trực tiếp trong template SVG rx/ry như code trên */
-}
-
-/* 3. Hiệu ứng đổ bóng cho toàn bộ node */
-:deep(.node) {
-  filter: drop-shadow(0 4px 3px rgb(0 0 0 / 0.07));
+/* Hiệu ứng đổ bóng cho toàn bộ node */
+.node {
+  filter: drop-shadow(0 4px 6px rgb(0 0 0 / 0.2)) !important;
 }

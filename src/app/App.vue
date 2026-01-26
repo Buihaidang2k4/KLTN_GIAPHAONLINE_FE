@@ -1,8 +1,12 @@
 <script setup lang="ts">
-import HomeUser from '@/views/user/Home.vue';
+import Home from '@/views/user/Home.vue';
+import { RouterView } from 'vue-router';
+import { Toaster } from 'vue-sonner';
+
 </script>
 
 <template>
-    <HomeUser/>
+    <Home />
+    <!-- <RouterView /> -->
+    <!-- <Toaster /> -->
 </template>
-
