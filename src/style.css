@@ -22,3 +22,7 @@
 .node {
   filter: drop-shadow(0 4px 6px rgb(0 0 0 / 0.2)) !important;
 }
+
+.font-cursive {
+  font-family: 'Dancing Script', cursive;
+}

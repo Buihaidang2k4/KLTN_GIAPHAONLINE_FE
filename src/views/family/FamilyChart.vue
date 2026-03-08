@@ -99,14 +99,15 @@ onMounted(() => {
       nodeMenu: {
         addSiblings: {
           text: "Thêm đời đầu",
-          icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>'
+          icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4A6FA5" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>'
         },
         viewChildren: {
           text: "Xem đời sau",
-          icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="23 13 23 17 19 17"/><path d="M23 13l-4 4"/></svg>'
+          icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="23 13 23 17 19 17"/><path d="M23 13l-4 4"/></svg>'
         },
         focus: {
           text: "Trở về gốc",
+          icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>',
           onClick: () => {
             family.center("1", {
               ripple: true,
@@ -146,6 +147,7 @@ onMounted(() => {
           icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>'
         },
       },
+
       nodeMenuTrigger: (FamilyTree as any).action.nodeMenu,
       nodeMenuButton: '.menu-button',
       editForm: false,
@@ -175,14 +177,16 @@ onMounted(() => {
       },
 
       align: FamilyTree.align.center,
+
       // định hướng 
       orientation: FamilyTree.orientation.top,
       padding: 100,
+
       // khoảng cách vợ chồng
       partnerChildrenSplitSeparation: 80,
 
       // hiển thị zoom mặc định 
-      scaleInitial: 1.2,
+      scaleInitial: 1,
       // zoom in out , max min
       scaleMax: 10,
       // scaleMin: 0.5,
@@ -199,7 +203,7 @@ onMounted(() => {
       //   allChildren: true
       // },
       nodeCircleMenu: true,
-
+      // miniMap: true,
     } as any);
 
     const myData: any[] = [
@@ -518,6 +522,19 @@ const runExport = (type: string) => {
 </template>
 
 <style scoped>
+:deep(.bft-minimap) {
+  background-color: rgba(243, 229, 171, 0.8) !important;
+  /* Màu giấy có độ trong suốt */
+  opacity: 0.9;
+}
+
+/* Ẩn bớt các nút điều hướng bên trong minimap nếu thấy rối */
+:deep(.bft-minimap .bft-button) {
+  display: none;
+}
+
+
+
 /* Ẩn thanh công cụ mặc định (Search.) */
 :deep([data-ctrl-menu]),
 :deep(.bft-control-container),
