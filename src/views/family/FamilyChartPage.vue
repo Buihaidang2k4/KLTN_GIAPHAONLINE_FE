@@ -402,7 +402,6 @@ const clearSearch = () => {
   searchInputRef.value?.focus();
 };
 
-
 //  droppdown export gia pha 
 const isExportMenuOpen = ref(false);
 
@@ -412,17 +411,16 @@ const runExport = (type: string) => {
 
   if (type === 'pdf') family.exportPDF({ filename: "Gia-pha.pdf" });
   if (type === 'png') family.exportPNG({ filename: "Gia-pha.png" });
-  if (type === 'csv') family.exportCSV({ filename: "Gia-pha.csv" });
   if (type === 'svg') family.exportSVG({ filename: "Gia-pha.svg" });
 
-  isExportMenuOpen.value = false; // Đóng menu
+  isExportMenuOpen.value = false;
 };
 
 </script>
 
 <template>
   <div class="flex  h-screen flex-col bg-slate-50 p-6 font-sans">
-    <header class="mb-6 flex items-center justify-between rounded-2xl bg-white p-3 shadow-sm border border-slate-200">
+    <header class="mb-6 flex items-center justify-between  bg-white p-2 shadow-sm border border-slate-200">
       <h1 class="text-2xl font-black text-slate-800 tracking-tight">
         GIA PHẢ DÒNG HỌ
       </h1>
@@ -430,13 +428,12 @@ const runExport = (type: string) => {
         <span class="flex items-center gap-1"><i class="w-3 h-3 bg-blue-500 rounded-full"></i> NAM</span>
         <span class="flex items-center gap-1"><i class="w-3 h-3 bg-pink-500 rounded-full"></i> NỮ</span>
       </div>
-      <RouterLink to="/dashboard" class="border p-3 bg-amber-200 rounded-xl">Dashboard</RouterLink>
 
 
       <div class="flex gap-2">
         <!--  export gia pha -->
         <div class="relative inline-block text-left">
-          <button @click="isExportMenuOpen = !isExportMenuOpen"
+          <!-- <button @click="isExportMenuOpen = !isExportMenuOpen"
             class="flex items-center gap-2 bg-white border border-slate-200 px-4 py-2 rounded-xl font-bold text-slate-700 shadow-sm hover:bg-slate-50 transition-all">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -445,11 +442,14 @@ const runExport = (type: string) => {
               <line x1="12" y1="15" x2="12" y2="3" />
             </svg>
             Xuất gia phả
-          </button>
-
+          </button> -->
 
           <!-- export file -->
-          <div v-if="isExportMenuOpen" @click="isExportMenuOpen = false" class="fixed inset-0 z-10"></div>
+          <RouterLink to="/family/export"
+            class="flex items-center gap-2 bg-white border border-slate-200 px-4 py-2 rounded-xl font-bold text-slate-700 shadow-sm hover:bg-slate-50 transition-all">
+            Export</RouterLink>
+
+          <!-- <div v-if="isExportMenuOpen" @click="isExportMenuOpen = false" class="fixed inset-0 z-10"></div>
 
           <div v-if="isExportMenuOpen"
             class="absolute right-0 mt-2 w-48 rounded-xl bg-white shadow-lg border border-slate-100 py-2 z-20 overflow-hidden">
@@ -468,12 +468,7 @@ const runExport = (type: string) => {
               <span class="font-bold text-green-500">SVG</span> Xuất file SVG
             </button>
 
-            <button @click="runExport('csv')"
-              class="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-700 hover:bg-green-50 hover:text-green-600 transition-colors">
-              <span class="font-bold text-green-500">CSV</span> Xuất file Excel
-            </button>
-
-          </div>
+          </div> -->
         </div>
 
         <!-- search   -->
@@ -511,8 +506,7 @@ const runExport = (type: string) => {
     </header>
 
     <!--  tree -->
-    <div class="flex-1 overflow-hidden rounded-[2.5rem] border-2 border-slate-200 shadow-inner parchment-bg">
-
+    <div class="flex-1 overflow-hidden  border-2 border-slate-200 shadow-inner parchment-bg">
       <div ref="treeRef" class="h-full w-full parchment-bg"></div>
     </div>
 

@@ -23,8 +23,8 @@ const anhAnhEm = 'https://images.unsplash.com/photo-1471286174890-9c112ffca5b4?q
                 </h1>
 
                 <p class="text-lg text-[#2c1e12]/80 mb-10 max-w-lg leading-relaxed">
-                    Hãy để chúng tôi giúp bạn kết nối các thế hệ, dựng lại những nhịp cầu thời gian và bảo tồn những
-                    giá trị quý báu của tổ tiên trong một không gian ấm cúng.
+                    Chúng tôi giúp bạn kết nối các thế hệ trong gia đình, dựng lại những nhịp cầu thời gian và gìn giữ
+                    ký ức, truyền thống của tổ tiên để những giá trị ấy luôn được lưu truyền cho mai sau.🌿
                 </p>
 
                 <div class="flex flex-col sm:flex-row gap-4">

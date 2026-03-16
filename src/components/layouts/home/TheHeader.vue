@@ -86,13 +86,13 @@ const scrollToSection = (sectionId: string) => {
 
                 <!-- Auth -->
                 <li>
-                    <RouterLink to="/login" class="hover:text-amber-700 transition-colors">
+                    <RouterLink target="_blank" to="/login" class="hover:text-amber-700 transition-colors">
                         Đăng nhập
                     </RouterLink>
                 </li>
 
                 <li>
-                    <RouterLink to="/register" class="bg-amber-800 text-white
+                    <RouterLink target="_blank" to="/register" class="bg-amber-800 text-white
                    px-5 py-2 rounded-xl
                    hover:bg-amber-900
                    transition-all duration-300

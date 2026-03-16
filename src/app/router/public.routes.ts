@@ -7,12 +7,14 @@ export default [
         children: [
             {
                 path: "",
-                component: () => import("@/views/home/Home.vue"),
+                name: "Home",
+                component: () => import("@/views/home/HomePage.vue"),
             },
 
             {
                 path: "post",
-                component: () => import("@/views/home/HomePost.vue"),
+                name: "HomePost",
+                component: () => import("@/views/home/HomePostPage.vue"),
             },
         ]
     },

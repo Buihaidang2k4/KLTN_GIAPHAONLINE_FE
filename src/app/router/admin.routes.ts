@@ -7,6 +7,7 @@ export default [
         children: [
             {
                 path: "",
+                name: "SystemDashboard",
                 component: () => import("@/views/dashboard/SystemDashboard.vue"),
             },
         ]
