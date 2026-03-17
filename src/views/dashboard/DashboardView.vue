@@ -4,7 +4,8 @@
 
 <template>
     <div>
-        hiển thị giao diện dashboard nhé-
+        Hiển thị giao diện chung chung nhé
+
     </div>
 </template>
 

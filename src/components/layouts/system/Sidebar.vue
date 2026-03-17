@@ -21,34 +21,34 @@ const menuGroups = [
     {
         label: 'Điều hành',
         items: [
-            { icon: LayoutDashboard, label: 'Dashboard', to: '/system' },
+            { icon: LayoutDashboard, label: 'Dashboard', to: '/System/Dashboard' },
         ]
     },
     {
         label: 'Kinh doanh',
         items: [
-            { icon: Users, label: 'Người dùng', to: '/system/users' },
-            { icon: CreditCard, label: 'Gói thanh toán', to: '/system/subscriptions' },
-            { icon: Receipt, label: 'Giao dịch', to: '/system/transactions' },
+            { icon: Users, label: 'Quản lý tài khoản', to: '/System/Accounts' },
+            { icon: CreditCard, label: 'Gói thanh toán', to: '/System/Subscriptions' },
+            { icon: Receipt, label: 'Giao dịch', to: '/System/Transactions' },
         ]
     },
     {
         label: 'Nội dung',
         items: [
-            { icon: FileText, label: 'Bài viết hướng dẫn', to: '/system/posts' },
-            { icon: FolderOpen, label: 'Danh mục', to: '/system/categories' },
+            { icon: FileText, label: 'Bài viết hướng dẫn', to: '/System/Posts' },
+            { icon: FolderOpen, label: 'Danh mục', to: '/System/Categories' },
         ]
     },
     {
         label: 'Cấu hình',
         items: [
-            { icon: TreePine, label: 'Web config', to: '/system/family-trees' },
+            { icon: TreePine, label: 'Web config', to: '/System/WebConfig' },
         ]
     }
 ]
 
 const isActive = (path: string) => {
-    if (path === '/system') return route.path === '/system'
+    if (path === '/System') return route.path === '/System'
     return route.path.startsWith(path)
 }
 </script>
@@ -68,7 +68,7 @@ const isActive = (path: string) => {
 
         <!-- Logo -->
         <div class="px-5 py-6 border-b border-sky-800/40">
-            <RouterLink to="/system" class="flex items-center gap-3">
+            <RouterLink to="/System" class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-xl overflow-hidden shadow-lg shadow-sky-500/20 flex-shrink-0">
                     <img :src="logo" alt="Logo" class="w-full h-full object-cover" />
                 </div>

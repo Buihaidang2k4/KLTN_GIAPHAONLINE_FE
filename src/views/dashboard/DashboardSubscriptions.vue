@@ -4,7 +4,7 @@
 
 <template>
     <div>
-        hiển thị giao diện dashboard nhé-
+        hiển thị giao diện quản lí gói thanh toán nhé
     </div>
 </template>
 
