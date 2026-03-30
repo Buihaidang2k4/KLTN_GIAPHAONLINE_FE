@@ -3,13 +3,15 @@ import { RouterLink, useRoute } from 'vue-router'
 import {
     LayoutDashboard,
     Users,
-    CreditCard,
     Receipt,
     FileText,
     FolderOpen,
     LogOut,
-    TreePine,
-    ChevronLeft
+    Package,
+    Settings,
+    ChevronLeft,
+    ShieldCheck,
+    Key
 } from 'lucide-vue-next'
 import { ref, computed } from 'vue'
 import logo from '@/assets/images/Logo_GiaPha.png'
@@ -19,44 +21,56 @@ const isCollapsed = ref(false)
 
 const menuGroups = [
     {
-        label: 'Điều hành',
+        label: 'Bảng điều khiển', // Hoặc 'Tổng quan'
         items: [
-            { icon: LayoutDashboard, label: 'Dashboard', to: '/System/Dashboard' },
+            { icon: LayoutDashboard, label: 'Thống kê hệ thống', to: '/system/dashboard' },
         ]
     },
     {
-        label: 'Kinh doanh',
+        label: 'Phân quyền & Tài khoản',
         items: [
-            { icon: Users, label: 'Quản lý tài khoản', to: '/System/Accounts' },
-            { icon: CreditCard, label: 'Gói thanh toán', to: '/System/Subscriptions' },
-            { icon: Receipt, label: 'Giao dịch', to: '/System/Transactions' },
+            { icon: Users, label: 'Quản lý người dùng', to: '/system/accounts' },
+            { icon: ShieldCheck, label: 'Quản lý vai trò', to: '/system/roles' },
+            { icon: Key, label: 'Quản lý quyền hạn', to: '/system/permissions' },
         ]
     },
     {
-        label: 'Nội dung',
+        label: 'Quản lý Kinh doanh',
         items: [
-            { icon: FileText, label: 'Bài viết hướng dẫn', to: '/System/Posts' },
-            { icon: FolderOpen, label: 'Danh mục', to: '/System/Categories' },
+            { icon: Package, label: 'Gói dịch vụ', to: '/system/subscriptions' }, // Dùng Package (Gói) thay vì CreditCard
+            { icon: Receipt, label: 'Lịch sử giao dịch', to: '/system/transactions' },
         ]
     },
     {
-        label: 'Cấu hình',
+        label: 'Quản lý Nội dung',
         items: [
-            { icon: TreePine, label: 'Web config', to: '/System/WebConfig' },
+            { icon: FolderOpen, label: 'Danh mục bài viết', to: '/system/categories' },
+            { icon: FileText, label: 'Bài viết & Hướng dẫn', to: '/system/posts' },
+        ]
+    },
+    {
+        label: 'Cấu hình hệ thống',
+        items: [
+            { icon: Settings, label: 'Cấu hình Website', to: '/system/web-config' }, // Dùng Settings icon chuẩn hơn TreePine
         ]
     }
-]
+];
 
 const isActive = (path: string) => {
-    if (path === '/System') return route.path === '/System'
+    if (path === '/system') return route.path === '/system'
     return route.path.startsWith(path)
 }
+
+const classIsCollapsed = computed(() => {
+    return isCollapsed.value ? 'w-22' : 'w-72'
+})
+
 </script>
 
 <template>
     <aside :class="[
         'relative flex flex-col transition-all duration-300 ease-in-out',
-        isCollapsed ? 'w-20' : 'w-72'
+        classIsCollapsed
     ]"
         class="bg-gradient-to-b from-[#0a2540] via-[#0d3b66] to-[#0a2540] text-slate-300 min-h-screen border-r border-sky-800/40">
 

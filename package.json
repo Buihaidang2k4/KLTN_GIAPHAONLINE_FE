@@ -12,6 +12,8 @@
     "@balkangraph/familytree.js": "^1.9.47",
     "@tailwindcss/vite": "^4.1.18",
     "@tanstack/vue-query": "^5.92.7",
+    "@wangeditor/editor": "^5.1.23",
+    "@wangeditor/editor-for-vue": "^5.1.12",
     "axios": "^1.13.2",
     "lucide-vue-next": "^0.562.0",
     "pinia": "^3.0.4",

@@ -2,7 +2,7 @@ import SystemLayout from "@/components/layouts/system/SystemLayout.vue";
 
 export default [
     {
-        path: "/System",
+        path: "/system",
         component: SystemLayout,
         children: [
             {
@@ -11,39 +11,49 @@ export default [
                 component: () => import("@/views/dashboard/SystemDashboard.vue"),
             },
             {
-                path: "Dashboard",
+                path: "dashboard",
                 name: "Dashboard",
                 component: () => import("@/views/dashboard/DashboardView.vue"),
             },
             {
-                path: "Accounts",
+                path: "accounts",
                 name: "Accounts",
                 component: () => import("@/views/dashboard/DashboardAccounts.vue"),
             },
             {
-                path: "Subscriptions",
+                path: "subscriptions",
                 name: "Subscriptions",
                 component: () => import("@/views/dashboard/DashboardSubscriptions.vue"),
             },
             {
-                path: "Transactions",
+                path: "transactions",
                 name: "Transactions",
                 component: () => import("@/views/dashboard/DashboardTransactions.vue"),
             },
             {
-                path: "Posts",
+                path: "posts",
                 name: "Posts",
                 component: () => import("@/views/dashboard/DashboardPosts.vue"),
             },
             {
-                path: "Categories",
+                path: "categories",
                 name: "Categories",
                 component: () => import("@/views/dashboard/DashboardCategories.vue"),
             },
             {
-                path: "WebConfig",
+                path: "web-config",
                 name: "WebConfig",
                 component: () => import("@/views/dashboard/DashboardWebConfig.vue"),
+            },
+            {
+                path: "roles",
+                name: "Roles",
+                component: () => import("@/views/dashboard/DashboardRoles.vue"),
+            },
+            {
+                path: "permissions",
+                name: "Permissions",
+                component: () => import("@/views/dashboard/DashboardPermissions.vue"),
             },
 
         ]

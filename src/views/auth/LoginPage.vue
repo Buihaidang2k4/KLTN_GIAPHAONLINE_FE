@@ -117,7 +117,7 @@ const handleLogin = () => {
                 <div class="relative">
                     <!-- viền glow -->
                     <div
-                        class="absolute -inset-3 rounded-[36px] bg-gradient-to-br from-[#d1b06a]/20 via-transparent to-[#2f5a43]/20 blur-xl">
+                        class="absolute -inset-3 rounded-[36px]  bg-linear-to-br from-[#d1b06a]/20 via-transparent to-[#2f5a43]/20 blur-xl">
                     </div>
 
                     <div
@@ -197,10 +197,10 @@ const handleLogin = () => {
                                         <span>Ghi nhớ đăng nhập</span>
                                     </label>
 
-                                    <a href="#"
+                                    <RouterLink to="/forgot-password"
                                         class="text-sm text-[#7d6840] hover:text-[#234030] transition font-medium">
                                         Quên mật khẩu?
-                                    </a>
+                                    </RouterLink>
                                 </div>
 
                                 <button type="submit"

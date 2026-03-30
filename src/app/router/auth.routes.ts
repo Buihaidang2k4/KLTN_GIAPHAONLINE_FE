@@ -1,3 +1,4 @@
+
 export default [
     {
         path: "/login",
@@ -9,4 +10,9 @@ export default [
         name: "Register",
         component: () => import("@/views/auth/RegisterPage.vue"),
     },
+    {
+        path: "/forgot-password",
+        name: "ForgotPassword",
+        component: () => import("@/views/auth/ForgotPassowordPage.vue"),
+    }
 ]
