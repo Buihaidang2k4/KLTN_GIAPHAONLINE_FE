@@ -139,21 +139,6 @@ const classIsCollapsed = computed(() => {
             </div>
         </nav>
 
-        <!-- Footer / Logout -->
-        <div class="border-t border-sky-800/40 p-3">
-            <button :class="[
-                'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium',
-                'text-red-400/80 hover:bg-red-500/10 hover:text-red-400 transition-all duration-200'
-            ]">
-                <div class="flex-shrink-0 w-9 h-9 rounded-lg bg-red-500/10 flex items-center justify-center">
-                    <LogOut :size="18" />
-                </div>
-                <transition name="fade">
-                    <span v-if="!isCollapsed">Đăng xuất</span>
-                </transition>
-            </button>
-        </div>
-
     </aside>
 </template>
 
