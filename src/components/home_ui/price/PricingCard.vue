@@ -14,6 +14,7 @@ interface Plan {
 defineProps<{
     plan: Plan
 }>()
+
 </script>
 
 <template>
@@ -59,7 +60,7 @@ defineProps<{
             <!-- Features -->
             <ul class="space-y-4">
                 <li v-for="feature in plan.features" :key="feature" class="flex items-center gap-3 text-sm">
-                    <div class="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+                    <div class="w-5 h-5 rounded-full flex items-center justify-center shrink-0"
                         :class="plan.highlighted ? 'bg-amber-400/20' : 'bg-stone-100'">
                         <Check :size="12" :class="plan.highlighted ? 'text-amber-400' : 'text-stone-600'" />
                     </div>
