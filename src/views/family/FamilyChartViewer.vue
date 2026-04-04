@@ -4,20 +4,26 @@ import FamilyTree from "@balkangraph/familytree.js";
 import EditMemberModal from "@/components/family_tree/EditMemberModal.vue";
 import bg_familytree from "@/assets/images/bg_familyTree.jpg";
 import { notify } from "@/utils/notify";
-
+import {
+  Trees
+} from "lucide-vue-next"
+import ButtonBase from "@/components/common-ui/ButtonBase.vue";
+import router from "@/app/router";
 const bgImageStyle = computed(() => `url(${bg_familytree})`);
 
 const treeRef = ref<HTMLDivElement | null>(null);
-const isModalOpen = ref(false);
+const isModalOpen = ref<boolean>(false);
 const selectedMember = ref<any>(null);
 let family: any = null;
+const isMiniMap = ref<boolean>(false);
 
 onMounted(() => {
   if (treeRef.value) {
     FamilyTree.templates.john = Object.assign({}, FamilyTree.templates.base);
     FamilyTree.templates.john.size = [160, 170];
+    // node nam  
     FamilyTree.templates.john.node =
-      '<rect x="0" y="0" height="170" width="160" fill="#F2F6FB" stroke-width="1.5" stroke="#4A6FA5" rx="10" ry="10"></rect>' +
+      '<rect x="0" y="0" height="170" width="160" fill="#F2F6FB" stroke-width="1.5" stroke="#4A6FA5" rx="5" ry="5"></rect>' +
       '<g class="menu-button" style="cursor:pointer; pointer-events: all;" transform="translate(128, 10)">' +
       '<circle cx="12" cy="12" r="12" fill="#B07A6A" opacity="0.1"></circle>' +
       '<path fill="#64748B" d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5s3.5 1.57 3.5 3.5s-1.57 3.5-3.5 3.5z" transform="scale(0.8) translate(3, 3)"></path>' +
@@ -69,7 +75,7 @@ onMounted(() => {
     // node màu nữ
     FamilyTree.templates.jane = Object.assign({}, FamilyTree.templates.john);
     FamilyTree.templates.jane.node =
-      '<rect x="0" y="0" height="170" width="160" fill="#FAF3F1" stroke-width="1.5" stroke="#B07A6A" rx="10" ry="10"></rect>' +
+      '<rect x="0" y="0" height="170" width="160" fill="#FAF3F1" stroke-width="1.5" stroke="#B07A6A" rx="5" ry="5"></rect>' +
       '<g class="menu-button" style="cursor:pointer; pointer-events: all;" transform="translate(128, 10)">' +
       '<circle cx="12" cy="12" r="12" fill="#B07A6A" opacity="0.1"></circle>' +
       '<path fill="#64748B" d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5s3.5 1.57 3.5 3.5s-1.57 3.5-3.5 3.5z" transform="scale(0.8) translate(3, 3)"></path>' +
@@ -203,14 +209,12 @@ onMounted(() => {
       //   allChildren: true
       // },
       nodeCircleMenu: true,
-      // miniMap: true,
+      miniMap: isMiniMap.value,
     } as any);
 
     const myData: any[] = [
-      // THẾ HỆ 1: THỦY TỔ (2 người)
       { id: "1", pids: ["2"], generation: "1", name: "Nguyễn Văn Tâm", title: "1940", gender: "male", photo: "https://cdn.balkan.app/shared/m60/1.jpg" },
       { id: "2", pids: ["1"], generation: "1", name: "Lê Thị Thanh", title: "1945", gender: "female", photo: "https://cdn.balkan.app/shared/w60/1.jpg" },
-      // THẾ HỆ 2: CÁC CON CỦA CỤ TÂM (8 người - 3 cặp vợ chồng + 2 người độc thân)
       { id: "3", fid: "1", mid: "2", pids: ["4"], generation: "2", name: "Nguyễn Quang", title: "1965", gender: "male", photo: "https://cdn.balkan.app/shared/m60/2.jpg" },
       { id: "4", pids: ["3"], generation: "2", name: "Hoàng Mỹ", title: "1968", gender: "female", photo: "https://cdn.balkan.app/shared/w60/2.jpg" },
       { id: "5", fid: "1", mid: "2", pids: ["6"], generation: "2", name: "Nguyễn Hùng", title: "1970", gender: "male", photo: "https://cdn.balkan.app/shared/m60/3.jpg" },
@@ -219,33 +223,24 @@ onMounted(() => {
       { id: "8", pids: ["7"], generation: "2", name: "Trần Thế", title: "1973", gender: "male", photo: "https://cdn.balkan.app/shared/m30/1.jpg" },
       { id: "9", fid: "1", mid: "2", generation: "2", name: "Nguyễn Tuấn", title: "1978", gender: "male", photo: "https://cdn.balkan.app/shared/m30/2.jpg" },
       { id: "10", fid: "1", mid: "2", generation: "2", name: "Nguyễn Thu", title: "1982", gender: "female", photo: "https://cdn.balkan.app/shared/w30/2.jpg" },
-      // THẾ HỆ 3: CÁC CHÁU NỘI/NGOẠI (12 người)
-      // Con của ông Quang (id 3-4)
       { id: "11", fid: "3", mid: "4", pids: ["12"], generation: "3", name: "Nguyễn Anh", title: "1990", gender: "male", photo: "https://cdn.balkan.app/shared/m30/5.jpg" },
       { id: "12", pids: ["11"], generation: "3", name: "Lê Ngọc", title: "1992", gender: "female", photo: "https://cdn.balkan.app/shared/w30/5.jpg" },
       { id: "13", fid: "3", mid: "4", generation: "3", name: "Nguyễn Bảo", title: "1995", gender: "male", photo: "https://cdn.balkan.app/shared/m30/6.jpg" },
-      // Con của ông Hùng (id 5-6)
       { id: "14", fid: "5", mid: "6", pids: ["15"], generation: "3", name: "Nguyễn Cường", title: "1993", gender: "male", photo: "https://cdn.balkan.app/shared/m30/7.jpg" },
       { id: "15", pids: ["14"], generation: "3", name: "Đỗ Quyên", title: "1995", gender: "female", photo: "https://cdn.balkan.app/shared/w30/7.jpg" },
       { id: "16", fid: "5", mid: "6", generation: "3", name: "Nguyễn Diệu", title: "1998", gender: "female", photo: "https://cdn.balkan.app/shared/w30/8.jpg" },
-      // Con của bà Mai (id 7-8 - Cháu ngoại)
       { id: "17", fid: "8", mid: "7", pids: ["18"], generation: "3", name: "Trần Long", title: "1996", gender: "male", photo: "https://cdn.balkan.app/shared/m30/8.jpg" },
       { id: "18", pids: ["17"], generation: "3", name: "Vũ Hạ", title: "1998", gender: "female", photo: "https://cdn.balkan.app/shared/w30/9.jpg" },
       { id: "19", fid: "8", mid: "7", generation: "3", name: "Trần Yến", title: "2000", gender: "female", photo: "https://cdn.balkan.app/shared/w10/1.jpg" },
-      // Con của ông Tuấn (id 9 - mới lấy vợ)
-      { id: "20", pids: ["21"], generation: "3", name: "Nguyễn Tuấn", title: "1978", gender: "male", photo: "https://cdn.balkan.app/shared/m30/2.jpg" }, // Trùng id 9, đã sửa thành 20
+      { id: "20", pids: ["21"], generation: "3", name: "Nguyễn Tuấn", title: "1978", gender: "male", photo: "https://cdn.balkan.app/shared/m30/2.jpg" },
       { id: "21", pids: ["20"], generation: "3", name: "Bùi Kim", title: "1985", gender: "female", photo: "https://cdn.balkan.app/shared/w30/10.jpg" },
       { id: "22", fid: "20", mid: "21", generation: "3", name: "Nguyễn Khôi", title: "2010", gender: "male", photo: "https://cdn.balkan.app/shared/m10/1.jpg" },
-      // Con của Nguyễn Anh (id 11-12)
       { id: "23", fid: "11", mid: "12", generation: "4", name: "Nguyễn Minh", title: "2015", gender: "male", photo: "https://cdn.balkan.app/shared/m10/2.jpg" },
       { id: "24", fid: "11", mid: "12", generation: "4", name: "Nguyễn An", title: "2018", gender: "female", photo: "https://cdn.balkan.app/shared/w10/2.jpg" },
-      // Con của Nguyễn Cường (id 14-15)
       { id: "25", fid: "14", mid: "15", generation: "4", name: "Nguyễn Bình", title: "2020", gender: "male", photo: "https://cdn.balkan.app/shared/m10/3.jpg" },
       { id: "26", fid: "14", mid: "15", generation: "4", name: "Nguyễn Ca", title: "2022", gender: "female", photo: "https://cdn.balkan.app/shared/w10/3.jpg" },
-      // Con của Trần Long (id 17-18)
       { id: "27", fid: "17", mid: "18", generation: "4", name: "Trần Đăng", title: "2019", gender: "male", photo: "https://cdn.balkan.app/shared/m10/4.jpg" },
       { id: "28", fid: "17", mid: "18", generation: "4", name: "Trần Giao", title: "2021", gender: "female", photo: "https://cdn.balkan.app/shared/w10/4.jpg" },
-      // THẾ HỆ 5: ĐỜI ÚT (2 người)
       { id: "29", fid: "23", generation: "5", name: "Nguyễn GenZ", title: "2038", gender: "male", photo: "https://cdn.balkan.app/shared/m10/5.jpg" },
       { id: "30", fid: "23", generation: "5", name: "Nguyễn Alpha", title: "2040", gender: "female", photo: "https://cdn.balkan.app/shared/w10/5.jpg" }
     ];
@@ -298,7 +293,6 @@ onMounted(() => {
 const onSaveMember = (updatedData: any) => {
   if (family && updatedData) {
     try {
-      // Gọi lệnh cập nhật của thư viện
       family.updateNode(updatedData);
       isModalOpen.value = false;
     } catch (error) {
@@ -315,7 +309,6 @@ const handleSearch = () => {
   const term = searchQuery.value?.trim().toLowerCase();
   if (!term || !family) return;
 
-  // Tìm trong mảng nodes gốc được truyền vào cấu hình
   const allNodesData = family.config.nodes;
 
   if (!allNodesData) {
@@ -323,7 +316,6 @@ const handleSearch = () => {
     return;
   }
 
-  // Tìm thành viên có tên chứa từ khóa
   const foundMember = allNodesData.find((node: any) => {
     return node.name && node.name.toLowerCase().includes(term);
   });
@@ -371,7 +363,6 @@ const searchSuggestions = computed(() => {
   // Lấy dữ liệu từ nodes trong config
   const allNodesData = family.config.nodes;
 
-  // Trả về tối đa 5-8 kết quả chứa từ khóa
   return allNodesData.filter((node: any) =>
     node.name && node.name.toLowerCase().includes(query)
   ).slice(0, 6);
@@ -380,7 +371,7 @@ const searchSuggestions = computed(() => {
 // Hàm để khi nhấn vào một gợi ý thì thực hiện search luôn
 const selectSuggestion = (member: any) => {
   searchQuery.value = member.name;
-  handleSearch(); // Chạy hàm search ngon lành của bạn
+  handleSearch();
 };
 
 
@@ -388,87 +379,67 @@ const selectSuggestion = (member: any) => {
 const clearSearch = () => {
   searchQuery.value = '';
 
-  // Xóa class tìm kiếm để bỏ hiệu ứng mờ
   treeRef.value?.classList.remove('is-searching');
 
-  // Xóa hiệu ứng highlight trên node
   treeRef.value?.querySelectorAll('.found-node-highlight').forEach(el => {
     el.classList.remove('found-node-highlight');
   });
 
-  // Tùy chọn: Fit lại toàn bộ cây để nhìn tổng thể
   family.fit();
 
   searchInputRef.value?.focus();
 };
 
-//  droppdown export gia pha 
-const isExportMenuOpen = ref(false);
-
-// Hàm để đóng menu sau khi chọn một chức năng
-const runExport = (type: string) => {
-  if (!family) return;
-
-  if (type === 'pdf') family.exportPDF({ filename: "Gia-pha.pdf" });
-  if (type === 'png') family.exportPNG({ filename: "Gia-pha.png" });
-  if (type === 'svg') family.exportSVG({ filename: "Gia-pha.svg" });
-
-  isExportMenuOpen.value = false;
+// bật mini map
+const toggleMiniMap = () => {
+  isMiniMap.value = !isMiniMap.value;
+  if (family) {
+    family.config.miniMap = isMiniMap.value;
+    family.draw();
+  }
 };
 
+
+const resetView = () => {
+  if (family) {
+    family.fit();
+  }
+};
+
+// quay lại danh sách gia phả
+const goBack = () => {
+  router.go(-1);
+};
 </script>
 
 <template>
-  <div class="flex  h-screen flex-col bg-slate-50 p-6 font-sans">
-    <header class="mb-6 flex items-center justify-between  bg-white p-2 shadow-sm border border-slate-200">
+  <div class="flex h-screen flex-col bg-slate-50 font-sans">
+    <header class="mb-2 flex items-center justify-between  bg-white p-2 shadow-sm border border-slate-200">
       <h1 class="text-2xl font-black text-slate-800 tracking-tight">
-        GIA PHẢ DÒNG HỌ
+        <span class="mr-2">
+        </span>Họ: Nguyễn
       </h1>
-      <div class="flex gap-4 text-xs font-bold">
-        <span class="flex items-center gap-1"><i class="w-3 h-3 bg-blue-500 rounded-full"></i> NAM</span>
-        <span class="flex items-center gap-1"><i class="w-3 h-3 bg-pink-500 rounded-full"></i> NỮ</span>
-      </div>
-
 
       <div class="flex gap-2">
-        <!--  export gia pha -->
-        <div class="relative inline-block text-left">
-          <!-- <button @click="isExportMenuOpen = !isExportMenuOpen"
-            class="flex items-center gap-2 bg-white border border-slate-200 px-4 py-2 rounded-xl font-bold text-slate-700 shadow-sm hover:bg-slate-50 transition-all">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
-            Xuất gia phả
-          </button> -->
+        <div class="relative inline-block text-right">
+          <ButtonBase @click="goBack" variant="primary" size="md">
+            Quay trở lại
+          </ButtonBase>
+          <ButtonBase @click="toggleMiniMap" :variant="isMiniMap ? 'secondary' : 'primary'" size="md">
+            {{ isMiniMap ? 'Tắt mini map' : 'Bật mini map' }}
+          </ButtonBase>
+          <ButtonBase @click="resetView" variant="primary" size="md">
+            Reset mặc định
+          </ButtonBase>
+          <ButtonBase @click="" variant="primary" size="md">
+            Gia phả trực tuyến
+          </ButtonBase>
 
-          <!-- export file -->
-          <RouterLink to="/family/export"
-            class="flex items-center gap-2 bg-white border border-slate-200 px-4 py-2 rounded-xl font-bold text-slate-700 shadow-sm hover:bg-slate-50 transition-all">
-            Export</RouterLink>
-
-          <!-- <div v-if="isExportMenuOpen" @click="isExportMenuOpen = false" class="fixed inset-0 z-10"></div>
-
-          <div v-if="isExportMenuOpen"
-            class="absolute right-0 mt-2 w-48 rounded-xl bg-white shadow-lg border border-slate-100 py-2 z-20 overflow-hidden">
-            <button @click="runExport('pdf')"
-              class="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-700 hover:bg-red-50 hover:text-red-600 transition-colors">
-              <span class="font-bold text-red-500">PDF</span> Xuất file tài liệu
-            </button>
-
-            <button @click="runExport('png')"
-              class="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-600 transition-colors border-y border-slate-50">
-              <span class="font-bold text-blue-500">PNG</span> Xuất file hình ảnh
-            </button>
-
-            <button @click="runExport('svg')"
-              class="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-700 hover:bg-green-50 hover:text-green-600 transition-colors">
-              <span class="font-bold text-green-500">SVG</span> Xuất file SVG
-            </button>
-
-          </div> -->
+          <ButtonBase @click="" variant="primary" size="md">
+            <RouterLink to="/family/xuat-file" class="">
+              Xuất hình ảnh
+            </RouterLink>
+          </ButtonBase>
         </div>
 
         <!-- search   -->
@@ -506,7 +477,7 @@ const runExport = (type: string) => {
     </header>
 
     <!--  tree -->
-    <div class="flex-1 overflow-hidden  border-2 border-slate-200 shadow-inner parchment-bg">
+    <div class="flex-1 overflow-hidden border-2 border-slate-200 shadow-inner parchment-bg">
       <div ref="treeRef" class="h-full w-full parchment-bg"></div>
     </div>
 

@@ -4,55 +4,72 @@ export default [
     {
         path: "/family",
         component: UserLayout,
-        redirect: "/family/dashboard",
+        // Cập nhật redirect cho khớp với path mới của dashboard
+        redirect: "/family/tong-quan", 
         children: [
             {
-                path: "dashboard",
+                // dashboard -> tong-quan
+                path: "tong-quan",
                 name: "FamilyDashboard",
                 component: () => import("@/views/family/FamilyDashboard.vue"),
             },
             {
-                path: "chart",
+                // danh-sach-gia-pha -> danh-sach
+                path: "danh-sach",
+                name: "FamilyList",
+                component: () => import("@/views/family/FamilyTreeContainer.vue")
+            }
+            , {
+                // chart -> so-do-cay
+                path: "so-do-cay",
                 name: "FamilyChart",
-                component: () => import("@/views/family/FamilyChartPage.vue"),
+                component: () => import("@/views/family/FamilyChartViewer.vue"),
             },
             {
-                path: "export",
+                // export -> xuat-file
+                path: "xuat-file",
                 name: "FamilyExport",
                 component: () => import("@/views/family/FamilyExportPage.vue"),
             },
             {
-                path: "events",
+                // events -> su-kien
+                path: "su-kien",
                 name: "FamilyEvents",
                 component: () => import("@/views/family/FamilyEvents.vue"),
             },
             {
-                path: "categories",
+                // categories -> danh-muc-bai-viet
+                path: "danh-muc-bai-viet",
                 name: "FamilyPostCategory",
                 component: () => import("@/views/family/FamilyPostCategory.vue")
             },
             {
-                path: "album",
+                // album -> thu-vien-anh
+                path: "thu-vien-anh",
                 name: "FamilyAlbum",
                 component: () => import("@/views/family/FamilyAlbum.vue")
             },
             {
-                path: "posts",
+                // posts -> bai-viet
+                path: "bai-viet",
                 name: "FamilyPost",
                 component: () => import("@/views/family/FamilyPosts.vue")
             }
             , {
-                path: "settings",
+                // settings -> cau-hinh
+                path: "cau-hinh",
                 name: "FamilySetting",
                 component: () => import("@/views/family/FamilySetting.vue")
             }
             , {
-                path: "email",
+                // email -> hop-thu
+                path: "hop-thu",
                 name: "FamilyEmail",
                 component: () => import("@/views/family/FamilyEmail.vue")
             }
             , {
-                path: "achievements",
+                // achievements -> thanh-tich
+                path: "thanh-tich",
                 name: "FamilyAchievements",
                 component: () => import("@/views/family/FamilyAchievements.vue")
             }

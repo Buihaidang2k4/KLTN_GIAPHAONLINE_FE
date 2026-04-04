@@ -10,11 +10,12 @@ import {
   Settings,
   PanelLeftClose,
   ChevronRight,
-  LogOut,
   CalendarDays,
-  Sparkles,
   Medal,
   Hash,
+  RefreshCw,
+  ChevronLeft,
+  Download,
 } from "lucide-vue-next"
 
 const route = useRoute()
@@ -27,32 +28,41 @@ type MenuItem = {
   badge?: string | number
 }
 
+type ActionItem = {
+  name: string
+  path: string
+  icon: any
+}
+
 const menus: MenuItem[] = [
-  { name: "Tổng quan", path: "/family/dashboard", icon: LayoutDashboard },
-  { name: "Gia phả", path: "/family/chart", icon: TreePine },
-  { name: "Bài viết", path: "/family/posts", icon: FileText },
-  { name: "Chuyên mục", path: "/family/categories", icon: Hash },
-  { name: "Sự kiện", path: "/family/events", icon: CalendarDays },
-  { name: "Thành tích/ giải thưởng", path: "/family/achievements", icon: Medal },
-  { name: "Album", path: "/family/album", icon: Image },
-  { name: "Email", path: "/family/email", icon: Mail, badge: 2 },
-  { name: "Cài đặt", path: "/family/settings", icon: Settings },
+  { name: "Tổng quan", path: "/family/tong-quan", icon: LayoutDashboard },
+  { name: "Danh sách gia phả", path: "/family/danh-sach", icon: TreePine },
+  // { name: "Sơ đồ cây", path: "/family/so-do-cay", icon: TreePine },
+  { name: "Chuyên mục bài viết", path: "/family/danh-muc-bai-viet", icon: Hash },
+  { name: "Bài viết", path: "/family/bai-viet", icon: FileText },
+  { name: "Sự kiện", path: "/family/su-kien", icon: CalendarDays },
+  { name: "Thành tích/ giải thưởng", path: "/family/thanh-tich", icon: Medal },
+  { name: "Album", path: "/family/thu-vien-anh", icon: Image },
+  { name: "Email", path: "/family/hop-thu", icon: Mail, badge: 2 },
+  { name: "Cài đặt", path: "/family/cau-hinh", icon: Settings },
 ]
 
 const isActive = (path: string) => route.path === path || route.path.startsWith(path + "/")
 
-const userInfo = computed(() => ({
-  name: "Phan Dũng",
-  role: "Quản trị viên",
-  initials: "PD",
-}))
+const listActionNav: ActionItem[] = [
+  { name: "Quay lai", path: "", icon: ChevronLeft },
+  { name: "Trở về mặc định", path: "", icon: RefreshCw },
+  { name: "Xuất ảnh phả đồ", path: "", icon: Download }
+
+]
+
 </script>
 
 <template>
-  <aside :class="open ? 'w-[272px]' : 'w-[84px]'"
+  <aside :class="open ? 'w-68' : 'w-21'"
     class="relative h-screen sticky top-0 flex flex-col border-r border-slate-200 bg-white transition-all duration-300 ease-out">
     <!-- Header -->
-    <div class="relative h-[76px] px-4 flex items-center border-b border-slate-100">
+    <div class="relative h-19 px-4 flex items-center border-b border-slate-100">
       <div class="flex items-center w-full" :class="open ? 'justify-between' : 'justify-center'">
         <RouterLink to="/" class="flex items-center gap-3 min-w-0 group">
           <div
@@ -82,24 +92,6 @@ const userInfo = computed(() => ({
         class="absolute -right-3 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full border border-slate-200 bg-white shadow-sm flex items-center justify-center text-slate-500 hover:text-indigo-600 hover:border-indigo-200 transition z-10">
         <ChevronRight :size="15" />
       </button>
-    </div>
-
-    <!-- Workspace card -->
-    <div class="px-3 pt-4">
-      <div :class="open ? 'px-3 py-3' : 'px-0 py-3 justify-center'"
-        class="rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200/80 flex items-center gap-3 transition-all">
-        <div
-          class="w-10 h-10 rounded-xl bg-white shadow-sm border border-slate-200 flex items-center justify-center text-indigo-600">
-          <Sparkles :size="18" />
-        </div>
-
-        <Transition name="nav-fade">
-          <div v-if="open" class="min-w-0">
-            <p class="text-sm font-bold text-slate-800 truncate">Khu vực quản lý</p>
-            <p class="text-[11px] text-slate-500 truncate">Quản lý nội dung và dữ liệu</p>
-          </div>
-        </Transition>
-      </div>
     </div>
 
     <!-- Menu -->
@@ -140,7 +132,7 @@ const userInfo = computed(() => ({
               <span class="truncate text-sm font-semibold tracking-tight">{{ m.name }}</span>
 
               <span v-if="m.badge"
-                class="min-w-[20px] h-5 px-1.5 rounded-full bg-slate-200 text-slate-600 text-[10px] font-bold flex items-center justify-center">
+                class="min-w-5 h-5 px-1.5 rounded-full bg-slate-200 text-slate-600 text-[10px] font-bold flex items-center justify-center">
                 {{ m.badge }}
               </span>
             </div>
@@ -148,43 +140,13 @@ const userInfo = computed(() => ({
 
           <!-- Tooltip when collapsed -->
           <div v-if="!open"
-            class="pointer-events-none absolute left-[72px] top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all whitespace-nowrap rounded-lg bg-slate-900 text-white text-[11px] font-semibold px-3 py-1.5 shadow-lg z-50">
+            class="pointer-events-none absolute left-18 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all whitespace-nowrap rounded-lg bg-slate-900 text-white text-[11px] font-semibold px-3 py-1.5 shadow-lg z-50">
             {{ m.name }}
           </div>
         </RouterLink>
       </nav>
     </div>
 
-    <!-- Footer user -->
-    <div class="p-3 border-t border-slate-100 bg-slate-50/70">
-      <div :class="open ? 'px-3 py-3' : 'px-0 py-2 justify-center'"
-        class="rounded-2xl bg-white border border-slate-200/70 flex items-center gap-3 transition-all">
-        <div
-          class="relative shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white flex items-center justify-center font-bold shadow-sm">
-          {{ userInfo.initials }}
-          <span
-            class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white"></span>
-        </div>
-
-        <Transition name="nav-fade">
-          <div v-if="open" class="min-w-0 flex-1">
-            <p class="text-sm font-bold text-slate-800 truncate leading-none">
-              {{ userInfo.name }}
-            </p>
-            <p class="text-[11px] text-slate-500 truncate mt-1">
-              {{ userInfo.role }}
-            </p>
-          </div>
-        </Transition>
-
-        <Transition name="nav-fade">
-          <button v-if="open"
-            class="w-9 h-9 rounded-xl flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 transition">
-            <LogOut :size="17" />
-          </button>
-        </Transition>
-      </div>
-    </div>
   </aside>
 </template>
 
