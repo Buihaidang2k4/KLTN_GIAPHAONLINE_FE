@@ -2,20 +2,52 @@
 import { ref, onMounted, computed } from "vue";
 import FamilyTree from "@balkangraph/familytree.js";
 import EditMemberModal from "@/components/family_tree/EditMemberModal.vue";
+import AddMemberModal from "@/components/family_tree/AddMemberModal.vue";
 import bg_familytree from "@/assets/images/bg_familyTree.jpg";
 import { notify } from "@/utils/notify";
-import {
-  Trees
-} from "lucide-vue-next"
 import ButtonBase from "@/components/common-ui/ButtonBase.vue";
 import router from "@/app/router";
 const bgImageStyle = computed(() => `url(${bg_familytree})`);
 
 const treeRef = ref<HTMLDivElement | null>(null);
-const isModalOpen = ref<boolean>(false);
+const isModalUpdateOpen = ref<boolean>(false);
+const isModalAddOpen = ref<boolean>(false);
 const selectedMember = ref<any>(null);
 let family: any = null;
 const isMiniMap = ref<boolean>(false);
+
+const myData: any[] = [
+  { id: "1", pids: ["2"], generation: "1", name: "Nguyễn Văn Tâm", title: "1940", gender: "male", photo: "https://cdn.balkan.app/shared/m60/1.jpg" },
+  { id: "2", pids: ["1"], generation: "1", name: "Lê Thị Thanh", title: "1945", gender: "female", photo: "https://cdn.balkan.app/shared/w60/1.jpg" },
+  { id: "3", fid: "1", mid: "2", pids: ["4"], generation: "2", name: "Nguyễn Quang", title: "1965", gender: "male", photo: "https://cdn.balkan.app/shared/m60/2.jpg" },
+  { id: "4", pids: ["3"], generation: "2", name: "Hoàng Mỹ", title: "1968", gender: "female", photo: "https://cdn.balkan.app/shared/w60/2.jpg" },
+  { id: "5", fid: "1", mid: "2", pids: ["6"], generation: "2", name: "Nguyễn Hùng", title: "1970", gender: "male", photo: "https://cdn.balkan.app/shared/m60/3.jpg" },
+  { id: "6", pids: ["5"], generation: "2", name: "Phan Lan", title: "1972", gender: "female", photo: "https://cdn.balkan.app/shared/w60/3.jpg" },
+  { id: "7", fid: "1", mid: "2", pids: ["8"], generation: "2", name: "Nguyễn Mai", title: "1975", gender: "female", photo: "https://cdn.balkan.app/shared/w30/1.jpg" },
+  { id: "8", pids: ["7"], generation: "2", name: "Trần Thế", title: "1973", gender: "male", photo: "https://cdn.balkan.app/shared/m30/1.jpg" },
+  { id: "9", fid: "1", mid: "2", generation: "2", name: "Nguyễn Tuấn", title: "1978", gender: "male", photo: "https://cdn.balkan.app/shared/m30/2.jpg" },
+  { id: "10", fid: "1", mid: "2", generation: "2", name: "Nguyễn Thu", title: "1982", gender: "female", photo: "https://cdn.balkan.app/shared/w30/2.jpg" },
+  { id: "11", fid: "3", mid: "4", pids: ["12"], generation: "3", name: "Nguyễn Anh", title: "1990", gender: "male", photo: "https://cdn.balkan.app/shared/m30/5.jpg" },
+  { id: "12", pids: ["11"], generation: "3", name: "Lê Ngọc", title: "1992", gender: "female", photo: "https://cdn.balkan.app/shared/w30/5.jpg" },
+  { id: "13", fid: "3", mid: "4", generation: "3", name: "Nguyễn Bảo", title: "1995", gender: "male", photo: "https://cdn.balkan.app/shared/m30/6.jpg" },
+  { id: "14", fid: "5", mid: "6", pids: ["15"], generation: "3", name: "Nguyễn Cường", title: "1993", gender: "male", photo: "https://cdn.balkan.app/shared/m30/7.jpg" },
+  { id: "15", pids: ["14"], generation: "3", name: "Đỗ Quyên", title: "1995", gender: "female", photo: "https://cdn.balkan.app/shared/w30/7.jpg" },
+  { id: "16", fid: "5", mid: "6", generation: "3", name: "Nguyễn Diệu", title: "1998", gender: "female", photo: "https://cdn.balkan.app/shared/w30/8.jpg" },
+  { id: "17", fid: "8", mid: "7", pids: ["18"], generation: "3", name: "Trần Long", title: "1996", gender: "male", photo: "https://cdn.balkan.app/shared/m30/8.jpg" },
+  { id: "18", pids: ["17"], generation: "3", name: "Vũ Hạ", title: "1998", gender: "female", photo: "https://cdn.balkan.app/shared/w30/9.jpg" },
+  { id: "19", fid: "8", mid: "7", generation: "3", name: "Trần Yến", title: "2000", gender: "female", photo: "https://cdn.balkan.app/shared/w10/1.jpg" },
+  { id: "20", pids: ["21"], generation: "3", name: "Nguyễn Tuấn", title: "1978", gender: "male", photo: "https://cdn.balkan.app/shared/m30/2.jpg" },
+  { id: "21", pids: ["20"], generation: "3", name: "Bùi Kim", title: "1985", gender: "female", photo: "https://cdn.balkan.app/shared/w30/10.jpg" },
+  { id: "22", fid: "20", mid: "21", generation: "3", name: "Nguyễn Khôi", title: "2010", gender: "male", photo: "https://cdn.balkan.app/shared/m10/1.jpg" },
+  { id: "23", fid: "11", mid: "12", generation: "4", name: "Nguyễn Minh", title: "2015", gender: "male", photo: "https://cdn.balkan.app/shared/m10/2.jpg" },
+  { id: "24", fid: "11", mid: "12", generation: "4", name: "Nguyễn An", title: "2018", gender: "female", photo: "https://cdn.balkan.app/shared/w10/2.jpg" },
+  { id: "25", fid: "14", mid: "15", generation: "4", name: "Nguyễn Bình", title: "2020", gender: "male", photo: "https://cdn.balkan.app/shared/m10/3.jpg" },
+  { id: "26", fid: "14", mid: "15", generation: "4", name: "Nguyễn Ca", title: "2022", gender: "female", photo: "https://cdn.balkan.app/shared/w10/3.jpg" },
+  { id: "27", fid: "17", mid: "18", generation: "4", name: "Trần Đăng", title: "2019", gender: "male", photo: "https://cdn.balkan.app/shared/m10/4.jpg" },
+  { id: "28", fid: "17", mid: "18", generation: "4", name: "Trần Giao", title: "2021", gender: "female", photo: "https://cdn.balkan.app/shared/w10/4.jpg" },
+  { id: "29", fid: "23", generation: "5", name: "Nguyễn GenZ", title: "2038", gender: "male", photo: "https://cdn.balkan.app/shared/m10/5.jpg" },
+  { id: "30", fid: "23", generation: "5", name: "Nguyễn Alpha", title: "2040", gender: "female", photo: "https://cdn.balkan.app/shared/w10/5.jpg" }
+];
 
 onMounted(() => {
   if (treeRef.value) {
@@ -129,14 +161,14 @@ onMounted(() => {
         },
         add: {
           text: "Thêm con",
-          icon: `
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-            <circle cx="8.5" cy="7" r="4" />
-            <line x1="20" y1="8" x2="20" y2="14" />
-            <line x1="23" y1="11" x2="17" y2="11" />
-          </svg>
-          `
+          icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus-icon lucide-plus"><path d="M5 12h14"/><path d="M12 5v14"/></svg>',
+          onClick: (nodeId: any) => {
+            const rawData = family.get(nodeId);
+            if (rawData) {
+              selectedMember.value = structuredClone(rawData);
+              isModalAddOpen.value = true;
+            }
+          }
         },
         edit: {
           text: "Chỉnh sửa",
@@ -144,7 +176,7 @@ onMounted(() => {
             const rawData = family.get(nodeId);
             if (rawData) {
               selectedMember.value = structuredClone(rawData);
-              isModalOpen.value = true;
+              isModalUpdateOpen.value = true;
             }
           }
         },
@@ -212,38 +244,7 @@ onMounted(() => {
       miniMap: isMiniMap.value,
     } as any);
 
-    const myData: any[] = [
-      { id: "1", pids: ["2"], generation: "1", name: "Nguyễn Văn Tâm", title: "1940", gender: "male", photo: "https://cdn.balkan.app/shared/m60/1.jpg" },
-      { id: "2", pids: ["1"], generation: "1", name: "Lê Thị Thanh", title: "1945", gender: "female", photo: "https://cdn.balkan.app/shared/w60/1.jpg" },
-      { id: "3", fid: "1", mid: "2", pids: ["4"], generation: "2", name: "Nguyễn Quang", title: "1965", gender: "male", photo: "https://cdn.balkan.app/shared/m60/2.jpg" },
-      { id: "4", pids: ["3"], generation: "2", name: "Hoàng Mỹ", title: "1968", gender: "female", photo: "https://cdn.balkan.app/shared/w60/2.jpg" },
-      { id: "5", fid: "1", mid: "2", pids: ["6"], generation: "2", name: "Nguyễn Hùng", title: "1970", gender: "male", photo: "https://cdn.balkan.app/shared/m60/3.jpg" },
-      { id: "6", pids: ["5"], generation: "2", name: "Phan Lan", title: "1972", gender: "female", photo: "https://cdn.balkan.app/shared/w60/3.jpg" },
-      { id: "7", fid: "1", mid: "2", pids: ["8"], generation: "2", name: "Nguyễn Mai", title: "1975", gender: "female", photo: "https://cdn.balkan.app/shared/w30/1.jpg" },
-      { id: "8", pids: ["7"], generation: "2", name: "Trần Thế", title: "1973", gender: "male", photo: "https://cdn.balkan.app/shared/m30/1.jpg" },
-      { id: "9", fid: "1", mid: "2", generation: "2", name: "Nguyễn Tuấn", title: "1978", gender: "male", photo: "https://cdn.balkan.app/shared/m30/2.jpg" },
-      { id: "10", fid: "1", mid: "2", generation: "2", name: "Nguyễn Thu", title: "1982", gender: "female", photo: "https://cdn.balkan.app/shared/w30/2.jpg" },
-      { id: "11", fid: "3", mid: "4", pids: ["12"], generation: "3", name: "Nguyễn Anh", title: "1990", gender: "male", photo: "https://cdn.balkan.app/shared/m30/5.jpg" },
-      { id: "12", pids: ["11"], generation: "3", name: "Lê Ngọc", title: "1992", gender: "female", photo: "https://cdn.balkan.app/shared/w30/5.jpg" },
-      { id: "13", fid: "3", mid: "4", generation: "3", name: "Nguyễn Bảo", title: "1995", gender: "male", photo: "https://cdn.balkan.app/shared/m30/6.jpg" },
-      { id: "14", fid: "5", mid: "6", pids: ["15"], generation: "3", name: "Nguyễn Cường", title: "1993", gender: "male", photo: "https://cdn.balkan.app/shared/m30/7.jpg" },
-      { id: "15", pids: ["14"], generation: "3", name: "Đỗ Quyên", title: "1995", gender: "female", photo: "https://cdn.balkan.app/shared/w30/7.jpg" },
-      { id: "16", fid: "5", mid: "6", generation: "3", name: "Nguyễn Diệu", title: "1998", gender: "female", photo: "https://cdn.balkan.app/shared/w30/8.jpg" },
-      { id: "17", fid: "8", mid: "7", pids: ["18"], generation: "3", name: "Trần Long", title: "1996", gender: "male", photo: "https://cdn.balkan.app/shared/m30/8.jpg" },
-      { id: "18", pids: ["17"], generation: "3", name: "Vũ Hạ", title: "1998", gender: "female", photo: "https://cdn.balkan.app/shared/w30/9.jpg" },
-      { id: "19", fid: "8", mid: "7", generation: "3", name: "Trần Yến", title: "2000", gender: "female", photo: "https://cdn.balkan.app/shared/w10/1.jpg" },
-      { id: "20", pids: ["21"], generation: "3", name: "Nguyễn Tuấn", title: "1978", gender: "male", photo: "https://cdn.balkan.app/shared/m30/2.jpg" },
-      { id: "21", pids: ["20"], generation: "3", name: "Bùi Kim", title: "1985", gender: "female", photo: "https://cdn.balkan.app/shared/w30/10.jpg" },
-      { id: "22", fid: "20", mid: "21", generation: "3", name: "Nguyễn Khôi", title: "2010", gender: "male", photo: "https://cdn.balkan.app/shared/m10/1.jpg" },
-      { id: "23", fid: "11", mid: "12", generation: "4", name: "Nguyễn Minh", title: "2015", gender: "male", photo: "https://cdn.balkan.app/shared/m10/2.jpg" },
-      { id: "24", fid: "11", mid: "12", generation: "4", name: "Nguyễn An", title: "2018", gender: "female", photo: "https://cdn.balkan.app/shared/w10/2.jpg" },
-      { id: "25", fid: "14", mid: "15", generation: "4", name: "Nguyễn Bình", title: "2020", gender: "male", photo: "https://cdn.balkan.app/shared/m10/3.jpg" },
-      { id: "26", fid: "14", mid: "15", generation: "4", name: "Nguyễn Ca", title: "2022", gender: "female", photo: "https://cdn.balkan.app/shared/w10/3.jpg" },
-      { id: "27", fid: "17", mid: "18", generation: "4", name: "Trần Đăng", title: "2019", gender: "male", photo: "https://cdn.balkan.app/shared/m10/4.jpg" },
-      { id: "28", fid: "17", mid: "18", generation: "4", name: "Trần Giao", title: "2021", gender: "female", photo: "https://cdn.balkan.app/shared/w10/4.jpg" },
-      { id: "29", fid: "23", generation: "5", name: "Nguyễn GenZ", title: "2038", gender: "male", photo: "https://cdn.balkan.app/shared/m10/5.jpg" },
-      { id: "30", fid: "23", generation: "5", name: "Nguyễn Alpha", title: "2040", gender: "female", photo: "https://cdn.balkan.app/shared/w10/5.jpg" }
-    ];
+
 
     myData.forEach(node => {
       if (!node.tags) {
@@ -261,31 +262,31 @@ onMounted(() => {
     family.draw();
 
     // hanlde click node 
-    family.on("click", (_sender: any, args: any) => {
+    // family.on("click", (_sender: any, args: any) => {
 
-      if (args.event.target.classList.contains('menu-button') || args.event.target.closest('.menu-button')) {
-        return;
-      }
+    //   if (args.event.target.classList.contains('menu-button') || args.event.target.closest('.menu-button')) {
+    //     return;
+    //   }
 
-      args.cancel = true;
+    //   args.cancel = true;
 
-      const nodeId = args.node?.id as any;
-      // Kiểm tra dữ liệu node trong args
-      if (!nodeId) {
-        console.warn("Không có nodeId trong args:", args);
-        return;
-      }
+    //   const nodeId = args.node?.id as any;
+    //   // Kiểm tra dữ liệu node trong args
+    //   if (!nodeId) {
+    //     console.warn("Không có nodeId trong args:", args);
+    //     return;
+    //   }
 
-      // Lấy dữ liệu node từ cây
-      const rawData = family.get(nodeId);
-      if (rawData) {
-        selectedMember.value = structuredClone(rawData);
+    //   // Lấy dữ liệu node từ cây
+    //   const rawData = family.get(nodeId);
+    //   if (rawData) {
+    //     selectedMember.value = structuredClone(rawData);
 
-        isModalOpen.value = true;
-      } else {
-        console.warn("Không tìm thấy dữ liệu cho node:", nodeId);
-      }
-    });
+    //     isModalOpen.value = true;
+    //   } else {
+    //     console.warn("Không tìm thấy dữ liệu cho node:", nodeId);
+    //   }
+    // });
   }
 });
 
@@ -294,7 +295,7 @@ const onSaveMember = (updatedData: any) => {
   if (family && updatedData) {
     try {
       family.updateNode(updatedData);
-      isModalOpen.value = false;
+      isModalUpdateOpen.value = false;
     } catch (error) {
       console.error("Lỗi khi cập nhật node vào FamilyTree:", error);
     }
@@ -305,6 +306,8 @@ const onSaveMember = (updatedData: any) => {
 const searchQuery = ref("");
 const searchInputRef = ref<HTMLInputElement | null>(null);
 
+
+// tìm kiếm thành viên
 const handleSearch = () => {
   const term = searchQuery.value?.trim().toLowerCase();
   if (!term || !family) return;
@@ -399,6 +402,9 @@ const toggleMiniMap = () => {
   }
 };
 
+const isMiniMapUi = computed(() => {
+  return isMiniMap.value ? 'secondary' : 'primary';
+});
 
 const resetView = () => {
   if (family) {
@@ -425,7 +431,7 @@ const goBack = () => {
           <ButtonBase @click="goBack" variant="primary" size="md">
             Quay trở lại
           </ButtonBase>
-          <ButtonBase @click="toggleMiniMap" :variant="isMiniMap ? 'secondary' : 'primary'" size="md">
+          <ButtonBase @click="toggleMiniMap" :variant="isMiniMapUi" size="md">
             {{ isMiniMap ? 'Tắt mini map' : 'Bật mini map' }}
           </ButtonBase>
           <ButtonBase @click="resetView" variant="primary" size="md">
@@ -482,7 +488,10 @@ const goBack = () => {
     </div>
 
     <!--  modal -->
-    <EditMemberModal :isOpen="isModalOpen" :member="selectedMember" @close="isModalOpen = false" @save="onSaveMember" />
+    <AddMemberModal :isOpen="isModalAddOpen" :member="selectedMember" @close="isModalAddOpen = false"
+      @save="onSaveMember" />
+    <EditMemberModal :isOpen="isModalUpdateOpen" :member="selectedMember" @close="isModalUpdateOpen = false"
+      @save="onSaveMember" />
   </div>
 </template>
 
@@ -497,8 +506,6 @@ const goBack = () => {
 :deep(.bft-minimap .bft-button) {
   display: none;
 }
-
-
 
 /* Ẩn thanh công cụ mặc định (Search.) */
 :deep([data-ctrl-menu]),

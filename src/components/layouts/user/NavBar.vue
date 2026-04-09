@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from "vue"
+import { ref } from "vue"
 import { RouterLink, useRoute } from "vue-router"
 import {
   LayoutDashboard,
@@ -12,10 +12,8 @@ import {
   ChevronRight,
   CalendarDays,
   Medal,
-  Hash,
-  RefreshCw,
-  ChevronLeft,
-  Download,
+  Hash
+  , Columns3Cog,
 } from "lucide-vue-next"
 
 const route = useRoute()
@@ -44,17 +42,11 @@ const menus: MenuItem[] = [
   { name: "Thành tích/ giải thưởng", path: "/family/thanh-tich", icon: Medal },
   { name: "Album", path: "/family/thu-vien-anh", icon: Image },
   { name: "Email", path: "/family/hop-thu", icon: Mail, badge: 2 },
+  { name: "Sổ tay phong tục", path: "/family/phong-tuc", icon: Columns3Cog },
   { name: "Cài đặt", path: "/family/cau-hinh", icon: Settings },
 ]
 
 const isActive = (path: string) => route.path === path || route.path.startsWith(path + "/")
-
-const listActionNav: ActionItem[] = [
-  { name: "Quay lai", path: "", icon: ChevronLeft },
-  { name: "Trở về mặc định", path: "", icon: RefreshCw },
-  { name: "Xuất ảnh phả đồ", path: "", icon: Download }
-
-]
 
 </script>
 

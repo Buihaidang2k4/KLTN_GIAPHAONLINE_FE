@@ -12,6 +12,7 @@ import {
   Home,
   Circle
 } from 'lucide-vue-next'
+import Topbar_Notification from '@/components/family_tree/topbar/Topbar_Notification.vue'
 
 const currentUser = ref({
   name: "Bùi Hải Đăng",
@@ -52,14 +53,15 @@ const systemStatus = ref('online')
           <Globe :size="20" />
         </button>
 
-        <div class="relative group">
+        <!-- <div class="relative group">
           <button
             class="p-2.5 text-slate-500 hover:bg-slate-50 hover:text-indigo-600 rounded-xl transition-all relative">
             <Bell :size="20" />
             <span v-if="hasNotification"
-              class="absolute top-2.5 right-2.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></span>
+              class="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></span>
           </button>
-        </div>
+        </div> -->
+        <Topbar_Notification />
       </div>
 
       <!-- Separator -->

@@ -5,7 +5,7 @@ export default [
         path: "/family",
         component: UserLayout,
         // Cập nhật redirect cho khớp với path mới của dashboard
-        redirect: "/family/tong-quan", 
+        redirect: "/family/tong-quan",
         children: [
             {
                 // dashboard -> tong-quan
@@ -72,6 +72,12 @@ export default [
                 path: "thanh-tich",
                 name: "FamilyAchievements",
                 component: () => import("@/views/family/FamilyAchievements.vue")
+            },
+            {
+                // customs -> phong-tuc
+                path: "phong-tuc",
+                name: "FamilyCustoms",
+                component: () => import("@/views/family/FamilyCustoms.vue")
             }
         ],
     },
