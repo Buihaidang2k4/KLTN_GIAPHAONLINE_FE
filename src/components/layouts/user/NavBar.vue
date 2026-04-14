@@ -40,9 +40,9 @@ const menus: MenuItem[] = [
   { name: "Bài viết", path: "/family/bai-viet", icon: FileText },
   { name: "Sự kiện", path: "/family/su-kien", icon: CalendarDays },
   { name: "Thành tích/ giải thưởng", path: "/family/thanh-tich", icon: Medal },
+  { name: "Sổ tay phong tục", path: "/family/phong-tuc", icon: Columns3Cog },
   { name: "Album", path: "/family/thu-vien-anh", icon: Image },
   { name: "Email", path: "/family/hop-thu", icon: Mail, badge: 2 },
-  { name: "Sổ tay phong tục", path: "/family/phong-tuc", icon: Columns3Cog },
   { name: "Cài đặt", path: "/family/cau-hinh", icon: Settings },
 ]
 

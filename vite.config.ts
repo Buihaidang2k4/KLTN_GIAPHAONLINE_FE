@@ -13,4 +13,13 @@ export default defineConfig({
   optimizeDeps: {
     include: ['@wangeditor/editor', '@wangeditor/editor-for-vue']
   }
+  ,server:{
+    proxy:{
+      '/api': {
+        target: process.env.VITE_API_HOST || 'http://localhost:8080',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, '/api/v1')
+      }
+    }
+  }
 })

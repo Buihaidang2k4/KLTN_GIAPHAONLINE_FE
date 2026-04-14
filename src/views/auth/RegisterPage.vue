@@ -9,29 +9,15 @@ import {
   EyeOff,
   Users
 } from 'lucide-vue-next'
-
-// đổi lại đúng đường dẫn logo của bạn
 import logo from '@/assets/images/Logo_GiaPha.png'
+import { useRegisterForm } from '@/components/forms/auth/useRegisterForm'
 
-const fullName = ref('')
-const email = ref('')
-const phone = ref('')
-const password = ref('')
-const confirmPassword = ref('')
-const agreeTerms = ref(false)
-const showPassword = ref(false)
-const showConfirmPassword = ref(false)
+const { registerForm, registerHandler, errors } = useRegisterForm();
 
-const handleRegister = () => {
-  console.log({
-    fullName: fullName.value,
-    email: email.value,
-    phone: phone.value,
-    password: password.value,
-    confirmPassword: confirmPassword.value,
-    agreeTerms: agreeTerms.value
-  })
-}
+const showPassword = ref(false);
+const showConfirmPassword = ref(false);
+const agreeTerms = ref(false);
+const maxlengthPhone = 13; 
 </script>
 
 <template>
@@ -49,7 +35,7 @@ const handleRegister = () => {
     </div>
 
     <!-- viền -->
-    <div class="absolute inset-5 md:inset-8 border border-[#c8b27a]/60 rounded-[32px]"></div>
+    <div class="absolute inset-5 md:inset-8 border border-[#c8b27a]/60 rounded-4xl"></div>
     <div class="absolute inset-7 md:inset-10 border border-[#2f5a43]/20 rounded-[28px]"></div>
 
     <!-- hoa văn góc -->
@@ -83,9 +69,9 @@ const handleRegister = () => {
 
     <!-- vòng tròn mờ -->
     <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-      <div class="w-[760px] h-[760px] rounded-full border border-[#b89243]/20"></div>
-      <div class="absolute w-[620px] h-[620px] rounded-full border border-[#2f5a43]/15"></div>
-      <div class="absolute w-[500px] h-[500px] rounded-full border border-[#b89243]/10"></div>
+      <div class="w-190 h-190 rounded-full border border-[#b89243]/20"></div>
+      <div class="absolute w-155 h-155 rounded-full border border-[#2f5a43]/15"></div>
+      <div class="absolute w-125 h-125 rounded-full border border-[#b89243]/10"></div>
     </div>
 
     <div class="relative z-10 min-h-screen flex items-center justify-center px-6 py-12">
@@ -94,7 +80,7 @@ const handleRegister = () => {
         <div class="hidden lg:flex flex-col justify-center pr-8">
           <div class="mb-8">
             <div class="inline-flex items-center gap-3 mb-5">
-              <div class="w-12 h-[2px] bg-[#b89243]"></div>
+              <div class="w-12 h-0.5 bg-[#b89243]"></div>
               <span class="uppercase tracking-[0.35em] text-sm text-[#6d5a35]">
                 Khởi tạo gia phả số
               </span>
@@ -129,12 +115,12 @@ const handleRegister = () => {
         <!-- bên phải -->
         <div class="relative">
           <div
-            class="absolute -inset-3 rounded-[36px] bg-gradient-to-br from-[#d1b06a]/20 via-transparent to-[#2f5a43]/20 blur-xl">
+            class="absolute -inset-3 rounded-[36px] bg-linear-to-br from-[#d1b06a]/20 via-transparent to-[#2f5a43]/20 blur-xl">
           </div>
 
           <div
             class="relative bg-white/55 backdrop-blur-md rounded-[36px] border border-[#c6b07b]/50 shadow-[0_20px_80px_rgba(56,42,17,0.18)] overflow-hidden">
-            <div class="h-2 bg-gradient-to-r from-[#2f5a43] via-[#c9a85c] to-[#2f5a43]"></div>
+            <div class="h-2 bg-linear-to-r from-[#2f5a43] via-[#c9a85c] to-[#2f5a43]"></div>
 
             <div class="px-8 md:px-12 py-10 md:py-12">
               <!-- logo -->
@@ -169,18 +155,38 @@ const handleRegister = () => {
               </div>
 
               <!-- form -->
-              <form class="space-y-5" @submit.prevent="handleRegister">
+              <form class="space-y-5" @submit.prevent="registerHandler">
                 <div class="grid md:grid-cols-2 gap-5">
-                  <div class="md:col-span-2">
+                  <div>
                     <label class="block mb-2 text-sm font-medium text-[#355340]">
                       Họ và tên
                     </label>
                     <div
                       class="flex items-center gap-3 rounded-2xl border border-[#c8b27a]/50 bg-[#fffaf1]/80 px-4 py-3 focus-within:border-[#2f5a43] focus-within:shadow-[0_0_0_4px_rgba(47,90,67,0.08)] transition">
                       <User class="w-5 h-5 text-[#7a6843]" />
-                      <input v-model="fullName" type="text" placeholder="Nhập họ và tên"
+                      <input v-model="registerForm.fullName" type="text" placeholder="Nhập họ và tên"
                         class="w-full bg-transparent outline-none text-[#234030] placeholder:text-[#8b8a80]" />
                     </div>
+                    <!-- show error  -->
+                    <p v-if="errors.fullName" class="mt-2 text-sm text-red-600">
+                      {{ errors.fullName }}
+                    </p>
+                  </div>
+
+                  <div>
+                    <label class="block mb-2 text-sm font-medium text-[#355340]">
+                      Tên dòng họ
+                    </label>
+                    <div
+                      class="flex items-center gap-3 rounded-2xl border border-[#c8b27a]/50 bg-[#fffaf1]/80 px-4 py-3 focus-within:border-[#2f5a43] focus-within:shadow-[0_0_0_4px_rgba(47,90,67,0.08)] transition">
+                      <User class="w-5 h-5 text-[#7a6843]" />
+                      <input v-model="registerForm.familyName" type="text" placeholder="Nhập tên dòng họ"
+                        class="w-full bg-transparent outline-none text-[#234030] placeholder:text-[#8b8a80]" />
+                    </div>
+                    <!-- show error  -->
+                    <p v-if="errors.familyName" class="mt-2 text-sm text-red-600">
+                      {{ errors.familyName }}
+                    </p>
                   </div>
 
                   <div>
@@ -190,9 +196,14 @@ const handleRegister = () => {
                     <div
                       class="flex items-center gap-3 rounded-2xl border border-[#c8b27a]/50 bg-[#fffaf1]/80 px-4 py-3 focus-within:border-[#2f5a43] focus-within:shadow-[0_0_0_4px_rgba(47,90,67,0.08)] transition">
                       <Mail class="w-5 h-5 text-[#7a6843]" />
-                      <input v-model="email" type="email" placeholder="Nhập email"
+                      <input v-model="registerForm.email" type="email" placeholder="Nhập email"
                         class="w-full bg-transparent outline-none text-[#234030] placeholder:text-[#8b8a80]" />
                     </div>
+                    <!-- show error  -->
+                    <p v-if="errors.email" class="mt-2 text-sm text-red-600">
+                      {{ errors.email }}
+                    </p>
+
                   </div>
 
                   <div>
@@ -202,9 +213,14 @@ const handleRegister = () => {
                     <div
                       class="flex items-center gap-3 rounded-2xl border border-[#c8b27a]/50 bg-[#fffaf1]/80 px-4 py-3 focus-within:border-[#2f5a43] focus-within:shadow-[0_0_0_4px_rgba(47,90,67,0.08)] transition">
                       <Phone class="w-5 h-5 text-[#7a6843]" />
-                      <input v-model="phone" type="text" placeholder="Nhập số điện thoại"
+                      <input :maxlength="maxlengthPhone" v-model="registerForm.phoneNumber" type="text"
+                        placeholder="Nhập số điện thoại"
                         class="w-full bg-transparent outline-none text-[#234030] placeholder:text-[#8b8a80]" />
                     </div>
+                    <!-- show error  -->
+                    <p v-if="errors.phoneNumber" class="mt-2 text-sm text-red-600">
+                      {{ errors.phoneNumber }}
+                    </p>
                   </div>
 
                   <div>
@@ -214,7 +230,8 @@ const handleRegister = () => {
                     <div
                       class="flex items-center gap-3 rounded-2xl border border-[#c8b27a]/50 bg-[#fffaf1]/80 px-4 py-3 focus-within:border-[#2f5a43] focus-within:shadow-[0_0_0_4px_rgba(47,90,67,0.08)] transition">
                       <Lock class="w-5 h-5 text-[#7a6843]" />
-                      <input v-model="password" :type="showPassword ? 'text' : 'password'" placeholder="Tạo mật khẩu"
+                      <input v-model="registerForm.password" :type="showPassword ? 'text' : 'password'"
+                        placeholder="Tạo mật khẩu"
                         class="w-full bg-transparent outline-none text-[#234030] placeholder:text-[#8b8a80]" />
                       <button type="button" class="text-[#6c5a37] hover:text-[#234030] transition"
                         @click="showPassword = !showPassword">
@@ -222,6 +239,10 @@ const handleRegister = () => {
                         <Eye v-else class="w-5 h-5" />
                       </button>
                     </div>
+                    <!-- show error  -->
+                    <p v-if="errors.password" class="mt-2 text-sm text-red-600">
+                      {{ errors.password }}
+                    </p>
                   </div>
 
                   <div>
@@ -231,7 +252,7 @@ const handleRegister = () => {
                     <div
                       class="flex items-center gap-3 rounded-2xl border border-[#c8b27a]/50 bg-[#fffaf1]/80 px-4 py-3 focus-within:border-[#2f5a43] focus-within:shadow-[0_0_0_4px_rgba(47,90,67,0.08)] transition">
                       <Lock class="w-5 h-5 text-[#7a6843]" />
-                      <input v-model="confirmPassword" :type="showConfirmPassword ? 'text' : 'password'"
+                      <input v-model="registerForm.confirmPassword" :type="showConfirmPassword ? 'text' : 'password'"
                         placeholder="Nhập lại mật khẩu"
                         class="w-full bg-transparent outline-none text-[#234030] placeholder:text-[#8b8a80]" />
                       <button type="button" class="text-[#6c5a37] hover:text-[#234030] transition"
@@ -240,6 +261,10 @@ const handleRegister = () => {
                         <Eye v-else class="w-5 h-5" />
                       </button>
                     </div>
+                    <!-- show error  -->
+                    <p v-if="errors.confirmPassword" class="mt-2 text-sm text-red-600">
+                      {{ errors.confirmPassword }}
+                    </p>
                   </div>
                 </div>
 

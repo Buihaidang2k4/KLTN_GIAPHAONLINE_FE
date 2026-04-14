@@ -14,5 +14,6 @@ export default [
         path: "/forgot-password",
         name: "ForgotPassword",
         component: () => import("@/views/auth/ForgotPassowordPage.vue"),
-    }
+    },
+
 ]

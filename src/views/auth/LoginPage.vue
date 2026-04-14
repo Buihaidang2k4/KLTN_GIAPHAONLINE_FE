@@ -1,20 +1,13 @@
 <script setup lang="ts">
-import { ref } from 'vue'
 import { Mail, Lock, Eye, EyeOff } from 'lucide-vue-next'
 import logo from '@/assets/images/Logo_GiaPha.png'
+import { useLoginForm } from '@/components/forms/auth/useLoginForm'
 
-const email = ref('')
-const password = ref('')
-const remember = ref(false)
-const showPassword = ref(false)
+const {
+    email, password, showPassword,
+    errors, submit, isSubmitDisabled,
+} = useLoginForm();
 
-const handleLogin = () => {
-    console.log({
-        email: email.value,
-        password: password.value,
-        remember: remember.value
-    })
-}
 </script>
 
 <template>
@@ -27,12 +20,12 @@ const handleLogin = () => {
         <!-- texture giấy -->
         <div class="absolute inset-0 opacity-[0.08] mix-blend-multiply pointer-events-none">
             <div
-                class="w-full h-full bg-[linear-gradient(to_right,rgba(35,64,48,0.06)_1px,transparent_1px),linear-gradient(to_bottom,rgba(35,64,48,0.06)_1px,transparent_1px)] bg-[size:36px_36px]">
+                class="w-full h-full bg-[linear-gradient(to_right,rgba(35,64,48,0.06)_1px,transparent_1px),linear-gradient(to_bottom,rgba(35,64,48,0.06)_1px,transparent_1px)] bg-position-[36px_36px]">
             </div>
         </div>
 
         <!-- viền khung ngoài -->
-        <div class="absolute inset-5 md:inset-8 border border-[#c8b27a]/60 rounded-[32px]"></div>
+        <div class="absolute inset-5 md:inset-8 border border-[#c8b27a]/60 rounded-4xl"></div>
         <div class="absolute inset-7 md:inset-10 border border-[#2f5a43]/20 rounded-[28px]"></div>
 
         <!-- hoa văn góc -->
@@ -123,7 +116,7 @@ const handleLogin = () => {
                     <div
                         class="relative bg-white/55 backdrop-blur-md rounded-[36px] border border-[#c6b07b]/50 shadow-[0_20px_80px_rgba(56,42,17,0.18)] overflow-hidden">
                         <!-- dải trang trí top -->
-                        <div class="h-2 bg-gradient-to-r from-[#2f5a43] via-[#c9a85c] to-[#2f5a43]"></div>
+                        <div class="h-2 bg-linear-to-r from-[#2f5a43] via-[#c9a85c] to-[#2f5a43]"></div>
 
                         <div class="px-8 md:px-12 py-10 md:py-12">
                             <!-- logo -->
@@ -159,7 +152,7 @@ const handleLogin = () => {
                             </div>
 
                             <!-- form -->
-                            <form class="space-y-5" @submit.prevent="handleLogin">
+                            <form class="space-y-5" @submit.prevent="submit">
                                 <div>
                                     <label class="block mb-2 text-sm font-medium text-[#355340]">
                                         Email
@@ -169,7 +162,12 @@ const handleLogin = () => {
                                         <Mail class="w-5 h-5 text-[#7a6843]" />
                                         <input v-model="email" type="email" placeholder="Nhập email của bạn"
                                             class="w-full bg-transparent outline-none text-[#234030] placeholder:text-[#8b8a80]" />
+
                                     </div>
+                                    <!-- show error  -->
+                                    <p v-if="errors.email" class="mt-2 text-sm text-red-600">
+                                        {{ errors.email }}
+                                    </p>
                                 </div>
 
                                 <div>
@@ -177,17 +175,22 @@ const handleLogin = () => {
                                         Mật khẩu
                                     </label>
                                     <div
-                                        class="flex items-center gap-3 rounded-2xl border border-[#c8b27a]/50 bg-[#fffaf1]/80 px-4 py-3 focus-within:border-[#2f5a43] focus-within:shadow-[0_0_0_4px_rgba(47,90,67,0.08)] transition">
+                                        class="flex items-center gap-3 rounded-2xl border border-[#c8b27a]/50 bg-[#fffaf1]/80 px-4 py-3 focus-within:border-[#2f5a43] focus-within:shadow-[0_0_0_4px_rgba(47,90,67,0.08)] transition ">
                                         <Lock class="w-5 h-5 text-[#7a6843]" />
                                         <input v-model="password" :type="showPassword ? 'text' : 'password'"
                                             placeholder="Nhập mật khẩu"
                                             class="w-full bg-transparent outline-none text-[#234030] placeholder:text-[#8b8a80]" />
-                                        <button type="button" class="text-[#6c5a37] hover:text-[#234030] transition"
+                                        <button type="button"
+                                            class="text-[#6c5a37] hover:text-[#234030] transition cursor-pointer"
                                             @click="showPassword = !showPassword">
                                             <EyeOff v-if="showPassword" class="w-5 h-5" />
                                             <Eye v-else class="w-5 h-5" />
                                         </button>
+
                                     </div>
+                                    <p v-if="errors.password" class="mt-2 text-sm text-red-600">
+                                        {{ errors.password }}
+                                    </p>
                                 </div>
 
                                 <div class="flex items-center justify-between gap-4 pt-1">
@@ -203,9 +206,11 @@ const handleLogin = () => {
                                     </RouterLink>
                                 </div>
 
-                                <button type="submit"
+                                <button type="submit" :disabled="isSubmitDisabled"
                                     class="relative w-full mt-3 overflow-hidden rounded-2xl bg-[#234030] px-6 py-4 text-white font-semibold text-lg shadow-[0_10px_30px_rgba(35,64,48,0.28)] transition hover:-translate-y-0.5 hover:bg-[#1c3326]">
-                                    <span class="relative z-10">Đăng nhập vào GiaPhaOnline</span>
+                                    <span class="relative z-10">
+                                        {{ 'Đăng nhập vào GiaPhaOnline' }}
+                                    </span>
                                     <span
                                         class="absolute inset-y-0 left-0 w-20 bg-white/10 skew-x-[-20deg] translate-x-[-120%] hover:translate-x-[520%] transition-transform duration-1000"></span>
                                 </button>

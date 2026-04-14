@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router';
+import { Toaster } from 'vue-sonner';
 </script>
 
 <template>
@@ -7,6 +8,12 @@ import { RouterView } from 'vue-router';
         <main class="main-content">
             <RouterView />
         </main>
+
+        <Toaster rich-colors position="top-right" :close-button="true" :expand="false" :visible-toasts="5"
+            :toast-options="{
+                style: { padding: '12px 16px', borderRadius: '12px' },
+                class: 'my-custom-toast',
+            }" />
     </div>
 </template>
 
