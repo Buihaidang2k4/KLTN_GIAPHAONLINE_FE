@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { 
-  Users, 
-  FileText, 
-  Calendar, 
-  Crown, 
-  CheckCircle2, 
-  ArrowUpCircle, 
-  Clock, 
-  ChevronRight,
+import {
+  Users,
+  FileText,
+  Calendar,
+  Crown,
+  CheckCircle2,
+  ArrowUpCircle,
+  Clock,
   TrendingUp,
   ShieldCheck,
   Zap,
@@ -48,23 +47,23 @@ const upcomingEvents = ref([
 
 // --- DANH SÁCH GÓI DỊCH VỤ ---
 const servicePlans = ref([
-  { 
-    name: 'Cơ bản', 
-    price: '0đ', 
+  {
+    name: 'Cơ bản',
+    price: '0đ',
     features: ['50 thành viên', '5GB Lưu trữ', 'Gia phả 3 đời'],
-    isCurrent: false 
+    isCurrent: false
   },
-  { 
-    name: 'Nâng cao', 
-    price: '199k/tháng', 
+  {
+    name: 'Nâng cao',
+    price: '199k/tháng',
     features: ['200 thành viên', '100GB Lưu trữ', 'Gia phả không giới hạn', 'Ưu tiên hỗ trợ'],
-    isCurrent: true 
+    isCurrent: true
   },
-  { 
-    name: 'Chuyên nghiệp', 
-    price: '499k/tháng', 
+  {
+    name: 'Chuyên nghiệp',
+    price: '499k/tháng',
     features: ['Thành viên vô hạn', '1TB Lưu trữ', 'Tên miền riêng gia tộc', 'Số hóa tài liệu cổ'],
-    isCurrent: false 
+    isCurrent: false
   }
 ])
 
@@ -77,7 +76,7 @@ const maxVal = Math.max(...chartData)
 <template>
   <div class="min-h-screen bg-slate-50 p-4 md:p-8 text-slate-900 font-sans">
     <div class="max-w-7xl mx-auto space-y-8">
-      
+
       <!-- HEADER & ADMIN INFO -->
       <section class="flex flex-col lg:flex-row gap-6 items-start justify-between">
         <div class="flex items-center gap-4">
@@ -92,18 +91,20 @@ const maxVal = Math.max(...chartData)
           </div>
         </div>
 
-        <div class="w-full lg:w-auto bg-white p-4 rounded-[2rem] shadow-sm border border-slate-200 flex items-center gap-4">
+        <div
+          class="w-full lg:w-auto bg-white p-4 rounded-[2rem] shadow-sm border border-slate-200 flex items-center gap-4">
           <img :src="familyInfo.admin.avatar" class="w-12 h-12 rounded-full border-2 border-indigo-100" />
           <div class="pr-8">
             <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Quản trị viên</p>
             <h4 class="font-black text-slate-800 flex items-center gap-1">
-              {{ familyInfo.admin.name }} 
+              {{ familyInfo.admin.name }}
               <Crown :size="14" class="text-amber-500" />
             </h4>
           </div>
           <div class="h-10 w-[1px] bg-slate-100"></div>
           <div class="pl-4">
-            <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[11px] font-black uppercase">
+            <span
+              class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[11px] font-black uppercase">
               <CheckCircle2 :size="12" /> Đang hoạt động
             </span>
           </div>
@@ -112,12 +113,15 @@ const maxVal = Math.max(...chartData)
 
       <!-- STATS GRID -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div v-for="stat in stats" :key="stat.label" class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 hover:shadow-md transition-all group">
+        <div v-for="stat in stats" :key="stat.label"
+          class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 hover:shadow-md transition-all group">
           <div class="flex items-center justify-between mb-4">
-            <div :class="[stat.color, 'w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-opacity-20']">
+            <div
+              :class="[stat.color, 'w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-opacity-20']">
               <component :is="stat.icon" :size="24" />
             </div>
-            <span class="text-[11px] font-bold text-emerald-500 bg-emerald-50 px-2 py-1 rounded-lg">{{ stat.trend }}</span>
+            <span
+              class="text-[11px] font-bold text-emerald-500 bg-emerald-50 px-2 py-1 rounded-lg">{{ stat.trend }}</span>
           </div>
           <h3 class="text-4xl font-black text-slate-900 mb-1">{{ stat.value.toLocaleString() }}</h3>
           <p class="text-slate-400 font-bold uppercase text-xs tracking-widest">{{ stat.label }}</p>
@@ -136,15 +140,15 @@ const maxVal = Math.max(...chartData)
               <TrendingUp :size="16" /> Chi tiết
             </button>
           </div>
-          
+
           <!-- GIẢ LẬP BIỂU ĐỒ CỘT -->
           <div class="flex items-end justify-between h-48 gap-3 px-2">
             <div v-for="(val, idx) in chartData" :key="idx" class="flex-1 flex flex-col items-center group">
-              <div 
+              <div
                 class="w-full bg-slate-100 rounded-t-xl transition-all duration-500 group-hover:bg-indigo-500 relative"
-                :style="{ height: `${(val / maxVal) * 100}%` }"
-              >
-                <div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                :style="{ height: `${(val / maxVal) * 100}%` }">
+                <div
+                  class="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity">
                   {{ val }}
                 </div>
               </div>
@@ -158,13 +162,14 @@ const maxVal = Math.max(...chartData)
           <div class="absolute top-0 right-0 p-8 opacity-10">
             <Calendar :size="120" />
           </div>
-          
+
           <h3 class="text-xl font-black mb-6 flex items-center gap-2">
             <Clock :size="20" class="text-indigo-300" /> Sự kiện sắp tới
           </h3>
-          
+
           <div class="space-y-4 relative z-10">
-            <div v-for="event in upcomingEvents" :key="event.id" class="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/10 hover:bg-white/20 transition-all cursor-pointer group">
+            <div v-for="event in upcomingEvents" :key="event.id"
+              class="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/10 hover:bg-white/20 transition-all cursor-pointer group">
               <div class="flex justify-between items-start mb-2">
                 <span :class="[
                   'text-[9px] font-black px-2 py-0.5 rounded-full uppercase',
@@ -178,8 +183,9 @@ const maxVal = Math.max(...chartData)
               <p class="text-[11px] text-indigo-200 line-clamp-1 opacity-80">{{ event.location }}</p>
             </div>
           </div>
-          
-          <button class="w-full mt-6 py-4 bg-white text-indigo-900 rounded-2xl font-black text-sm hover:bg-indigo-50 transition-colors shadow-lg">
+
+          <button
+            class="w-full mt-6 py-4 bg-white text-indigo-900 rounded-2xl font-black text-sm hover:bg-indigo-50 transition-colors shadow-lg">
             Xem Lịch Toàn Gia Tộc
           </button>
         </div>
@@ -196,18 +202,15 @@ const maxVal = Math.max(...chartData)
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div 
-            v-for="plan in servicePlans" 
-            :key="plan.name"
-            :class="[
-              'p-8 rounded-[3rem] border-2 transition-all relative overflow-hidden',
-              plan.isCurrent 
-                ? 'bg-white border-indigo-600 shadow-xl shadow-indigo-100 ring-4 ring-indigo-50' 
-                : 'bg-white border-slate-100 hover:border-slate-200 shadow-sm'
-            ]"
-          >
+          <div v-for="plan in servicePlans" :key="plan.name" :class="[
+            'p-8 rounded-[3rem] border-2 transition-all relative overflow-hidden',
+            plan.isCurrent
+              ? 'bg-white border-indigo-600 shadow-xl shadow-indigo-100 ring-4 ring-indigo-50'
+              : 'bg-white border-slate-100 hover:border-slate-200 shadow-sm'
+          ]">
             <!-- Badge Current -->
-            <div v-if="plan.isCurrent" class="absolute top-6 right-6 flex items-center gap-1 text-[10px] font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full uppercase tracking-widest">
+            <div v-if="plan.isCurrent"
+              class="absolute top-6 right-6 flex items-center gap-1 text-[10px] font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full uppercase tracking-widest">
               <Star :size="12" /> Gói hiện tại
             </div>
 
@@ -217,21 +220,19 @@ const maxVal = Math.max(...chartData)
             </div>
 
             <ul class="space-y-4 mb-10">
-              <li v-for="feature in plan.features" :key="feature" class="flex items-center gap-3 text-sm font-medium text-slate-600">
+              <li v-for="feature in plan.features" :key="feature"
+                class="flex items-center gap-3 text-sm font-medium text-slate-600">
                 <CheckCircle2 :size="18" class="text-indigo-500 shrink-0" />
                 {{ feature }}
               </li>
             </ul>
 
-            <button 
-              :disabled="plan.isCurrent"
-              :class="[
-                'w-full py-4 rounded-2xl font-black text-sm transition-all flex items-center justify-center gap-2',
-                plan.isCurrent 
-                  ? 'bg-slate-100 text-slate-400 cursor-not-allowed' 
-                  : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-100 active:scale-95'
-              ]"
-            >
+            <button :disabled="plan.isCurrent" :class="[
+              'w-full py-4 rounded-2xl font-black text-sm transition-all flex items-center justify-center gap-2',
+              plan.isCurrent
+                ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-100 active:scale-95'
+            ]">
               <Zap v-if="!plan.isCurrent" :size="18" />
               {{ plan.isCurrent ? 'Đang sử dụng' : 'Nâng cấp ngay' }}
             </button>
@@ -239,10 +240,13 @@ const maxVal = Math.max(...chartData)
         </div>
 
         <!-- Lưu trữ info -->
-        <div class="mt-8 bg-slate-900 rounded-[2.5rem] p-8 text-white flex flex-col md:flex-row items-center justify-between gap-8">
+        <div
+          class="mt-8 bg-slate-900 rounded-[2.5rem] p-8 text-white flex flex-col md:flex-row items-center justify-between gap-8">
           <div class="space-y-2">
             <h4 class="text-xl font-bold">Trạng thái lưu trữ dữ liệu</h4>
-            <p class="text-slate-400 text-sm">Gia tộc đã sử dụng {{ familyInfo.currentPlan.storageUsed }} trên tổng số {{ familyInfo.currentPlan.storageLimit }}</p>
+            <p class="text-slate-400 text-sm">Gia tộc đã sử dụng {{ familyInfo.currentPlan.storageUsed }} trên tổng số
+              {{ familyInfo.currentPlan.storageLimit }}
+            </p>
           </div>
           <div class="flex-1 w-full max-w-md space-y-3">
             <div class="h-3 w-full bg-slate-700 rounded-full overflow-hidden">
@@ -254,7 +258,8 @@ const maxVal = Math.max(...chartData)
               <span>100 GB</span>
             </div>
           </div>
-          <button class="px-8 py-4 bg-white text-slate-900 rounded-2xl font-black text-sm hover:bg-slate-100 transition-all flex items-center gap-2">
+          <button
+            class="px-8 py-4 bg-white text-slate-900 rounded-2xl font-black text-sm hover:bg-slate-100 transition-all flex items-center gap-2">
             <ArrowUpCircle :size="18" /> Mua thêm dung lượng
           </button>
         </div>
@@ -280,9 +285,11 @@ const maxVal = Math.max(...chartData)
 ::-webkit-scrollbar {
   width: 6px;
 }
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
   background: #e2e8f0;
   border-radius: 10px;

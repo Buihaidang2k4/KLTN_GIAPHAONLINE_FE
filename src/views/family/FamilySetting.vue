@@ -7,17 +7,9 @@ import {
     Trash2,
     Mail,
     ChevronRight,
-    UserCircle
 } from 'lucide-vue-next'
+import type { FamilyMember } from '@/types/family/family-member'
 
-interface FamilyMember {
-    id: number
-    name: string
-    email: string
-    role: 'Chủ nhà' | 'Thành viên'
-    avatar: string
-    status: 'active' | 'pending'
-}
 
 const familyMembers = ref<FamilyMember[]>([
     {
@@ -50,7 +42,6 @@ const inviteEmail = ref('')
 
 const handleInvite = () => {
     if (inviteEmail.value) {
-        // Logic mời thành viên ở đây
         inviteEmail.value = ''
     }
 }

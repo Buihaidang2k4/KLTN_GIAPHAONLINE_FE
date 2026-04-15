@@ -5,7 +5,7 @@ export default [
         path: "/family",
         component: UserLayout,
         redirect: "/family/tong-quan",
-        meta: { requiresAuth: true, requiresVerified: true },
+        meta: { requiresAuth: true, requiresActiveAccount: true },
         children: [
             {
                 path: "tong-quan",

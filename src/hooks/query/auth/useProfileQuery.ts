@@ -12,12 +12,15 @@ export function useProfileQuery() {
     });
 
     const user = computed(() => query.data.value?.data ?? null);
+    const isLoggedIn = computed(() => !!user.value && !query.isError.value);
+    const isAcctiveAccount = computed(() => user.value?.accountSatus === "ACTIVE");
 
     return {
         user,
         profileResponse: query.data,
         isFetchingUser: query.isLoading,
         isError: query.isError,
-        isLoggedIn: computed(() => !!user.value && !query.isError.value),
+        isLoggedIn,
+        isAcctiveAccount,
     };
 }

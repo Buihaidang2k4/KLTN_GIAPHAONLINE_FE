@@ -4,6 +4,7 @@ export default [
     {
         path: "/system",
         component: SystemLayout,
+        meta: { requiresAuth: true, requiresActiveAccount: true },
         children: [
             {
                 path: "",
