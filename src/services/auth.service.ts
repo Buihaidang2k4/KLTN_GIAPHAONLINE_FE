@@ -1,4 +1,4 @@
-import type { AccountDetailsRes, LoginReq, LoginRes, RegisterByInvitationReq, RegisterReq } from "@/types/auth/auth";
+import type { AccountDetailsRes, LoginReq, LoginRes, RegisterByInvitationReq, RegisterReq, RegisterRes } from "@/types/auth/auth";
 import api from "./api.base";
 import type { ApiResponse } from "@/types/api-response";
 import { apiRefresh } from "./api-refresh.base";
@@ -15,8 +15,8 @@ export const authService = {
         return res.data;
     },
 
-    register: async (data: RegisterReq): Promise<ApiResponse<void>> => {
-        const res = await api.post<ApiResponse<void>>('/auth/register', data);
+    register: async (data: RegisterReq): Promise<ApiResponse<RegisterRes>> => {
+        const res = await api.post<ApiResponse<RegisterRes>>('/auth/register', data);
         return res.data;
     },
 
@@ -41,11 +41,12 @@ export const authService = {
     },
 
     verifyAccount: async (token: string): Promise<ApiResponse<void>> => {
-        const res = await api.patch<ApiResponse<void>>(`/auth/verify-account/${token}`);
+        const res = await api.post<ApiResponse<void>>(`/auth/verify-account/${token}`);
+        return res.data;
+    },
+
+    reSendTokenVerify: async (email: string): Promise<ApiResponse<void>> => {
+        const res = await api.post<ApiResponse<void>>(`/auth/re-send-token-verify/${email}`);
         return res.data;
     }
-
-
-
-
 }

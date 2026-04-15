@@ -15,6 +15,19 @@ export interface RegisterReq {
     password: string;
     confirmPassword: string;
 }
+export interface RegisterRes {
+    accountId: number;
+    email: string;
+    phoneNumber: string;
+    fullName: string;
+    avatarPath: string | null;
+    avatarUrl: string | null;
+    accountStatus: string;
+    lockReason: string | null;
+    lockedAt: string | null;
+    createdAt: string;
+    updatedAt: string;
+}
 
 export interface RegisterByInvitationReq {
     tokenInvitation: string;
@@ -26,26 +39,11 @@ export interface RegisterByInvitationReq {
     invitationToken: string;
 }
 
-export interface AccountDetailsRes {
-    accountId: number;
-    email: string;
-    fullName: string;
-    avatarPath: string | null;
-    avatarUrl: string | null;
-    accountStatus: string;
-    lockReason: string | null;
-    lockedAt: string | null;
-    createdAt: string;
-    updatedAt: string;
-
-    roles: RoleRes[];
-    families: FamilyRes[];
-}
-
 export interface FamilyRes {
     familyId: number;
+    slug: string;
     familyName: string;
-    description?: string;
+    description?: string | null;
 }
 
 export interface RoleRes {

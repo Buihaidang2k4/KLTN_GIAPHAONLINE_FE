@@ -4,80 +4,74 @@ export default [
     {
         path: "/family",
         component: UserLayout,
-        // Cập nhật redirect cho khớp với path mới của dashboard
         redirect: "/family/tong-quan",
+        meta: { requiresAuth: true, requiresVerified: true },
         children: [
             {
-                // dashboard -> tong-quan
                 path: "tong-quan",
                 name: "FamilyDashboard",
                 component: () => import("@/views/family/FamilyDashboard.vue"),
             },
             {
-                // danh-sach-gia-pha -> danh-sach
                 path: "danh-sach",
                 name: "FamilyList",
-                component: () => import("@/views/family/FamilyTreeContainer.vue")
-            }
-            , {
-                // chart -> so-do-cay
+                component: () => import("@/views/family/FamilyTreeContainer.vue"),
+            },
+            {
                 path: "so-do-cay",
                 name: "FamilyChart",
                 component: () => import("@/views/family/FamilyChartViewer.vue"),
             },
             {
-                // export -> xuat-file
                 path: "xuat-file",
                 name: "FamilyExport",
                 component: () => import("@/views/family/FamilyExportPage.vue"),
+                meta: { permissions: ["FAM_EXPORT"] },
             },
             {
-                // events -> su-kien
                 path: "su-kien",
                 name: "FamilyEvents",
                 component: () => import("@/views/family/FamilyEvents.vue"),
+                meta: { permissions: ["EVENT_MANAGE"] },
             },
             {
-                // categories -> danh-muc-bai-viet
                 path: "danh-muc-bai-viet",
                 name: "FamilyPostCategory",
-                component: () => import("@/views/family/FamilyPostCategory.vue")
+                component: () => import("@/views/family/FamilyPostCategory.vue"),
+                meta: { permissions: ["POST_MANAGE"] },
             },
             {
-                // album -> thu-vien-anh
                 path: "thu-vien-anh",
                 name: "FamilyAlbum",
-                component: () => import("@/views/family/FamilyAlbum.vue")
+                component: () => import("@/views/family/FamilyAlbum.vue"),
+                meta: { permissions: ["ALBUM_MANAGE"] },
             },
             {
-                // posts -> bai-viet
                 path: "bai-viet",
                 name: "FamilyPost",
-                component: () => import("@/views/family/FamilyPosts.vue")
-            }
-            , {
-                // settings -> cau-hinh
-                path: "cau-hinh",
-                name: "FamilySetting",
-                component: () => import("@/views/family/FamilySetting.vue")
-            }
-            , {
-                // email -> hop-thu
-                path: "hop-thu",
-                name: "FamilyEmail",
-                component: () => import("@/views/family/FamilyEmail.vue")
-            }
-            , {
-                // achievements -> thanh-tich
-                path: "thanh-tich",
-                name: "FamilyAchievements",
-                component: () => import("@/views/family/FamilyAchievements.vue")
+                component: () => import("@/views/family/FamilyPosts.vue"),
+                meta: { permissions: ["POST_MANAGE"] },
             },
             {
-                // customs -> phong-tuc
+                path: "cau-hinh",
+                name: "FamilySetting",
+                component: () => import("@/views/family/FamilySetting.vue"),
+                meta: { permissions: ["FAM_SETTINGS_EDIT"] },
+            },
+            {
+                path: "hop-thu",
+                name: "FamilyEmail",
+                component: () => import("@/views/family/FamilyEmail.vue"),
+            },
+            {
+                path: "thanh-tich",
+                name: "FamilyAchievements",
+                component: () => import("@/views/family/FamilyAchievements.vue"),
+            },
+            {
                 path: "phong-tuc",
                 name: "FamilyCustoms",
-                component: () => import("@/views/family/FamilyCustoms.vue")
+                component: () => import("@/views/family/FamilyCustoms.vue"),
             }
         ],
     },

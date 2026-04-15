@@ -20,6 +20,7 @@ export function useRegisterMutation() {
 
     return {
         register: mutation.mutate,
+        registerAsync: mutation.mutateAsync,
         isRegistering: mutation.isPending,
     };
 }

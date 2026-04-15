@@ -1,11 +1,13 @@
 import { useRegisterMutation } from "@/hooks/query/auth/useRegisterMutation";
-import { ref } from "vue";
+import { onMounted, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import type { RegisterReq } from "@/types/auth/auth";
 
+const REGISTER_FORM_STORAGE_KEY = "register_form_draft";
+
 export function useRegisterForm() {
     const router = useRouter();
-    const { register, isRegistering } = useRegisterMutation();
+    const { registerAsync, isRegistering } = useRegisterMutation();
 
     const registerForm = ref<RegisterReq>({
         fullName: "",
@@ -35,6 +37,35 @@ export function useRegisterForm() {
             confirmPassword: "",
         };
     };
+
+    onMounted(() => {
+        const savedData = localStorage.getItem(REGISTER_FORM_STORAGE_KEY);
+
+        if (savedData) {
+            const parsed = JSON.parse(savedData);
+
+            registerForm.value.fullName = parsed.fullName || "";
+            registerForm.value.email = parsed.email || "";
+            registerForm.value.phoneNumber = parsed.phoneNumber || "";
+            registerForm.value.familyName = parsed.familyName || "";
+        }
+    });
+
+    watch(
+        registerForm,
+        (newValue) => {
+            localStorage.setItem(
+                REGISTER_FORM_STORAGE_KEY,
+                JSON.stringify({
+                    fullName: newValue.fullName,
+                    email: newValue.email,
+                    phoneNumber: newValue.phoneNumber,
+                    familyName: newValue.familyName,
+                })
+            );
+        },
+        { deep: true }
+    );
 
     const validate = (): boolean => {
         clearErrors();
@@ -66,8 +97,8 @@ export function useRegisterForm() {
         if (!phoneNumber) {
             errors.value.phoneNumber = "Vui lòng nhập số điện thoại";
             isValid = false;
-        } else if (!/^\d{10,13}$/.test(phoneNumber)) {
-            errors.value.phoneNumber = "Số điện thoại không hợp lệ (10-13 chữ số)";
+        }
+        if (!validatePhoneNumber(phoneNumber)) {
             isValid = false;
         }
 
@@ -98,19 +129,50 @@ export function useRegisterForm() {
         return isValid;
     };
 
+    const normalizePhoneNumber = (phone: string): string => {
+        return phone.replace(/[\s.-]/g, "");
+    };
+
+    const validatePhoneNumber = (phone: string): boolean => {
+        const normalizedPhone = normalizePhoneNumber(phone);
+
+        const phoneRegex = /^(0|\+84|84)(3|5|7|8|9)\d{8}$/;
+
+        if (!normalizedPhone) {
+            errors.value.phoneNumber = "Vui lòng nhập số điện thoại";
+            return false;
+        }
+
+        if (!phoneRegex.test(normalizedPhone)) {
+            errors.value.phoneNumber =
+                "Số điện thoại không hợp lệ. Ví dụ: 0912345678 hoặc +84912345678";
+            return false;
+        }
+
+        return true;
+    };
+
     const registerHandler = async () => {
         if (!validate()) return;
 
+        const normalizedPhoneNumber = normalizePhoneNumber(registerForm.value.phoneNumber.trim());
+
         try {
-            await register({
+            const result = await registerAsync({
                 ...registerForm.value,
                 fullName: registerForm.value.fullName.trim(),
                 email: registerForm.value.email.trim(),
-                phoneNumber: registerForm.value.phoneNumber.trim(),
+                phoneNumber: normalizedPhoneNumber,
                 familyName: registerForm.value.familyName.trim(),
             });
 
-            router.push("/login");
+            localStorage.removeItem(REGISTER_FORM_STORAGE_KEY);
+
+            router.push({
+                path: `/verify-account`,
+                query: { email: result.data?.email.trim() }
+            });
+
         } catch (error) {
             console.error("Register failed:", error);
         }

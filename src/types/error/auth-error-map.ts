@@ -12,7 +12,7 @@ export const AUTH_ERROR_MAP: Record<number, string> = {
     1002: "Tài khoản không tồn tại",
     1003: "Mật khẩu không chính xác",
     1005: "Tài khoản chưa được kích hoạt hoặc đang bị khóa",
-    1006: "Liên kết xác thực không hợp lệ",
+    1006: "Mã xác thực không hợp lệ",
     1007: "Liên kết xác thực đã được sử dụng",
     1008: "Liên kết xác thực đã hết hạn",
     1009: "Tài khoản đã được xác thực, vui lòng đăng nhập",

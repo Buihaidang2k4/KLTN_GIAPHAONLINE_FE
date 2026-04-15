@@ -1,22 +1,23 @@
 import { authService } from "@/services/auth.service";
 import { QUERY_KEYS } from "@/hooks/key/query-keys";
 import { useQuery } from "@tanstack/vue-query";
+import { computed } from "vue";
 
 export function useProfileQuery() {
-    const {
-        data,
-        isLoading,
-        isError,
-    } = useQuery({
+    const query = useQuery({
         queryKey: QUERY_KEYS.AUTH.profile(),
         queryFn: () => authService.getMyInfo(),
         retry: false,
         staleTime: 1000 * 60 * 5,
     });
 
+    const user = computed(() => query.data.value?.data ?? null);
+
     return {
-        user: data,
-        isFetchingUser: isLoading,
-        isLoggedIn: !!data && !isError,
+        user,
+        profileResponse: query.data,
+        isFetchingUser: query.isLoading,
+        isError: query.isError,
+        isLoggedIn: computed(() => !!user.value && !query.isError.value),
     };
 }

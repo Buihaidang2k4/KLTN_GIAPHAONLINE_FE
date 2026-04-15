@@ -17,7 +17,8 @@ const { registerForm, registerHandler, errors } = useRegisterForm();
 const showPassword = ref(false);
 const showConfirmPassword = ref(false);
 const agreeTerms = ref(false);
-const maxlengthPhone = 13; 
+const maxlengthPhone = 13;
+
 </script>
 
 <template>
