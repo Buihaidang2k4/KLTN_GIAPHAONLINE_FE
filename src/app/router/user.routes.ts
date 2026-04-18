@@ -72,6 +72,10 @@ export default [
                 path: "phong-tuc",
                 name: "FamilyCustoms",
                 component: () => import("@/views/family/FamilyCustoms.vue"),
+            }, {
+                path: "quan-tri-vien",
+                name: "FamilyManage",
+                component: () => import("@/views/family/FamilyManage.vue")
             }
         ],
     },

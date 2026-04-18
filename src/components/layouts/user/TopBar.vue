@@ -18,9 +18,9 @@ import { notify } from '@/utils/notify';
 const { user: profileData } = useProfileQuery();
 
 const currentUser = computed(() => ({
-  name: profileData.value?.data?.email || "Bùi Hải Đăng",
-  role: profileData.value?.data?.roles?.[0]?.name || "Quản trị viên",
-  avatar: profileData.value?.data?.avatarUrl || "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
+  name: profileData.value?.fullName || "Bùi Hải Đăng",
+  role: profileData.value?.roles?.[0]?.name || "Quản trị viên",
+  avatar: profileData.value?.avatarUrl || "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
 }))
 
 // show profile menu
@@ -67,7 +67,6 @@ const handleLogout = async () => {
   } catch (error) {
     notify.error("Đăng xuất thất bại. Vui lòng thử lại.");
     isConfirmingLogout.value = false;
-
   }
 }
 

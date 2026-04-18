@@ -5,16 +5,18 @@ export interface FamilyMember {
     email: string
     role: 'Chủ nhà' | 'Thành viên'
     avatar: string
-    status: 'active' | 'pending'
+    status: 'ACTIVE' | 'LEFT' | 'REMOVED' | 'BLOCKED'
 }
 
 export interface FamilyMemberRes {
     familyId: number;
     accountId: number;
+    fullName: string;
+    email: string;
     roleName: string;
-    status: 'active' | 'pending';
+    status: 'ACTIVE' | 'LEFT' | 'REMOVED' | 'BLOCKED';
     joinedAt: string;
-    removedAt: string;
+    removedAt: string | null;
     createdAt: string;
     updatedAt: string;
 }

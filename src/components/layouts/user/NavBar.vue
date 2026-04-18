@@ -14,6 +14,7 @@ import {
   Medal,
   Hash
   , Columns3Cog,
+  User,
 } from "lucide-vue-next"
 
 const route = useRoute()
@@ -43,6 +44,7 @@ const menus: MenuItem[] = [
   { name: "Sổ tay phong tục", path: "/family/phong-tuc", icon: Columns3Cog },
   { name: "Album", path: "/family/thu-vien-anh", icon: Image },
   { name: "Email", path: "/family/hop-thu", icon: Mail, badge: 2 },
+  { name: "Quản trị viên", path: "/family/quan-tri-vien",icon: User},
   { name: "Cài đặt", path: "/family/cau-hinh", icon: Settings },
 ]
 

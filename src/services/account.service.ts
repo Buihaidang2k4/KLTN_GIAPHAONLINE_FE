@@ -7,5 +7,5 @@ import { apiRefresh } from "./api-refresh.base";
 
 
 export const accountService = {
-    
+
 }

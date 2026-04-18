@@ -3,9 +3,9 @@ import adminRoutes from "./admin.routes";
 import authRoutes from "./auth.routes";
 import publicRoutes from "./public.routes";
 import userRoutes from "./user.routes";
-import { getCurrentUser } from "@/hooks/logic/auth/auth.storage";
+import { getCurrentUser } from "@/composables/auth/auth.storage";
 import { authService } from "@/services/auth.service";
-import { hasAnyPermission } from "@/hooks/logic/auth/auth.permission.helper";
+import { hasAnyPermission } from "@/composables/auth/auth.permission.helper";
 
 // router
 const routes: RouteRecordRaw[] = [
