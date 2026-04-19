@@ -1,16 +1,18 @@
 <script setup lang="ts">
 import { computed, ref } from "vue"
-import { useRouter } from "vue-router"
 
 import { useFamilyMembers } from "@/composables/family_members/useFamilyMembers"
 import { useProfileQuery } from "@/hooks/query/auth/useProfileQuery"
 import { useFamilyMembersQuery } from "@/hooks/query/family/family_member/useFamilyMember"
+import { useAcceptInvitationMutation, useCancelInvitationMutation, useInviteMemberMutation, useRejectInvitationMutation } from "@/hooks/query/family/family_invitaion/useFamilyInvitaion"
 
-import FamilyMemberList from "@/components/family_setting/FamilyMemberList.vue"
+import FamilyMemberList from "@/components/family_manage/FamilyMemberList.vue"
+import AddFamilyMemberForm from "@/components/forms/common/AddFamilyInvitaionMemberForm.vue"
+import type { CreateFamilyInvitationReq } from "@/types/family/family-invitation"
+import { useRouter } from "vue-router"
 
-const router = useRouter()
 const searchKeyword = ref("")
-
+const router = useRouter();
 const { user } = useProfileQuery()
 
 const familyId = computed(() => {
@@ -44,14 +46,31 @@ const filteredMembers = computed(() => {
     })
 })
 
-function handleAddMember() {
-    router.push("/family/invitations")
-    // hoặc route bạn đang dùng để thêm / mời thành viên
+const isShowFormAddMember = ref(false);
+
+const openForm = () => isShowFormAddMember.value = true;
+const closeFrom = () => isShowFormAddMember.value = false;
+const inviteMember = useInviteMemberMutation();
+
+
+function goToInvitationDetail() {
+    router.push("/family/quan-li-loi-moi");
+}
+
+
+function handleAddMemberSubmit(form: CreateFamilyInvitationReq) {
+    if (!familyId.value) return;
+    console.log("submitt add member", familyId.value, form.invitedEmail, form.message, form.roleName)
+    closeFrom();
+
+    //  api 
+    inviteMember.mutate({
+        familyId: familyId.value,
+        data: form
+    });
 }
 
 function handleSearch() {
-    // hiện tại search local nên không cần gọi API
-    // để sẵn hàm nếu sau này muốn search server-side
 }
 </script>
 
@@ -67,17 +86,26 @@ function handleSearch() {
                             class="w-full min-w-60 px-4 py-2.5 text-sm text-slate-700 outline-none"
                             @keyup.enter="handleSearch" />
                         <button type="button"
-                            class="border-l border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
+                            class="cursor-pointer border-l border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
                             @click="handleSearch">
                             Tìm
                         </button>
                     </div>
 
                     <button type="button"
-                        class="rounded-xl bg-slate-800 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-slate-700"
-                        @click="handleAddMember">
-                        + Thêm thành viên
+                        class="cursor-pointer rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
+                        @click="goToInvitationDetail">
+                        Xem chi tiết lời mời
                     </button>
+
+                    <button type="button"
+                        class="cursor-pointer rounded-xl bg-slate-800 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-slate-700"
+                        @click="openForm">
+                        + Gửi lời mời tới thành viên
+                    </button>
+
+                    <AddFamilyMemberForm v-if="isShowFormAddMember" @close="closeFrom"
+                        @submit="handleAddMemberSubmit" />
                 </div>
             </div>
 

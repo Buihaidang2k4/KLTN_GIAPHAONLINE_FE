@@ -11,8 +11,10 @@ import {
   TrendingUp,
   ShieldCheck,
   Zap,
-  Star
+  Star,
 } from 'lucide-vue-next'
+import { useRouter } from 'vue-router'
+const router = useRouter();
 
 // --- THÔNG TIN GIA PHẢ & QUẢN TRỊ ---
 const familyInfo = ref({
@@ -70,7 +72,7 @@ const servicePlans = ref([
 // Giả lập dữ liệu biểu đồ đóng góp (7 tháng gần nhất)
 const chartData = [40, 65, 55, 85, 70, 95, 110]
 const maxVal = Math.max(...chartData)
-
+const handleViewDetailEvents = () => router.push("/family/su-kien");
 </script>
 
 <template>
@@ -184,7 +186,7 @@ const maxVal = Math.max(...chartData)
             </div>
           </div>
 
-          <button
+          <button @click="() => handleViewDetailEvents()"
             class="w-full mt-6 py-4 bg-white text-indigo-900 rounded-2xl font-black text-sm hover:bg-indigo-50 transition-colors shadow-lg">
             Xem Lịch Toàn Gia Tộc
           </button>

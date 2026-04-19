@@ -1,15 +1,16 @@
 import api from "./api.base";
 import type { ApiResponse } from "@/types/api-response";
 import type { CreateFamilyInvitationReq, InviteInvitationMemberRes } from "@/types/family/family-invitation";
+import type { PageParams, PageResponse } from "@/types/page-response";
 
 export const familyInvitationService = {
-    getMySendInvitations: async (): Promise<ApiResponse<InviteInvitationMemberRes[]>> => {
-        const res = await api.get<ApiResponse<InviteInvitationMemberRes[]>>('/family-invitations/sent');
+    getMySendInvitations: async (params?: PageParams): Promise<ApiResponse<PageResponse<InviteInvitationMemberRes>>> => {
+        const res = await api.get<ApiResponse<PageResponse<InviteInvitationMemberRes>>>('/family-invitations/sent', { params });
         return res.data;
     },
 
-    getMyReceivedInvitations: async (): Promise<ApiResponse<InviteInvitationMemberRes[]>> => {
-        const res = await api.get<ApiResponse<InviteInvitationMemberRes[]>>('/family-invitations/received');
+    getMyReceivedInvitations: async (params?: PageParams): Promise<ApiResponse<PageResponse<InviteInvitationMemberRes>>> => {
+        const res = await api.get<ApiResponse<PageResponse<InviteInvitationMemberRes>>>('/family-invitations/received', { params });
         return res.data;
     },
 

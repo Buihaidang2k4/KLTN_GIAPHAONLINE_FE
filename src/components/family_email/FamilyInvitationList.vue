@@ -82,7 +82,7 @@ const getStatusConfig = (status: string) => {
 </script>
 
 <template>
-    <div class="w-full max-w-4xl mx-auto p-6">
+    <div class="w-full max-w mx-auto">
         <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
 
             <!-- Header & Filter Section -->

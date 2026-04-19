@@ -14,3 +14,10 @@ export interface PageResponse<T> {
 
     items: T[];
 }
+
+
+export interface PageParams {
+    page?: number
+    size?: number
+    sort?: string
+}

@@ -12,9 +12,12 @@ import {
   ChevronRight,
   CalendarDays,
   Medal,
-  Hash
-  , Columns3Cog,
+  Hash,
+  Columns3Cog,
   User,
+  UserPen,
+  FolderKanban,
+  ShieldCheck,
 } from "lucide-vue-next"
 
 const route = useRoute()
@@ -27,31 +30,49 @@ type MenuItem = {
   badge?: string | number
 }
 
-type ActionItem = {
-  name: string
-  path: string
-  icon: any
+type MenuGroup = {
+  title: string
+  items: MenuItem[]
 }
 
-const menus: MenuItem[] = [
-  { name: "Tổng quan", path: "/family/tong-quan", icon: LayoutDashboard },
-  { name: "Danh sách gia phả", path: "/family/danh-sach", icon: TreePine },
-  // { name: "Sơ đồ cây", path: "/family/so-do-cay", icon: TreePine },
-  { name: "Chuyên mục bài viết", path: "/family/danh-muc-bai-viet", icon: Hash },
-  { name: "Bài viết", path: "/family/bai-viet", icon: FileText },
-  { name: "Sự kiện", path: "/family/su-kien", icon: CalendarDays },
-  { name: "Thành tích/ giải thưởng", path: "/family/thanh-tich", icon: Medal },
-  { name: "Sổ tay phong tục", path: "/family/phong-tuc", icon: Columns3Cog },
-  { name: "Album", path: "/family/thu-vien-anh", icon: Image },
-  { name: "Email", path: "/family/hop-thu", icon: Mail, badge: 2 },
-  { name: "Quản trị viên", path: "/family/quan-tri-vien",icon: User},
-  { name: "Cài đặt", path: "/family/cau-hinh", icon: Settings },
+const menuGroups: MenuGroup[] = [
+  {
+    title: "Tổng quan",
+    items: [
+      { name: "Tổng quan", path: "/family/tong-quan", icon: LayoutDashboard },
+    ],
+  },
+  {
+    title: "Nội dung gia đình",
+    items: [
+      { name: "Danh sách gia phả", path: "/family/danh-sach", icon: TreePine },
+      { name: "Chuyên mục bài viết", path: "/family/danh-muc-bai-viet", icon: Hash },
+      { name: "Bài viết", path: "/family/bai-viet", icon: FileText },
+      { name: "Sự kiện", path: "/family/su-kien", icon: CalendarDays },
+      { name: "Thành tích / giải thưởng", path: "/family/thanh-tich", icon: Medal },
+      { name: "Sổ tay phong tục", path: "/family/phong-tuc", icon: Columns3Cog },
+      { name: "Album", path: "/family/thu-vien-anh", icon: Image },
+    ],
+  },
+  {
+    title: "Quản lý",
+    items: [
+      { name: "Quản lí lời mời", path: "/family/quan-li-loi-moi", icon: Mail, badge: 2 },
+      { name: "Quản lí thành viên", path: "/family/quan-li-thanh-vien", icon: ShieldCheck },
+    ],
+  },
+  {
+    title: "Tài khoản",
+    items: [
+      { name: "Tài khoản", path: "/family/tai-khoan", icon: UserPen },
+      { name: "Cài đặt", path: "/family/cau-hinh", icon: Settings },
+    ],
+  },
 ]
 
-const isActive = (path: string) => route.path === path || route.path.startsWith(path + "/")
-
+const isActive = (path: string) =>
+  route.path === path || route.path.startsWith(path + "/")
 </script>
-
 <template>
   <aside :class="open ? 'w-68' : 'w-21'"
     class="relative h-screen sticky top-0 flex flex-col border-r border-slate-200 bg-white transition-all duration-300 ease-out">
@@ -89,61 +110,57 @@ const isActive = (path: string) => route.path === path || route.path.startsWith(
     </div>
 
     <!-- Menu -->
-    <div class="flex-1 overflow-y-auto nav-scroll px-3 py-5">
-      <div class="mb-3">
+    <div class="flex-1 overflow-y-auto nav-scroll px-3 py-5 space-y-5">
+      <div v-for="group in menuGroups" :key="group.title" class="space-y-2">
         <Transition name="nav-fade">
           <p v-if="open" class="px-3 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">
-            Điều hướng
+            {{ group.title }}
           </p>
         </Transition>
-      </div>
 
-      <nav class="space-y-1.5">
-        <RouterLink v-for="m in menus" :key="m.path" :to="m.path" :class="[
-          'group relative flex items-center rounded-2xl transition-all duration-200',
-          open ? 'px-3 py-2.5 gap-3' : 'px-0 py-2.5 justify-center',
-          isActive(m.path)
-            ? 'bg-indigo-50 text-indigo-700 shadow-sm ring-1 ring-indigo-100'
-            : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
-        ]">
-          <!-- Active dot -->
-          <div v-if="isActive(m.path)"
-            class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-r-full bg-indigo-600" />
-
-          <!-- Icon -->
-          <div :class="[
-            'shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition',
+        <nav class="space-y-1.5">
+          <RouterLink v-for="m in group.items" :key="m.path" :to="m.path" :class="[
+            'group relative flex items-center rounded-2xl transition-all duration-200',
+            open ? 'px-3 py-2.5 gap-3' : 'px-0 py-2.5 justify-center',
             isActive(m.path)
-              ? 'bg-white text-indigo-600 shadow-sm border border-indigo-100'
-              : 'bg-slate-100 text-slate-400 group-hover:bg-white group-hover:text-indigo-500 group-hover:border group-hover:border-slate-200'
+              ? 'bg-indigo-50 text-indigo-700 shadow-sm ring-1 ring-indigo-100'
+              : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
           ]">
-            <component :is="m.icon" :size="18" :stroke-width="isActive(m.path) ? 2.4 : 2" />
-          </div>
+            <div v-if="isActive(m.path)"
+              class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-r-full bg-indigo-600" />
 
-          <!-- Label -->
-          <Transition name="nav-fade">
-            <div v-if="open" class="min-w-0 flex-1 flex items-center justify-between gap-2">
-              <span class="truncate text-sm font-semibold tracking-tight">{{ m.name }}</span>
-
-              <span v-if="m.badge"
-                class="min-w-5 h-5 px-1.5 rounded-full bg-slate-200 text-slate-600 text-[10px] font-bold flex items-center justify-center">
-                {{ m.badge }}
-              </span>
+            <div :class="[
+              'shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition',
+              isActive(m.path)
+                ? 'bg-white text-indigo-600 shadow-sm border border-indigo-100'
+                : 'bg-slate-100 text-slate-400 group-hover:bg-white group-hover:text-indigo-500 group-hover:border group-hover:border-slate-200'
+            ]">
+              <component :is="m.icon" :size="18" :stroke-width="isActive(m.path) ? 2.4 : 2" />
             </div>
-          </Transition>
 
-          <!-- Tooltip when collapsed -->
-          <div v-if="!open"
-            class="pointer-events-none absolute left-18 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all whitespace-nowrap rounded-lg bg-slate-900 text-white text-[11px] font-semibold px-3 py-1.5 shadow-lg z-50">
-            {{ m.name }}
-          </div>
-        </RouterLink>
-      </nav>
+            <Transition name="nav-fade">
+              <div v-if="open" class="min-w-0 flex-1 flex items-center justify-between gap-2">
+                <span class="truncate text-sm font-semibold tracking-tight">
+                  {{ m.name }}
+                </span>
+
+                <span v-if="m.badge"
+                  class="min-w-5 h-5 px-1.5 rounded-full bg-slate-200 text-slate-600 text-[10px] font-bold flex items-center justify-center">
+                  {{ m.badge }}
+                </span>
+              </div>
+            </Transition>
+
+            <div v-if="!open"
+              class="pointer-events-none absolute left-18 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all whitespace-nowrap rounded-lg bg-slate-900 text-white text-[11px] font-semibold px-3 py-1.5 shadow-lg z-50">
+              {{ m.name }}
+            </div>
+          </RouterLink>
+        </nav>
+      </div>
     </div>
-
   </aside>
 </template>
-
 <style scoped>
 .nav-fade-enter-active,
 .nav-fade-leave-active {

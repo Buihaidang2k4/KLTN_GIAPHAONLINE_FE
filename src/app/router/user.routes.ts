@@ -59,9 +59,9 @@ export default [
                 meta: { permissions: ["FAM_SETTINGS_EDIT"] },
             },
             {
-                path: "hop-thu",
-                name: "FamilyEmail",
-                component: () => import("@/views/family/FamilyEmail.vue"),
+                path: "quan-li-loi-moi",
+                name: "FamilyManageInvition",
+                component: () => import("@/views/family/FamilyManageInvitation.vue"),
             },
             {
                 path: "thanh-tich",
@@ -73,9 +73,13 @@ export default [
                 name: "FamilyCustoms",
                 component: () => import("@/views/family/FamilyCustoms.vue"),
             }, {
-                path: "quan-tri-vien",
+                path: "quan-li-thanh-vien",
                 name: "FamilyManage",
                 component: () => import("@/views/family/FamilyManage.vue")
+            }, {
+                path: "tai-khoan",
+                name: "FamilyAccount",
+                component: () => import("@/views/family/FamilyAccount.vue")
             }
         ],
     },
