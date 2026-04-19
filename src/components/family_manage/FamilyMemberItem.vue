@@ -18,9 +18,9 @@ const getRoleLabel = (roleName: string) => {
     switch (roleName) {
         case "FAMILY_ADMIN":
             return "Quản trị viên"
-        case "EDITOR":
+        case "FAMILY_EDITOR":
             return "Biên tập viên"
-        case "VIEWER":
+        case "FAMILY_VIEWER":
             return "Người xem"
         default:
             return roleName
@@ -31,9 +31,9 @@ const getRoleClass = (roleName: string) => {
     switch (roleName) {
         case "FAMILY_ADMIN":
             return "bg-amber-100 text-amber-700"
-        case "EDITOR":
+        case "FAMILY_EDITOR":
             return "bg-blue-100 text-blue-700"
-        case "VIEWER":
+        case "FAMILY_VIEWER":
             return "bg-slate-100 text-slate-700"
         default:
             return "bg-slate-100 text-slate-700"
@@ -61,7 +61,7 @@ const getStatusClass = (status: FamilyMemberRes["status"]) => {
         <div class="col-span-12 md:col-span-5 flex items-center gap-3 min-w-0">
             <div class="relative shrink-0">
                 <div
-                    class="w-11 h-11 rounded-full overflow-hidden bg-gradient-to-r from-orange-400 to-amber-500 flex items-center justify-center text-white text-sm font-semibold">
+                    class="w-11 h-11 rounded-full overflow-hidden bg-linear-to-r from-orange-400 to-amber-500 flex items-center justify-center text-white text-sm font-semibold">
                     <span>{{ member.email?.charAt(0).toUpperCase() }}</span>
                 </div>
 

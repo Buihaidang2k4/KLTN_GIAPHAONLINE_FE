@@ -194,9 +194,6 @@ const canCancel = (status: FamilyInvitationStatus) => status === "PENDING"
                             {{ invite.message }}
                         </td>
 
-
-
-
                         <td class="px-5 py-4 text-sm text-slate-500">
                             {{ invite.createdAt }}
                         </td>

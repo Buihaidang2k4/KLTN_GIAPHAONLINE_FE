@@ -1,6 +1,6 @@
 
 import { computed } from "vue";
-import { useProfileQuery } from "@/hooks/query/auth/useProfileQuery";
+import { useProfileQuery } from "@/hooks/queries/auth/useProfileQuery";
 import { hasPermission } from "@/composables/auth/auth.permission.helper";
 
 const { user } = useProfileQuery();

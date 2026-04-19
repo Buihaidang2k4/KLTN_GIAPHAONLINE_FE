@@ -1,5 +1,5 @@
 import { authService } from "@/services/auth.service";
-import { QUERY_KEYS } from "@/hooks/key/query-keys";
+import { QUERY_KEYS } from "@/hooks/keys/query-keys";
 import type { LoginReq } from "@/types/auth/auth";
 import { notify } from "@/utils/notify";
 import { useMutation, useQueryClient } from "@tanstack/vue-query";

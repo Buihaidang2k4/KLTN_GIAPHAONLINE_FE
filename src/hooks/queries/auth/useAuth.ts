@@ -1,10 +1,10 @@
-import { useProfileQuery } from "@/hooks/query/auth/useProfileQuery";
-import { useLoginMutation } from "@/hooks/query/auth/useLoginMutation";
-import { useLogoutMutation } from "@/hooks/query/auth/useLogoutMutation";
-import { useRegisterMutation } from "@/hooks/query/auth/useRegisterMutation";
-import { useRegisterByInvitationMutation } from "@/hooks/query/auth/useRegisterByInvitationMutation";
-import { useRefreshTokenMutation } from "@/hooks/query/auth/useRefreshTokenMutation";
-import { useVerifyAccountMutation } from "@/hooks/query/auth/useVerifyAccountMutation";
+import { useProfileQuery } from "@/hooks/queries/auth/useProfileQuery";
+import { useLoginMutation } from "@/hooks/queries/auth/useLoginMutation";
+import { useLogoutMutation } from "@/hooks/queries/auth/useLogoutMutation";
+import { useRegisterMutation } from "@/hooks/queries/auth/useRegisterMutation";
+import { useRegisterByInvitationMutation } from "@/hooks/queries/auth/useRegisterByInvitationMutation";
+import { useRefreshTokenMutation } from "@/hooks/queries/auth/useRefreshTokenMutation";
+import { useVerifyAccountMutation } from "@/hooks/queries/auth/useVerifyAccountMutation";
 
 export function useAuth() {
     const login = useLoginMutation();

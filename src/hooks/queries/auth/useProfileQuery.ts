@@ -1,4 +1,4 @@
-import { QUERY_KEYS } from "@/hooks/key/query-keys"
+import { QUERY_KEYS } from "@/hooks/keys/query-keys"
 import { authService } from "@/services/auth.service"
 import { useQuery } from "@tanstack/vue-query"
 import { computed } from "vue"

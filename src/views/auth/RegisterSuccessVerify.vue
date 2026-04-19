@@ -8,8 +8,8 @@ import {
     ClipboardCheck
 } from 'lucide-vue-next'
 import logo from '@/assets/images/Logo_GiaPha.png'
-import { useVerifyAccountMutation } from '@/hooks/query/auth/useVerifyAccountMutation'
-import { useReSendTokenVerifyAccountMutation } from '@/hooks/query/auth/useReSendTokenVerifyAccountMutation';
+import { useVerifyAccountMutation } from '@/hooks/queries/auth/useVerifyAccountMutation'
+import { useReSendTokenVerifyAccountMutation } from '@/hooks/queries/auth/useReSendTokenVerifyAccountMutation';
 import { useRoute } from 'vue-router';
 
 

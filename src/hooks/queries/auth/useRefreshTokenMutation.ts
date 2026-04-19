@@ -1,5 +1,5 @@
 import { authService } from "@/services/auth.service";
-import { QUERY_KEYS } from "@/hooks/key/query-keys";
+import { QUERY_KEYS } from "@/hooks/keys/query-keys";
 import { useMutation, useQueryClient } from "@tanstack/vue-query";
 
 export function useRefreshTokenMutation() {

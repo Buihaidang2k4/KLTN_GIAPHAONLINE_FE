@@ -7,7 +7,7 @@ import {
   useInvitationReceivedQuery,
   useInvitationSentQuery,
   useRejectInvitationMutation,
-} from "@/hooks/query/family/family_invitaion/useFamilyInvitaion"
+} from "@/hooks/queries/family/family_invitaion/useFamilyInvitation"
 
 const activeTab = ref<"received" | "sent">("sent")
 

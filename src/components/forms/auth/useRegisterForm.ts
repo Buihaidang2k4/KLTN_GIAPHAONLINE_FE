@@ -1,4 +1,4 @@
-import { useRegisterMutation } from "@/hooks/query/auth/useRegisterMutation";
+import { useRegisterMutation } from "@/hooks/queries/auth/useRegisterMutation";
 import { onMounted, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import type { RegisterReq } from "@/types/auth/auth";

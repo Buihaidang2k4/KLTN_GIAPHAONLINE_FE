@@ -40,5 +40,17 @@ export const QUERY_KEYS = {
 
         members: (id: string | number) =>
             ["families", "members", id] as const,
+    },
+
+    ACCOUNT: {
+        ALL: ["accounts"] as const,
+
+        LIST: (params?: any) =>
+            ["accounts", "list", params] as const,
+
+        DETAIL: (accountId: number) =>
+            ["accounts", "detail", accountId] as const,
+
+        MY_INFO: ["accounts", "my-info"] as const
     }
 } as const

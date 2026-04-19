@@ -5,7 +5,7 @@ import { Toaster } from "vue-sonner";
 import router from './app/router';
 import { VueQueryPlugin } from '@tanstack/vue-query';
 import 'vue-sonner/style.css'
-import { queryClient } from './hooks/query/queryClient';
+import { queryClient } from './hooks/queries/queryClient';
 
 
 const app = createApp(App)

@@ -8,7 +8,7 @@ import type {
 } from "@/types/family/family-invitation"
 import type { ApiResponse } from "@/types/api-response"
 import { notify } from "@/utils/notify"
-import { QUERY_KEYS } from "@/hooks/key/query-keys"
+import { QUERY_KEYS } from "@/hooks/keys/query-keys"
 
 function normalizeParams(params?: MaybeRef<PageParams>) {
     const p = unref(params)

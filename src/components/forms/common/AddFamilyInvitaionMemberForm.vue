@@ -104,7 +104,7 @@ function handleClose() {
 </script>
 
 <template>
-    <div class="fixed inset-0 flex items-center justify-center bg-black/40">
+    <div class="fixed inset-0 flex items-center justify-center bg-black/40 z-99">
         <div class="w-105 bg-white p-5 rounded-lg">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-base font-medium">Mời thành viên</h2>

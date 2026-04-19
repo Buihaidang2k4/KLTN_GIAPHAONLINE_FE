@@ -1,4 +1,4 @@
-import { useLoginMutation } from "@/hooks/query/auth/useLoginMutation";
+import { useLoginMutation } from "@/hooks/queries/auth/useLoginMutation";
 import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
 

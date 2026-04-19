@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/vue-query'
 import { computed, type MaybeRefOrGetter, toValue } from 'vue'
 import { familyMemberService } from '@/services/family_member.service'
-import { QUERY_KEYS } from '@/hooks/key/query-keys'
+import { QUERY_KEYS } from '@/hooks/keys/query-keys'
 
 export function useFamilyMembersQuery(familyId: MaybeRefOrGetter<number | null>) {
     const resolvedFamilyId = computed(() => toValue(familyId))

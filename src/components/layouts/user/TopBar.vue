@@ -10,8 +10,8 @@ import {
   Home,
 } from 'lucide-vue-next'
 import Topbar_Notification from '@/components/family_tree/topbar/Topbar_Notification.vue'
-import { useProfileQuery } from '@/hooks/query/auth/useProfileQuery'
-import { useLogoutMutation } from '@/hooks/query/auth/useLogoutMutation';
+import { useProfileQuery } from '@/hooks/queries/auth/useProfileQuery'
+import { useLogoutMutation } from '@/hooks/queries/auth/useLogoutMutation';
 import ConfirmForm from '@/components/forms/common/ConfirmForm.vue';
 import { notify } from '@/utils/notify';
 

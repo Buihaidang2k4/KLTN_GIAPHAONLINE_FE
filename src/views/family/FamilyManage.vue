@@ -2,9 +2,9 @@
 import { computed, ref } from "vue"
 
 import { useFamilyMembers } from "@/composables/family_members/useFamilyMembers"
-import { useProfileQuery } from "@/hooks/query/auth/useProfileQuery"
-import { useFamilyMembersQuery } from "@/hooks/query/family/family_member/useFamilyMember"
-import { useAcceptInvitationMutation, useCancelInvitationMutation, useInviteMemberMutation, useRejectInvitationMutation } from "@/hooks/query/family/family_invitaion/useFamilyInvitaion"
+import { useProfileQuery } from "@/hooks/queries/auth/useProfileQuery"
+import { useFamilyMembersQuery } from "@/hooks/queries/family/family_member/useFamilyMember"
+import { useAcceptInvitationMutation, useCancelInvitationMutation, useInviteMemberMutation, useRejectInvitationMutation } from "@/hooks/queries/family/family_invitaion/useFamilyInvitation"
 
 import FamilyMemberList from "@/components/family_manage/FamilyMemberList.vue"
 import AddFamilyMemberForm from "@/components/forms/common/AddFamilyInvitaionMemberForm.vue"
