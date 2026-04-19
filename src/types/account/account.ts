@@ -17,6 +17,8 @@ export interface AccountDetailsRes {
     families: FamilyRes[];
 }
 
+export type AccountStatus = "ACTIVE" | "LOCKED" | "DELETED" | "PENDING"
+
 export interface AccountRes {
     accountId: number;
     email: string;
@@ -24,12 +26,12 @@ export interface AccountRes {
     fullName: string;
     avatarPath: string | null;
     avatarUrl: string | null;
-    accountStatus: string;
+    accountStatus: AccountStatus;
     lockReason: string | null;
     lockedAt: string | null;
     createdAt: string;
     updatedAt: string;
-    roles: string[];
+    roles: RoleRes[];
 }
 
 export interface CreateAccountReq {
@@ -51,4 +53,9 @@ export interface ChangePasswordAccountReq {
 export interface ChangeStatusLockReq {
     accountStatus: string;
     lockReason: string | null;
+}
+
+export interface UpdateAccountReq {
+    fullName: string
+    phoneNumber: string
 }

@@ -14,13 +14,15 @@ import { useProfileQuery } from '@/hooks/queries/auth/useProfileQuery'
 import { useLogoutMutation } from '@/hooks/queries/auth/useLogoutMutation';
 import ConfirmForm from '@/components/forms/common/ConfirmForm.vue';
 import { notify } from '@/utils/notify';
+import { useAccount } from '@/composables/accounts/useAccount';
 
 const { user: profileData } = useProfileQuery();
-
+const accountId = computed(() => profileData?.value?.accountId ?? null)
+const { account } = useAccount(accountId);
 const currentUser = computed(() => ({
-  name: profileData.value?.fullName || "Bùi Hải Đăng",
-  role: profileData.value?.roles?.[0]?.name || "Quản trị viên",
-  avatar: profileData.value?.avatarUrl || "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
+  name: account.value?.fullName || "User",
+  role: account.value?.roles[0] || "Quản trị viên",
+  avatar: account.value?.avatarUrl || "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
 }))
 
 // show profile menu

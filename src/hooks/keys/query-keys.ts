@@ -48,9 +48,10 @@ export const QUERY_KEYS = {
         LIST: (params?: any) =>
             ["accounts", "list", params] as const,
 
-        DETAIL: (accountId: number) =>
+        DETAIL: (accountId: string | number) =>
             ["accounts", "detail", accountId] as const,
 
+        DETAILTEMP: ["accounts", "detail"] as const,
         MY_INFO: ["accounts", "my-info"] as const
     }
 } as const

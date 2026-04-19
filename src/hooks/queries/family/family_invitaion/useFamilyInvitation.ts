@@ -74,18 +74,6 @@ export function useAcceptInvitationMutation() {
         mutationFn: (token: string) => familyInvitationService.acceptInvitation(token),
 
         onSuccess: (_, token) => {
-            // queryClient.invalidateQueries({
-            //     queryKey: QUERY_KEYS.INVITATION.sentList()
-            // })
-            // queryClient.invalidateQueries({
-            //     queryKey: QUERY_KEYS.INVITATION.receivedList(),
-            //     refetchType: "active"
-            // })
-
-            // queryClient.invalidateQueries({
-            //     queryKey: QUERY_KEYS.FAMILY.list()
-            // })
-
             queryClient.setQueryData(
                 QUERY_KEYS.INVITATION.receivedList(),
 

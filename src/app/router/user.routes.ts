@@ -79,7 +79,7 @@ export default [
             }, {
                 path: "tai-khoan",
                 name: "FamilyAccount",
-                component: () => import("@/views/family/FamilyAccount.vue")
+                component: () => import("@/views/family/FamilyAccounts.vue")
             }
         ],
     },

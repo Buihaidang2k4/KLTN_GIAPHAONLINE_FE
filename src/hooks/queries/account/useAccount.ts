@@ -3,6 +3,9 @@ import { accountService } from "@/services/account.service"
 import { QUERY_KEYS } from "@/hooks/keys/query-keys"
 
 import type { PageParams } from "@/types/page-response"
+import { computed, toValue, type MaybeRefOrGetter } from "vue"
+import { notify } from "@/utils/notify"
+import type { ChangePasswordAccountReq, UpdateAccountReq } from "@/types/account/account"
 
 export function useAccountsQuery(params?: PageParams) {
     return useQuery({
@@ -12,11 +15,13 @@ export function useAccountsQuery(params?: PageParams) {
     })
 }
 
-export function useAccountQuery(accountId: number) {
+export function useAccountQuery(accountId: MaybeRefOrGetter<number | null>) {
+    const resolvedAccountId = computed(() => toValue(accountId));
+
     return useQuery({
-        queryKey: QUERY_KEYS.ACCOUNT.DETAIL(accountId),
-        queryFn: () => accountService.getAccountById(accountId),
-        enabled: !!accountId
+        queryKey: QUERY_KEYS.ACCOUNT.DETAIL(resolvedAccountId.value ?? 'unknown'),
+        queryFn: () => accountService.getAccountById(resolvedAccountId.value!),
+        enabled: computed(() => !!resolvedAccountId.value)
     })
 }
 
@@ -42,6 +47,26 @@ export function useCreateAccountMutation() {
     })
 }
 
+export function useUpdateAccountMutation() {
+
+    return useMutation({
+        mutationFn: ({ accountId, data }: {
+            accountId: number
+            data: UpdateAccountReq
+        }) => accountService.updateAccount(accountId, data),
+
+        onSuccess: () => {
+            notify.success("Thông báo", "Cập nhật thông tin thành công")
+        },
+
+        onError: () => {
+            notify.error("Thông báo", "Cập nhật thông tin thất bại!")
+        }
+    })
+}
+
+
+
 export function useChangePasswordMutation() {
     return useMutation({
         mutationFn: ({
@@ -49,8 +74,16 @@ export function useChangePasswordMutation() {
             data
         }: {
             accountId: number
-            data: any
-        }) => accountService.changePassword(accountId, data)
+            data: ChangePasswordAccountReq
+        }) => accountService.changePassword(accountId, data),
+
+        onSuccess: () => {
+            notify.success("Thông báo", "Đổi mật khẩu thành công")
+        },
+
+        onError: () => {
+            notify.error("Thông báo", "Mật khẩu hiện tại không đúng!")
+        }
     })
 }
 
@@ -88,8 +121,10 @@ export function useChangeAvatarMutation() {
 
         onSuccess: () => {
             queryClient.invalidateQueries({
-                queryKey: QUERY_KEYS.ACCOUNT.MY_INFO
+                queryKey: QUERY_KEYS.ACCOUNT.DETAILTEMP
             })
+
+            notify.success("Cập nhật thông tin", "Thay đổi ảnh đại điện thành công")
         }
     })
 }
