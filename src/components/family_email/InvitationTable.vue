@@ -139,6 +139,9 @@ const canCancel = (status: FamilyInvitationStatus) => status === "PENDING"
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-slate-50 border-b border-slate-100">
+                        <th
+                            class="px-5 py-3 text-xs font-semibold text-slate-500 uppercase whitespace-nowrap text-right">
+                            Hành động</th>
                         <th class="px-5 py-3 text-xs font-semibold text-slate-500 uppercase whitespace-nowrap">Email
                         </th>
                         <th class="px-5 py-3 text-xs font-semibold text-slate-500 uppercase whitespace-nowrap ">Gia đình
@@ -153,15 +156,41 @@ const canCancel = (status: FamilyInvitationStatus) => status === "PENDING"
                         </th>
                         <th class="px-5 py-3 text-xs font-semibold text-slate-500 uppercase whitespace-nowrap">Hết hạn
                         </th>
-                        <th
-                            class="px-5 py-3 text-xs font-semibold text-slate-500 uppercase whitespace-nowrap text-right">
-                            Hành động</th>
+
                     </tr>
                 </thead>
 
                 <tbody class="divide-y divide-slate-100">
                     <tr v-for="invite in filteredItems" :key="invite.familyInvitationId"
                         class="hover:bg-slate-50 transition-colors">
+
+                        <td class="px-5 py-4 text-right">
+                            <div class="flex items-center justify-end gap-2">
+                                <template v-if="mode === 'received' && canAcceptOrDecline(invite.invitationStatus)">
+                                    <button
+                                        class="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-medium hover:bg-emerald-100 cursor-pointer"
+                                        @click="emit('accept', invite.inviteToken)">
+                                        Chấp nhận
+                                    </button>
+                                    <button
+                                        class="px-3 py-1.5 rounded-lg bg-rose-50 text-rose-700 text-xs font-medium hover:bg-rose-100 cursor-pointer"
+                                        @click="emit('reject', invite.inviteToken)">
+                                        Từ chối
+                                    </button>
+                                </template>
+
+                                <template v-else-if="mode === 'sent' && canCancel(invite.invitationStatus)">
+                                    <button
+                                        class="px-3 py-1.5 rounded-lg bg-red-100 text-red-700 text-xs font-medium hover:bg-red-100 cursor-pointer"
+                                        @click="emit('cancel', invite.familyInvitationId)">
+                                        Hủy lời mời
+                                    </button>
+                                </template>
+
+                                <span v-else class="text-xs text-slate-400">--</span>
+                            </div>
+                        </td>
+
                         <td class="px-5 py-4">
                             <div class="flex items-center gap-3">
                                 <div
@@ -202,32 +231,6 @@ const canCancel = (status: FamilyInvitationStatus) => status === "PENDING"
                             {{ invite.expiredAt }}
                         </td>
 
-                        <td class="px-5 py-4 text-right">
-                            <div class="flex items-center justify-end gap-2">
-                                <template v-if="mode === 'received' && canAcceptOrDecline(invite.invitationStatus)">
-                                    <button
-                                        class="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-medium hover:bg-emerald-100 cursor-pointer"
-                                        @click="emit('accept', invite.inviteToken)">
-                                        Chấp nhận
-                                    </button>
-                                    <button
-                                        class="px-3 py-1.5 rounded-lg bg-rose-50 text-rose-700 text-xs font-medium hover:bg-rose-100 cursor-pointer"
-                                        @click="emit('reject', invite.inviteToken)">
-                                        Từ chối
-                                    </button>
-                                </template>
-
-                                <template v-else-if="mode === 'sent' && canCancel(invite.invitationStatus)">
-                                    <button
-                                        class="px-3 py-1.5 rounded-lg bg-red-100 text-red-700 text-xs font-medium hover:bg-red-100 cursor-pointer"
-                                        @click="emit('cancel', invite.familyInvitationId)">
-                                        Hủy lời mời
-                                    </button>
-                                </template>
-
-                                <span v-else class="text-xs text-slate-400">--</span>
-                            </div>
-                        </td>
                     </tr>
 
                     <tr v-if="filteredItems.length === 0">
@@ -237,6 +240,8 @@ const canCancel = (status: FamilyInvitationStatus) => status === "PENDING"
                     </tr>
                 </tbody>
             </table>
+
+            
         </div>
     </div>
 </template>

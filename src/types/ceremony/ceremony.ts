@@ -4,9 +4,11 @@ export interface CeremonyRes {
     ceremonyType: string;
     ceremonyName: string;
     description: string;
+    timelines: CeremonyTimelineRes[]
     createdAt: string;
-    updatedAt: string;
+    updatedAt: string | null;
 }
+
 
 export interface CeremonyReq {
     familyId: number;
@@ -41,8 +43,9 @@ export interface CeremonyTimelineRes {
     stepName: string;
     stepDescription: string;
     stepGuideline: string;
-    createdAt: string;
-    updatedAt: string;
+    timelinePreparations: CeremonyTimelinePreparationRes[]
+    createdAt: string | null ;
+    updatedAt: string | null;
 }
 
 export interface CeremonyTimelinePreparationReq {

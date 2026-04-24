@@ -57,7 +57,6 @@ function goToInvitationDetail() {
     router.push("/family/quan-li-loi-moi");
 }
 
-
 function handleAddMemberSubmit(form: CreateFamilyInvitationReq) {
     if (!familyId.value) return;
     console.log("submitt add member", familyId.value, form.invitedEmail, form.message, form.roleName)

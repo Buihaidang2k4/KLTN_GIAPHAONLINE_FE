@@ -1,14 +1,13 @@
 @import "tailwindcss";
 
-
 /* Màu thẻ Nam - Chỉ nhắm vào khung chính */
-.NAM>rect {
+.NAM > rect {
   fill: #f0f9ff !important;
   stroke: #0ea5e9 !important;
 }
 
 /* Màu thẻ Nữ - Chỉ nhắm vào khung chính */
-.NU>rect {
+.NU > rect {
   fill: #fff1f2 !important;
   stroke: #f43f5e !important;
 }
@@ -24,5 +23,7 @@
 }
 
 .font-cursive {
-  font-family: 'Dancing Script', cursive;
+  font-family: "Dancing Script", "Brush Script MT", cursive;
+  font-weight: 600;
+  letter-spacing: 0.5px;
 }

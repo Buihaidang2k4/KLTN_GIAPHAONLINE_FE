@@ -72,14 +72,26 @@ export default [
                 path: "phong-tuc",
                 name: "FamilyCustoms",
                 component: () => import("@/views/family/FamilyCustoms.vue"),
-            }, {
+            },
+            {
                 path: "quan-li-thanh-vien",
                 name: "FamilyManage",
-                component: () => import("@/views/family/FamilyManage.vue")
-            }, {
+                component: () => import("@/views/family/FamilyManageMembers.vue")
+            },
+            {
                 path: "tai-khoan",
                 name: "FamilyAccount",
                 component: () => import("@/views/family/FamilyAccounts.vue")
+            },
+            {
+                path: "lich-su-hoat-dong",
+                name: "FamilyAuditHistory",
+                component: () => import("@/views/family/FamilyAuditHistory.vue")
+            },
+            {
+                path: "dich-vu",
+                name: "FamilyService",
+                component: () => import("@/views/family/FamilyService.vue")
             }
         ],
     },

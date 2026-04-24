@@ -18,6 +18,7 @@ import {
   UserPen,
   FolderKanban,
   ShieldCheck,
+  History,
 } from "lucide-vue-next"
 
 const route = useRoute()
@@ -49,9 +50,9 @@ const menuGroups: MenuGroup[] = [
       { name: "Chuyên mục bài viết", path: "/family/danh-muc-bai-viet", icon: Hash },
       { name: "Bài viết", path: "/family/bai-viet", icon: FileText },
       { name: "Sự kiện", path: "/family/su-kien", icon: CalendarDays },
+      { name: "Album", path: "/family/thu-vien-anh", icon: Image },
       { name: "Thành tích / giải thưởng", path: "/family/thanh-tich", icon: Medal },
       { name: "Sổ tay phong tục", path: "/family/phong-tuc", icon: Columns3Cog },
-      { name: "Album", path: "/family/thu-vien-anh", icon: Image },
     ],
   },
   {
@@ -59,12 +60,15 @@ const menuGroups: MenuGroup[] = [
     items: [
       { name: "Quản lí lời mời", path: "/family/quan-li-loi-moi", icon: Mail, badge: 2 },
       { name: "Quản lí thành viên", path: "/family/quan-li-thanh-vien", icon: ShieldCheck },
+      { name: "Quản lí gói dịch vụ", path: "/family/dich-vu", icon: ShieldCheck },
+
     ],
   },
   {
     title: "Tài khoản",
     items: [
       { name: "Tài khoản", path: "/family/tai-khoan", icon: UserPen },
+      { name: "Lịch sử hoạt động", path: "/family/lich-su-hoat-dong", icon: History },
       { name: "Cài đặt", path: "/family/cau-hinh", icon: Settings },
     ],
   },

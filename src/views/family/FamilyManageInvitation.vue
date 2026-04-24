@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from "vue"
+import { computed, reactive, ref, toRef } from "vue"
 import InvitationTable from "@/components/family_email/InvitationTable.vue"
 import {
   useAcceptInvitationMutation,
@@ -8,12 +8,23 @@ import {
   useInvitationSentQuery,
   useRejectInvitationMutation,
 } from "@/hooks/queries/family/family_invitaion/useFamilyInvitation"
+import AppPagination from "@/components/forms/common/AppPagination.vue"
 
 const activeTab = ref<"received" | "sent">("sent")
 
-const receivedQuery = useInvitationReceivedQuery()
-const sentQuery = useInvitationSentQuery()
+const pagination = reactive({
+  sent: { page: 0, size: 5 },
+  received: { page: 0, size: 5 }
+})
 
+const params = computed(() => ({
+  page: pagination[activeTab.value].page,
+  size: pagination[activeTab.value].size
+}))
+
+
+const receivedQuery = useInvitationReceivedQuery(toRef(params))
+const sentQuery = useInvitationSentQuery(toRef(params))
 
 const acceptInvitation = useAcceptInvitationMutation();
 const rejectInvitation = useRejectInvitationMutation();
@@ -31,6 +42,20 @@ const handleAccept = (token: string) => acceptInvitation.mutate(token)
 const handleReject = (token: string) => rejectInvitation.mutate(token)
 
 const handleCancel = (id: number) => cancelInvitation.mutate(id)
+
+//  panagtion
+const currentTotalPages = computed(() => {
+  return activeTab.value === 'sent'
+    ? (sentQuery.data.value?.data?.totalPages ?? 0)
+    : (receivedQuery.data.value?.data?.totalPages ?? 0)
+})
+
+const currentPage = computed(() => pagination[activeTab.value].page)
+const hasNextPage = computed(() => currentPage.value + 1 < currentTotalPages.value)
+const hasPrevPage = computed(() => currentPage.value > 0)
+
+const nextPage = () => { if (hasNextPage.value) pagination[activeTab.value].page++ }
+const prevPage = () => { if (hasPrevPage.value) pagination[activeTab.value].page-- }
 </script>
 
 <template>
@@ -74,6 +99,9 @@ const handleCancel = (id: number) => cancelInvitation.mutate(id)
         <InvitationTable v-else title="Lời mời đã gửi" description="Danh sách các lời mời bạn đã gửi."
           :items="sentItems" :loading="sentQuery.isLoading.value" mode="sent" @cancel="handleCancel" />
       </div>
+      <!-- panagtion -->
+      <AppPagination :page="currentPage" :total-pages="currentTotalPages" :has-next="hasNextPage"
+        :has-prev="hasPrevPage" @next="nextPage" @prev="prevPage" />
     </div>
   </div>
 </template>

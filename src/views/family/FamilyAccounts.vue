@@ -3,7 +3,6 @@ import { computed, reactive, ref, watch } from "vue"
 import { AlarmClockCheck, Camera, KeyRound, Mail, Save, Shield, User } from "lucide-vue-next"
 import { useChangeAvatarMutation, useChangePasswordMutation, useMyInfoQuery, useUpdateAccountMutation } from "@/hooks/queries/account/useAccount"
 import { useAccount } from "@/composables/accounts/useAccount"
-import type { UpdateAccountReq } from "@/types/account/account"
 
 type PasswordErrors = {
     oldPassword?: string
@@ -23,8 +22,9 @@ const passwordForm = reactive<PasswordForm>({
     confirmPassword: "",
 })
 
-const profileForm = reactive<UpdateAccountReq>({
+const profileForm = reactive({
     fullName: "",
+    email: "",
     phoneNumber: "",
 })
 
@@ -42,6 +42,7 @@ watch(account, (val) => {
 
     profileForm.fullName = val.fullName ?? ""
     profileForm.phoneNumber = val.phoneNumber ?? ""
+    profileForm.email = val.email ?? ""
 }, { immediate: true })
 
 const selectedAvatar = ref<File | null>(null)
@@ -75,7 +76,6 @@ function handleUpdateProfile() {
         alert("Số điện thoại không hợp lệ")
         return
     }
-
 
     updateAccountMutation.mutate({
         accountId: accountId.value as number,
