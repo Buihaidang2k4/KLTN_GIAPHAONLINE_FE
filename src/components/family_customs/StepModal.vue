@@ -67,7 +67,7 @@ const handleSave = () => {
             <div
                 class="bg-white rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] border border-slate-200">
                 <div class="p-5 border-b border-slate-200 flex justify-between items-center bg-slate-50/50 shrink-0">
-                    <h3 class="text-lg font-bold font-serif text-slate-900">
+                    <h3 class="text-lg font-bold text-slate-900">
                         {{ editingStep ? 'Sửa bước hướng dẫn' : 'Thêm bước mới' }}
                     </h3>
                     <button @click="$emit('close')" class="p-1.5 hover:bg-white rounded-md transition-colors mr-1">

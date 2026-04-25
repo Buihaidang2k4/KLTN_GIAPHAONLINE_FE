@@ -31,7 +31,7 @@ const getTypeStyle = (type: string) => {
         </div>
 
         <h3
-            class="text-2xl font-semibold font-cursive text-slate-900 mb-3 group-hover:text-slate-700 transition-colors leading-tight">
+            class="text-2xl font-semibold text-slate-900 mb-3 group-hover:text-slate-700 transition-colors leading-tight">
             {{ ceremony.ceremonyName }}
         </h3>
 
