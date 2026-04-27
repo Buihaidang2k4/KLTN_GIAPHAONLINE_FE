@@ -10,7 +10,6 @@ import StepModal from '@/components/family_customs/StepModal.vue';
 import CeremonyCard from '@/components/family_customs/CeremonyCard.vue';
 import TimelineStep from '@/components/family_customs/TimelineStep.vue';
 
-// --- MOCK DATA ---```ts
 const INITIAL_CEREMONIES: CeremonyRes[] = [
     {
         ceremonyId: 1,

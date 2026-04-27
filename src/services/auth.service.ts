@@ -1,9 +1,10 @@
-import type { LoginReq, LoginRes, RegisterByInvitationReq, RegisterReq, RegisterRes } from "@/types/auth/auth";
+import type { LoginReq, LoginRes, RegisterByInvitationReq, RegisterReq, RegisterRes, ResetPasswordReq } from "@/types/auth/auth";
 import type { AccountDetailsRes } from "@/types/account/account";
 import api from "./api.base";
 
 import type { ApiResponse } from "@/types/api-response";
 import { apiRefresh } from "./api-refresh.base";
+import type { MaybeRefOrGetter } from "vue";
 
 
 export const authService = {
@@ -50,5 +51,26 @@ export const authService = {
     reSendTokenVerify: async (email: string): Promise<ApiResponse<void>> => {
         const res = await api.post<ApiResponse<void>>(`/auth/re-send-token-verify/${email}`);
         return res.data;
-    }
+    },
+
+    forgotPasswordSendOTP: async (email: string): Promise<ApiResponse<void>> => {
+        const res = await api.post<ApiResponse<void>>(`/auth/forgot-password-send-otp/${email}`)
+        return res.data;
+    },
+
+    resendOTPForgotPassword: async (email: string): Promise<ApiResponse<void>> => {
+        const res = await api.post<ApiResponse<void>>(`/auth/forgot-password-resend-otp/${email}`)
+        return res.data;
+    },
+
+    verifyForgotPasswordOtp: async (otp: MaybeRefOrGetter<string>): Promise<ApiResponse<void>> => {
+        const res = await api.post<ApiResponse<void>>(`/auth/verify-forgot-password-otp/${otp}`)
+        return res.data;
+    },
+
+    resetPassword: async (data: ResetPasswordReq): Promise<ApiResponse<void>> => {
+        const res = await api.post<ApiResponse<void>>(`/auth/reset-password`, data)
+        return res.data;
+    },
+
 }

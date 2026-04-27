@@ -58,3 +58,10 @@ export interface PermissionRes {
     scopeType: string;
     description: string;
 }
+
+
+export interface ResetPasswordReq {
+    otp: string;
+    newPassword: string;
+    confirmPassword: string;
+}
