@@ -14,6 +14,7 @@ export type FamilyInvitationStatus =
 export interface InviteInvitationMemberRes {
     familyInvitationId: number
     familyName: string
+    roleName: string
     invitedEmail: string
     invitedByAccountId: number
     message: string

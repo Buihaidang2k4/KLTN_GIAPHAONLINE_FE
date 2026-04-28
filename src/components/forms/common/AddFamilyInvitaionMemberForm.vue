@@ -16,7 +16,7 @@ const emit = defineEmits<{
 
 const form = reactive<InvitePayload>({
     invitedEmail: "",
-    roleName: "FAMILY_VIEWER",
+    roleName: "",
     message: ""
 })
 
@@ -52,7 +52,7 @@ const validators: Record<FormField, () => boolean> = {
 
     roleName: () => {
         if (!form.roleName.trim()) {
-            errors.roleName = "Vai trò không được để trống"
+            errors.roleName = "Vui lòng chọn quyền"
             return false
         }
 
@@ -128,9 +128,10 @@ function handleClose() {
                     <select v-model="form.roleName" class="w-full border px-2 py-1 text-sm"
                         :class="touched.roleName && errors.roleName ? 'border-red-400' : 'border-gray-300'"
                         @change="handleInput('roleName')" @blur="handleBlur('roleName')">
-                        <option value="FAMILY_VIEWER">Viewer</option>
-                        <option value="FAMILY_ADMIN">Admin</option>
-                        <option value="FAMILY_EDITOR">Editor</option>
+                        <option disabled value="">Chọn quyền</option>
+                        <option value="FAMILY_VIEWER">Người xem</option>
+                        <option value="FAMILY_EDITOR">Biên tập viên</option>
+                        <option value="FAMILY_ADMIN">Quản trị viên</option>
                     </select>
                     <p v-if="touched.roleName && errors.roleName" class="text-sm text-red-500">
                         {{ errors.roleName }}

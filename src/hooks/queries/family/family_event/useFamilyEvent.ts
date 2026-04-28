@@ -62,7 +62,7 @@ export function useFamilyEventsByFamilyQuery(
     })
 }
 
-export function useFamilyEventQuery(eventId: MaybeRefOrGetter<number | null>) {
+export function useFamilyEventByIdQuery(eventId: MaybeRefOrGetter<number | null>) {
     const resolvedEventId = computed(() => toValue(eventId))
 
     return useQuery({

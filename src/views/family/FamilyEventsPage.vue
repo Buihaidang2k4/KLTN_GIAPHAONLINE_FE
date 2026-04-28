@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, type MaybeRefOrGetter, toValue, reactive } from 'vue'
 import {
   Calendar as CalendarIcon,
   Plus,
@@ -13,243 +13,405 @@ import {
   Info
 } from 'lucide-vue-next'
 
-interface FamilyEvent {
-  id: number;
-  title: string;
-  date: string;
-  time: string;
-  location: string;
-  type: 'anniversary' | 'meeting' | 'holiday' | 'other';
-  description: string;
-  status: 'upcoming' | 'completed' | 'ongoing';
-}
+import type { FamilyEventRes } from '@/types/family/family-event'
+import { formatDate } from '@/utils/format-date'
+import {
+  useCreateFamilyEventMutation,
+  useDeleteFamilyEventMutation,
+  useFamilyEventsByFamilyQuery,
+  useUpdateFamilyEventMutation
+} from '@/hooks/queries/family/family_event/useFamilyEvent'
+import { useProfileQuery } from '@/hooks/queries/auth/useProfileQuery'
+import { PageResponse } from '@/types/page-response'
+import AppPagination from '@/components/forms/common/AppPagination.vue'
 
 const activeTab = ref<'all' | 'recent'>('all')
 const searchQuery = ref('')
 
-const events = ref<FamilyEvent[]>([
-  {
-    id: 1,
-    title: "Lễ giỗ Tổ họ Phan",
-    date: "2024-05-15",
-    time: "08:00",
-    location: "Nhà thờ họ, Quảng Nam",
-    type: "anniversary",
-    description: "Con cháu tập trung đông đủ để làm lễ dâng hương và họp mặt.",
-    status: "upcoming"
-  },
-  {
-    id: 2,
-    title: "Họp mặt con cháu đầu xuân",
-    date: "2024-02-12",
-    time: "10:00",
-    location: "Nhà bác trưởng",
-    type: "meeting",
-    description: "Chúc tết và mừng thọ các cụ cao niên trong dòng họ.",
-    status: "completed"
-  },
-  {
-    id: 3,
-    title: "Đại hội Gia phả 2024",
-    date: "2024-06-20",
-    time: "14:00",
-    location: "Trung tâm hội nghị TP.HCM",
-    type: "meeting",
-    description: "Cập nhật thông tin thành viên mới và ra mắt chatbot AI.",
-    status: "upcoming"
-  },
-  {
-    id: 4,
-    title: "Lễ mừng thọ Cụ Phan Văn Đáng",
-    date: "2024-04-30",
-    time: "09:30",
-    location: "Gia đình cụ Đáng",
-    type: "holiday",
-    description: "Lễ thượng thọ 90 tuổi.",
-    status: "upcoming"
+const { user } = useProfileQuery()
+
+const familyId = computed(() => {
+  return user.value?.families?.[0]?.familyId ?? null
+})
+
+
+const { data: familyEventsData } = useFamilyEventsByFamilyQuery(familyId)
+
+const { mutate: createEventMutation } = useCreateFamilyEventMutation()
+const { mutate: deleteEventMutation } = useDeleteFamilyEventMutation()
+const { mutate: updateEventMutation } = useUpdateFamilyEventMutation()
+
+const events = computed<FamilyEventRes[]>(() => {
+  const data = familyEventsData.value?.data
+
+  // Nếu data là PageResponse, lấy items
+  if (data?.items) {
+    return data.items
   }
-])
+
+  // Nếu data là mảng trực tiếp
+  if (Array.isArray(data)) {
+    return data
+  }
+
+  return []
+})
+
+console.log(familyId.value)
+console.log('familyEventsData', familyEventsData)
 
 const filteredEvents = computed(() => {
-  let list = events.value
+  let list = [...events.value]
+
   if (activeTab.value === 'recent') {
-    list = list.filter(e => e.status === 'upcoming')
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    list = list
+      .filter(event => event.status === 'ACTIVE')
+      .sort((a, b) => {
+        const dateA = new Date(`${a.solarDate}T${a.eventTime || '00:00'}`).getTime()
+        const dateB = new Date(`${b.solarDate}T${b.eventTime || '00:00'}`).getTime()
+        return dateA - dateB
+      })
       .slice(0, 5)
   }
 
-  if (searchQuery.value) {
-    list = list.filter(e => e.title.toLowerCase().includes(searchQuery.value.toLowerCase()))
+  if (searchQuery.value.trim()) {
+    const keyword = searchQuery.value.trim().toLowerCase()
+
+    list = list.filter(event =>
+      event.eventName?.toLowerCase().includes(keyword) ||
+      event.location?.toLowerCase().includes(keyword) ||
+      event.note?.toLowerCase().includes(keyword)
+    )
   }
 
   return list
 })
 
-const getTagClass = (type: string) => {
-  switch (type) {
-    case 'anniversary': return 'bg-red-50 text-red-600 border-red-100'
-    case 'meeting': return 'bg-blue-50 text-blue-600 border-blue-100'
-    case 'holiday': return 'bg-amber-50 text-amber-600 border-amber-100'
-    default: return 'bg-slate-50 text-slate-600 border-slate-100'
+
+type NullableString = string | null | undefined
+
+
+const getStatusText = (status: MaybeRefOrGetter<NullableString>) => {
+  const value = toValue(status);
+
+  const map: Record<string, string> = {
+    ACTIVE: 'Hoạt động',
+    INACTIVE: 'Không hoạt động'
+  }
+
+  return value ? map[value] || value : toValue(status)
+}
+
+const getStatusClass = (status: MaybeRefOrGetter<NullableString>) => {
+  const value = toValue(status);
+
+  switch (value) {
+    case 'ACTIVE':
+      return 'bg-emerald-50 text-emerald-600 border-emerald-100'
+    case 'INACTIVE':
+      return 'bg-slate-50 text-slate-600 border-slate-100'
+    default:
+      return 'bg-amber-50 text-amber-600 border-amber-100'
   }
 }
 
-const getStatusClass = (status: string) => {
-  switch (status) {
-    case 'upcoming': return 'text-emerald-600 bg-emerald-50'
-    case 'completed': return 'text-slate-400 bg-slate-50'
-    default: return 'text-amber-600 bg-amber-50'
+const getRepeatType = (type: MaybeRefOrGetter<NullableString>) => {
+  const value = toValue(type)
+
+  const map: Record<string, { label: string; class: string }> = {
+    NONE: {
+      label: 'Không lặp',
+      class: 'bg-slate-100 text-slate-600'
+    },
+    DAILY: {
+      label: 'Hằng ngày',
+      class: 'bg-green-100 text-green-600'
+    },
+    WEEKLY: {
+      label: 'Hằng tuần',
+      class: 'bg-blue-100 text-blue-600'
+    },
+    MONTHLY: {
+      label: 'Hằng tháng',
+      class: 'bg-indigo-100 text-indigo-600'
+    },
+    YEARLY: {
+      label: 'Hằng năm',
+      class: 'bg-purple-100 text-purple-600'
+    }
   }
+
+  return value && map[value]
+    ? map[value]
+    : {
+      label: value || '---',
+      class: 'bg-slate-100 text-slate-600'
+    }
 }
 
-const getTypeName = (type: string) => {
-  const map: any = { anniversary: 'Ngày giỗ', meeting: 'Họp mặt', holiday: 'Lễ hội', other: 'Khác' }
-  return map[type] || type
+const getCalendarType = (type: MaybeRefOrGetter<NullableString>) => {
+  const value = toValue(type);
+
+  const map: Record<string, string> = {
+    SOLAR: 'Dương lịch',
+    LUNAR: 'Âm lịch'
+  }
+
+  return value ? map[value] || value || value : '---'
 }
 
-const formatDate = (dateStr: string) => {
-  const d = new Date(dateStr)
-  return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })
+const getReminderEventType = (reminderType: MaybeRefOrGetter<NullableString>) => {
+  const value = toValue(reminderType)
+
+  const map: Record<string, { label: string; class: string }> = {
+    NONE: {
+      label: 'Không nhắc',
+      class: 'bg-slate-100 text-slate-600'
+    },
+    DAY_1: {
+      label: 'Trước 1 ngày',
+      class: 'bg-green-100 text-green-600'
+    },
+    DAY_3: {
+      label: 'Trước 3 ngày',
+      class: 'bg-emerald-100 text-emerald-600'
+    },
+    DAY_7: {
+      label: 'Trước 7 ngày',
+      class: 'bg-blue-100 text-blue-600'
+    },
+    DAY_15: {
+      label: 'Trước 15 ngày',
+      class: 'bg-indigo-100 text-indigo-600'
+    },
+    MONTH_1: {
+      label: 'Trước 1 tháng',
+      class: 'bg-purple-100 text-purple-600'
+    }
+  }
+
+  return value && map[value]
+    ? map[value]
+    : {
+      label: value || '---',
+      class: 'bg-slate-100 text-slate-600'
+    }
 }
+const tableHeaders = [
+  '#',
+  'Tên sự kiện',
+  'Âm lịch',
+  'Dương lịch',
+  'Loại lịch',
+  'Trạng thái',
+  'Lặp lại',
+  'Nhắc hẹn',
+  'Thời gian',
+  'Địa điểm',
+  'Ghi chú',
+  'Hành động'
+]
+
+// panagtion
+const pagination = reactive({
+  page: 0, size: 10
+})
+
+const params = computed(() => ({
+  page: pagination.page,
+  size: pagination.size
+}))
+
+const currentTotalPages = computed(() => {
+  return
+})
+
+const currentPage = computed(() => pagination.page)
+const hasNextPage = computed(() => currentPage.value + 1 < currentTotalPages.value)
+const hasPrevPage = computed(() => currentPage.value > 0)
+
+const nextPage = () => { if (hasNextPage.value) pagination.page++ }
+const prevPage = () => { if (hasPrevPage.value) pagination.page-- }
 </script>
 
 <template>
-  <div class="p-8 bg-slate-50/50 min-h-screen">
-    <!-- Header -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+  <div class="min-h-screen bg-slate-50/50 p-8">
+    <div class="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-center">
       <div>
-        <h1 class="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-2">
+        <h1 class="flex items-center gap-2 text-2xl font-black tracking-tight text-slate-800">
           <CalendarIcon class="text-amber-600" :size="28" />
           Quản lý Sự kiện
         </h1>
-        <p class="text-slate-500 text-sm mt-1 font-medium">Danh sách các hoạt động quan trọng của gia đình.</p>
+        <p class="mt-1 text-sm font-medium text-slate-500">
+          Danh sách các hoạt động quan trọng của gia đình.
+        </p>
       </div>
 
-      <button
-        class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl transition-all shadow-lg shadow-indigo-200 active:scale-95 font-bold text-sm">
+      <button type="button"
+        class="flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-200 transition-all hover:bg-indigo-700 active:scale-95">
         <Plus :size="18" />
         Tạo sự kiện
       </button>
     </div>
 
-    <!-- Toolbar: Tabs & Search -->
-    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-6">
-      <div class="flex flex-col lg:flex-row justify-between items-center gap-4">
-        <div class="flex p-1 bg-slate-100 rounded-xl w-full lg:w-auto">
-          <button @click="activeTab = 'all'" :class="[
-            'flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-bold transition-all w-full lg:w-auto justify-center',
-            activeTab === 'all' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+    <div class="mb-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div class="flex flex-col items-center justify-between gap-4 lg:flex-row">
+        <div class="flex w-full rounded-xl bg-slate-100 p-1 lg:w-auto">
+          <button type="button" @click="activeTab = 'all'" :class="[
+            'flex w-full items-center justify-center gap-2 rounded-lg px-6 py-2 text-sm font-bold transition-all lg:w-auto',
+            activeTab === 'all'
+              ? 'bg-white text-indigo-600 shadow-sm'
+              : 'text-slate-500 hover:text-slate-700'
           ]">
             <CalendarDays :size="16" />
             Tất cả
           </button>
-          <button @click="activeTab = 'recent'" :class="[
-            'flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-bold transition-all w-full lg:w-auto justify-center',
-            activeTab === 'recent' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+
+          <button type="button" @click="activeTab = 'recent'" :class="[
+            'flex w-full items-center justify-center gap-2 rounded-lg px-6 py-2 text-sm font-bold transition-all lg:w-auto',
+            activeTab === 'recent'
+              ? 'bg-white text-indigo-600 shadow-sm'
+              : 'text-slate-500 hover:text-slate-700'
           ]">
             <Bell :size="16" />
             Sắp diễn ra
           </button>
         </div>
 
-        <div class="flex items-center gap-3 w-full lg:w-auto">
+        <div class="flex w-full items-center gap-3 lg:w-auto">
           <div class="relative flex-1 lg:w-72">
             <Search class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" :size="18" />
             <input v-model="searchQuery" type="text" placeholder="Tìm kiếm sự kiện..."
-              class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm" />
+              class="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-4 text-sm transition-all focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
           </div>
-          <button class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-500 hover:bg-slate-100">
+
+          <button type="button"
+            class="rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-slate-500 hover:bg-slate-100">
             <Filter :size="18" />
           </button>
         </div>
       </div>
     </div>
 
-    <!-- Events Table -->
-    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+    <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
+        <table class="w-full border-collapse text-left">
           <thead>
-            <tr class="bg-slate-50/50 border-b border-slate-200">
-
-              <th class="px-6 py-4 text-[13px] font-black text-slate-500 uppercase tracking-wider whitespace-nowrap">#
-              </th>
-              <th class="px-6 py-4 text-[13px] font-black text-slate-500 uppercase tracking-wider whitespace-nowrap">Tên
-                sự kiện</th>
-              <th class="px-6 py-4 text-[13px] font-black text-slate-500 uppercase tracking-wider whitespace-nowrap">Sự
-                kiện</th>
-              <th class="px-6 py-4 text-[13px] font-black text-slate-500 uppercase tracking-wider whitespace-nowrap">Âm
-                lịch</th>
-              <th class="px-6 py-4 text-[13px] font-black text-slate-500 uppercase tracking-wider whitespace-nowrap">
-                Dương lịch</th>
-              <th class="px-6 py-4 text-[13px] font-black text-slate-500 uppercase tracking-wider whitespace-nowrap">
-                Trạng thái</th>
-              <th class="px-6 py-4 text-[13px] font-black text-slate-500 uppercase tracking-wider whitespace-nowrap">Lặp
-                lại</th>
-              <th class="px-6 py-4 text-[13px] font-black text-slate-500 uppercase tracking-wider whitespace-nowrap">
-                Nhắc hẹn</th>
-              <th class="px-6 py-4 text-[13px] font-black text-slate-500 uppercase tracking-wider whitespace-nowrap">
-                Thời gian</th>
-              <th class="px-6 py-4 text-[13px] font-black text-slate-500 uppercase tracking-wider whitespace-nowrap">Địa
-                điểm</th>
-              <th class="px-6 py-4 text-[13px] font-black text-slate-500 uppercase tracking-wider whitespace-nowrap">Địa
-                điểm Map</th>
-              <th class="px-6 py-4 text-[13px] font-black text-slate-500 uppercase tracking-wider whitespace-nowrap">Địa
-                điểm Map</th>
-
-              <th class="px-6 py-4 text-[13px] font-black text-slate-500 uppercase tracking-wider whitespace-nowrap">Ghi
-                chú</th>
-              <th class="px-6 py-4 text-[13px] font-black text-slate-500 uppercase tracking-wider whitespace-nowrap">
+            <tr class="border-b border-slate-200 bg-slate-50/50">
+              <th v-for="(header, index) in tableHeaders" :key="index"
+                class="whitespace-nowrap px-6 py-4 text-[13px] font-black uppercase tracking-wider text-slate-500">
+                {{ header }}
               </th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-slate-100">
-            <tr v-for="event in filteredEvents" :key="event.id" class="hover:bg-indigo-50/30 transition-colors group">
-              <td class="px-6 py-4">
-                <div class="flex flex-col">
-                  <span
-                    class="font-bold text-slate-800 group-hover:text-indigo-600 transition-colors">{{ event.title }}</span>
-                  <span class="text-xs text-slate-400 mt-0.5 line-clamp-1 max-w-50">{{ event.description }}</span>
-                </div>
-              </td>
-              <td class="px-6 py-4">
-                <span :class="['px-2.5 py-1 rounded-lg text-[11px] font-bold border', getTagClass(event.type)]">
-                  {{ getTypeName(event.type) }}
+
+          <tbody v-if="filteredEvents.length > 0" class="divide-y divide-slate-100">
+            <tr v-for="(event, index) in filteredEvents" :key="event.familyEventId ?? index"
+              class="group transition-colors hover:bg-indigo-50/30">
+              <td class="px-6 py-4 align-top">
+                <span class="font-bold text-slate-800 group-hover:text-indigo-600">
+                  {{ index + 1 }}
                 </span>
               </td>
-              <td class="px-6 py-4">
-                <div class="flex flex-col">
-                  <span class="text-sm font-semibold text-slate-700 flex items-center gap-1.5">
-                    <CalendarIcon :size="14" class="text-slate-400" />
-                    {{ formatDate(event.date) }}
+
+              <td class="px-6 py-4 align-top">
+                <div class="flex min-w-64 flex-col">
+                  <span class="font-bold text-slate-800 group-hover:text-indigo-600">
+                    {{ event.eventName }}
                   </span>
-                  <span class="text-xs text-slate-400 flex items-center gap-1.5 mt-1">
-                    <Clock :size="14" />
-                    {{ event.time }}
+                  <span class="mt-0.5 line-clamp-1 max-w-64 text-xs text-slate-400">
+                    {{ event.note || 'Không có ghi chú' }}
                   </span>
                 </div>
               </td>
-              <td class="px-6 py-4">
-                <div class="flex items-center gap-2 text-sm text-slate-600 max-w-45">
-                  <MapPin :size="14" class="text-slate-400 shrink-0" />
-                  <span class="truncate">{{ event.location }}</span>
-                </div>
+
+              <td class="px-6 py-4 align-top">
+                <span class="whitespace-nowrap text-sm font-semibold text-slate-700">
+                  {{ event.lunarDate ? formatDate(event.lunarDate) : '---' }}
+                </span>
               </td>
-              <td class="px-6 py-4 text-center">
+
+              <td class="px-6 py-4 align-top">
+                <span class="whitespace-nowrap text-sm font-semibold text-slate-700">
+                  {{ event.solarDate ? formatDate(event.solarDate) : '---' }}
+                </span>
+              </td>
+
+              <td class="px-6 py-4 align-top">
                 <span
-                  :class="['px-2.5 py-1 rounded-full text-[11px] font-black uppercase', getStatusClass(event.status)]">
-                  {{ event.status === 'upcoming' ? 'Sắp tới' : (event.status === 'completed' ? 'Đã xong' : 'Đang diễn ra') }}
+                  class="rounded-full bg-indigo-50 px-2.5 py-1 text-[11px] font-black uppercase text-indigo-600 whitespace-nowrap">
+                  {{ getCalendarType(event.calendarType) }}
                 </span>
               </td>
-              <td class="px-6 py-4">
-                <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-lg border border-transparent hover:border-indigo-100 shadow-sm transition-all"
+
+              <td class="px-6 py-4 align-top">
+                <span :class="[
+                  'rounded-lg border px-2.5 py-1 text-[11px] font-bold',
+                  getStatusClass(event.status)
+                ]">
+                  {{ getStatusText(event.status) }}
+                </span>
+              </td>
+
+              <td class="px-6 py-4 align-top">
+                <span :class="[
+                  'px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap',
+                  getRepeatType(event.repeatType).class
+                ]">
+                  {{ getRepeatType(event.repeatType).label }}
+                </span>
+              </td>
+
+              <td class="px-6 py-4 align-top">
+                <span
+                  :class="['whitespace-nowrap text-sm px-2 py-1 rounded-2xl', getReminderEventType(event.reminderType).class]">
+                  {{ getReminderEventType(event.reminderType).label }}
+                </span>
+              </td>
+
+              <td class="px-6 py-4 align-top">
+                <div class="flex flex-col">
+                  <span class="flex items-center gap-1.5 text-sm font-semibold text-slate-700">
+                    <Clock :size="14" class="text-slate-400" />
+                    {{ event.eventTime }}
+                  </span>
+                  <span class="mt-1 flex items-center gap-1.5 text-xs text-slate-400">
+                    <CalendarIcon :size="14" />
+                    {{ event.createdAt ? formatDate(event.createdAt) : '---' }}
+                  </span>
+                </div>
+              </td>
+
+              <td class="px-6 py-4 align-top">
+                <div class="flex max-w-52 items-center gap-2 text-sm text-slate-600">
+                  <MapPin :size="14" class="shrink-0 text-slate-400" />
+                  <a v-if="event.locationMapUrl" :href="event.locationMapUrl" target="_blank" rel="noopener noreferrer"
+                    class="truncate font-medium text-indigo-600 hover:underline">
+                    {{ event.location || 'Xem bản đồ' }}
+                  </a>
+                  <span v-else class="truncate">
+                    {{ event.location || '---' }}
+                  </span>
+                </div>
+              </td>
+
+              <td class="px-6 py-4 align-top">
+                <p class="line-clamp-2 max-w-72 text-sm text-slate-500">
+                  {{ event.note || '---' }}
+                </p>
+              </td>
+
+              <td class="px-6 py-4 align-top">
+                <div class="flex items-center justify-end gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+                  <button type="button"
+                    class="rounded-lg border border-transparent p-2 text-slate-400 shadow-sm transition-all hover:border-indigo-100 hover:bg-white hover:text-indigo-600"
                     title="Chi tiết">
                     <Info :size="18" />
                   </button>
-                  <button
-                    class="p-2 text-slate-400 hover:text-slate-800 hover:bg-white rounded-lg border border-transparent hover:border-slate-200 shadow-sm transition-all">
+
+                  <button type="button"
+                    class="rounded-lg border border-transparent p-2 text-slate-400 shadow-sm transition-all hover:border-slate-200 hover:bg-white hover:text-slate-800"
+                    title="Thao tác">
                     <MoreVertical :size="18" />
                   </button>
                 </div>
@@ -259,33 +421,45 @@ const formatDate = (dateStr: string) => {
         </table>
       </div>
 
-      <!-- Pagination / Footer Table -->
-      <div
-        class="px-6 py-4 bg-slate-50/30 border-t border-slate-100 flex items-center justify-between text-sm text-slate-500 font-medium">
-        <span>Hiển thị {{ filteredEvents.length }} sự kiện</span>
-        <div class="flex gap-2">
-          <button
-            class="px-3 py-1.5 border border-slate-200 rounded-lg hover:bg-white disabled:opacity-50">Trước</button>
-          <button
-            class="px-3 py-1.5 bg-white border border-indigo-200 text-indigo-600 font-bold rounded-lg shadow-sm">1</button>
-          <button class="px-3 py-1.5 border border-slate-200 rounded-lg hover:bg-white disabled:opacity-50">Sau</button>
-        </div>
-      </div>
-
-      <!-- Empty State -->
-      <div v-if="filteredEvents.length === 0" class="py-20 flex flex-col items-center justify-center">
-        <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-slate-300 mb-4">
+      <div v-if="filteredEvents.length === 0" class="flex flex-col items-center justify-center py-20">
+        <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 text-slate-300">
           <CalendarIcon :size="32" />
         </div>
         <h3 class="text-lg font-bold text-slate-800">Không có dữ liệu</h3>
-        <p class="text-slate-400 text-sm mt-1">Không tìm thấy sự kiện nào phù hợp với tìm kiếm của bạn.</p>
+        <p class="mt-1 text-sm text-slate-400">
+          Không tìm thấy sự kiện nào phù hợp với tìm kiếm của bạn.
+        </p>
+      </div>
+
+      <div
+        class="flex items-center justify-between border-t border-slate-100 bg-slate-50/30 px-6 py-4 text-sm font-medium text-slate-500">
+        <span>Hiển thị {{ filteredEvents.length }} sự kiện</span>
+
+        <div class="flex gap-2">
+          <button type="button"
+            class="rounded-lg border border-slate-200 px-3 py-1.5 hover:bg-white disabled:opacity-50" disabled>
+            Trước
+          </button>
+
+          <button type="button"
+            class="rounded-lg border border-indigo-200 bg-white px-3 py-1.5 font-bold text-indigo-600 shadow-sm">
+            1
+          </button>
+
+          <button type="button"
+            class="rounded-lg border border-slate-200 px-3 py-1.5 hover:bg-white disabled:opacity-50" disabled>
+            Sau
+          </button>
+        </div>
       </div>
     </div>
+    <!-- panagtion -->
+    <AppPagination :page="currentPage" :total-pages="currentTotalPages" :has-next="hasNextPage" :has-prev="hasPrevPage"
+      @next="nextPage" @prev="prevPage" />
   </div>
 </template>
 
 <style scoped>
-/* Tùy chỉnh thanh cuộn cho bảng nếu dữ liệu quá dài */
 .overflow-x-auto::-webkit-scrollbar {
   height: 6px;
 }

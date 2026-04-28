@@ -101,6 +101,19 @@ const getStatusConfig = (status: FamilyInvitationStatus) => {
     }
 }
 
+const getRoleName = (roleName: string) => {
+    switch (roleName) {
+        case "FAMILY_VIEWER":
+            return "Người xem"
+        case "FAMILY_EDITOR":
+            return "Biên tập viên"
+        case "FAMILY_ADMIN":
+            return "Quản trị viên"
+        default:
+            return roleName
+    }
+}
+
 const canAcceptOrDecline = (status: FamilyInvitationStatus) => status === "PENDING"
 const canCancel = (status: FamilyInvitationStatus) => status === "PENDING"
 
@@ -149,6 +162,8 @@ const canCancel = (status: FamilyInvitationStatus) => status === "PENDING"
                         <th class="px-5 py-3 text-xs font-semibold text-slate-500 uppercase whitespace-nowrap">Trạng
                             thái</th>
                         <th class="px-5 py-3 text-xs font-semibold text-slate-500 uppercase whitespace-nowrap">Mã mời
+                        </th>
+                        <th class="px-5 py-3 text-xs font-semibold text-slate-500 uppercase whitespace-nowrap">Vai trò
                         </th>
                         <th class="px-5 py-3 text-xs font-semibold text-slate-500 uppercase whitespace-nowrap">Lời mời
                         </th>
@@ -220,6 +235,10 @@ const canCancel = (status: FamilyInvitationStatus) => status === "PENDING"
                         </td>
 
                         <td class="px-5 py-4 text-sm text-slate-500">
+                            {{ getRoleName(invite.roleName) }}
+                        </td>
+
+                        <td class="px-5 py-4 text-sm text-slate-500">
                             {{ invite.message }}
                         </td>
 
@@ -241,7 +260,7 @@ const canCancel = (status: FamilyInvitationStatus) => status === "PENDING"
                 </tbody>
             </table>
 
-            
+
         </div>
     </div>
 </template>
