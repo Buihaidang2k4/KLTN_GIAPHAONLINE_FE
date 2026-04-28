@@ -42,6 +42,25 @@ export const QUERY_KEYS = {
             ["families", "members", id] as const,
     },
 
+    FAMILY_EVENT: {
+        all: ["family-events"] as const,
+
+        listByFamily: (familyId: string | number, params?: PageParams) =>
+            ["family-events", "family", familyId, params] as const,
+
+        detail: (eventId: string | number) =>
+            ["family-events", "detail", eventId] as const,
+
+        search: (search?: unknown, params?: PageParams) =>
+            ["family-events", "search", search, params] as const,
+
+        familyList: (familyId: string | number) =>
+            ["family-events", "family", familyId] as const,
+
+        searchList: () =>
+            ["family-events", "search"] as const
+    },
+
     ACCOUNT: {
         ALL: ["accounts"] as const,
 

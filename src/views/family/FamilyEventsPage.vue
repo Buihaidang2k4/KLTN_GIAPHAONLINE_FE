@@ -10,7 +10,6 @@ import {
   Bell,
   CalendarDays,
   Filter,
-  ChevronRight,
   Info
 } from 'lucide-vue-next'
 

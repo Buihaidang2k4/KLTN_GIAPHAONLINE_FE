@@ -22,10 +22,10 @@ const submit = () => {
   }
 
   emailError.value = ''
+  isSubmitted.value = true
 
   sendOtpForgotPass(email.value, {
     onSuccess: () => {
-      isSubmitted.value = true
       router.replace({
         path: "/verify-account-forgot",
         query: {
