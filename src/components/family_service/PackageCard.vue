@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Zap, Users, HardDrive, Calendar } from 'lucide-vue-next';
-import { SubscriptionPlan, PlanName } from '@/types/subscription/subscription';
+import { SubscriptionPlan, PlanName } from '@/types/subscription/subscription.types';
 
 interface Props {
     plan: SubscriptionPlan;
@@ -38,8 +38,7 @@ const formatPrice = (price: number) => {
 
         <!-- Header -->
         <div class="mb-8 pr-20">
-            <div
-                class="w-11 h-11 rounded-xl bg-slate-100 flex items-center justify-center text-slate-700 mb-5">
+            <div class="w-11 h-11 rounded-xl bg-slate-100 flex items-center justify-center text-slate-700 mb-5">
                 <component :is="getPlanIcon(plan.namePlan)" class="w-5 h-5" />
             </div>
             <h3 class="text-2xl font-semibold text-slate-900 mb-2 tracking-tight">

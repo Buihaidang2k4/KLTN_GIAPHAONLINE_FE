@@ -1,4 +1,4 @@
-import type { PageParams } from "@/types/page-response"
+import type { PageParams } from "@/types/page-response.types"
 import { reactive } from "vue"
 
 export function usePagination() {

@@ -3,8 +3,8 @@ import { QUERY_KEYS } from "@/hooks/keys/query-keys";
 import { notify } from "@/utils/notify";
 import { useMutation, useQueryClient } from "@tanstack/vue-query";
 import { getApiErrorMessage } from "@/utils/get-api-error-message";
-import type { ApiResponse } from "@/types/api-response";
-import type { ResetPasswordReq } from "@/types/auth/auth";
+import type { ApiResponse } from "@/types/api-response.types";
+import type { ResetPasswordReq } from "@/types/auth/auth.types";
 import type { MaybeRef, MaybeRefOrGetter } from "vue";
 
 

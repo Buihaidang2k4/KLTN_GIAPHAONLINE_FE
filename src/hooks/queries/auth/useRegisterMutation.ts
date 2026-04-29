@@ -1,5 +1,5 @@
 import { authService } from "@/services/auth.service";
-import type { RegisterReq } from "@/types/auth/auth";
+import type { RegisterReq } from "@/types/auth/auth.types";
 import { getApiErrorMessage } from "@/utils/get-api-error-message";
 import { notify } from "@/utils/notify";
 import { useMutation } from "@tanstack/vue-query";

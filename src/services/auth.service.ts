@@ -1,8 +1,8 @@
-import type { LoginReq, LoginRes, RegisterByInvitationReq, RegisterReq, RegisterRes, ResetPasswordReq } from "@/types/auth/auth";
-import type { AccountDetailsRes } from "@/types/account/account";
+import type { LoginReq, LoginRes, RegisterByInvitationReq, RegisterReq, RegisterRes, ResetPasswordReq } from "@/types/auth/auth.types";
+import type { AccountDetailsRes } from "@/types/account/account.types";
 import api from "./api.base";
 
-import type { ApiResponse } from "@/types/api-response";
+import type { ApiResponse } from "@/types/api-response.types";
 import { apiRefresh } from "./api-refresh.base";
 import type { MaybeRefOrGetter } from "vue";
 

@@ -1,5 +1,5 @@
 import { authService } from "@/services/auth.service";
-import type { RegisterByInvitationReq } from "@/types/auth/auth";
+import type { RegisterByInvitationReq } from "@/types/auth/auth.types";
 import { notify } from "@/utils/notify";
 import { useMutation } from "@tanstack/vue-query";
 

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { BookOpen, ShieldCheck, Sparkles, ArrowRight } from 'lucide-vue-next';
-import { SubscriptionPlan, PlanName } from '@/types/subscription/subscription';
+import { SubscriptionPlan, PlanName } from '@/types/subscription/subscription.types';
 import PackageCard from '@/components/family_service/PackageCard.vue';
 
 const MOCK_PLANS: SubscriptionPlan[] = [
@@ -75,10 +75,10 @@ const handleSelectPlan = (plan: SubscriptionPlan) => {
     <div class="min-h-screen bg-stone-50 text-slate-900 selection:bg-slate-200 mb-16 px-4 sm:px-6">
         <!-- Header Section -->
         <header class="max-w-6xl mx-auto pt-16 pb-12 text-center">
-            <div
-                class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-slate-200 mb-6">
+            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-slate-200 mb-6">
                 <Sparkles class="w-4 h-4 text-slate-500" />
-                <span class="text-[10px] font-semibold text-slate-600 uppercase tracking-[0.24em]">Dịch vụ gia phả</span>
+                <span class="text-[10px] font-semibold text-slate-600 uppercase tracking-[0.24em]">Dịch vụ gia
+                    phả</span>
             </div>
 
             <h1 class="text-4xl md:text-5xl font-semibold tracking-tight leading-tight mb-5">
@@ -107,8 +107,7 @@ const handleSelectPlan = (plan: SubscriptionPlan) => {
         </main>
 
         <!-- Footer Promo -->
-        <section
-            class="max-w-6xl mx-auto mt-14 p-8 md:p-10 bg-white rounded-3xl border border-slate-200">
+        <section class="max-w-6xl mx-auto mt-14 p-8 md:p-10 bg-white rounded-3xl border border-slate-200">
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-8">
                 <div class="max-w-md text-center md:text-left">
                     <h2 class="text-2xl font-semibold text-slate-900 mb-3">Bạn cần gói tùy chỉnh?</h2>

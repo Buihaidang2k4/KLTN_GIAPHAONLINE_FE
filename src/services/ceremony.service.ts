@@ -1,6 +1,6 @@
-import type { ApiResponse } from "@/types/api-response";
-import type { PageParams, PageResponse } from "@/types/page-response";
-import type { CeremonyReq, CeremonyRes, CeremonyUpdateReq } from "@/types/ceremony/ceremony";
+import type { ApiResponse } from "@/types/api-response.types";
+import type { PageParams, PageResponse } from "@/types/page-response.types";
+import type { CeremonyReq, CeremonyRes, CeremonyUpdateReq } from "@/types/ceremony/ceremony.types";
 import api from "./api.base";
 
 export const ceremonyService = {

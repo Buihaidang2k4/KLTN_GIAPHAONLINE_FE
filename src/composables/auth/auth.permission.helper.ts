@@ -1,4 +1,4 @@
-import type { AccountDetailsRes } from "@/types/account/account";
+import type { AccountDetailsRes } from "@/types/account/account.types";
 
 export const getRoleNames = (user: AccountDetailsRes | null | undefined): string[] => {
     return user?.roles?.map(role => role.name) ?? [];

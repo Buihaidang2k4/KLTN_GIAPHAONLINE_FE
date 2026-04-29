@@ -1,12 +1,11 @@
 import api from "./api.base"
-import type { ApiResponse } from "@/types/api-response"
-import type { PageParams, PageResponse } from "@/types/page-response"
+import type { ApiResponse } from "@/types/api-response.types"
+import type { PageParamsEvents, PageResponse } from "@/types/page-response.types"
 import type {
     FamilyEventReq,
     FamilyEventRes,
-    FamilyEventSearchReq,
     UpdateFamilyEventReq
-} from "@/types/family/family-event"
+} from "@/types/family/family-event.types"
 
 export const familyEventService = {
     createEvent: async (
@@ -43,25 +42,12 @@ export const familyEventService = {
 
     getEventsByFamily: async (
         familyId: number,
-        params?: PageParams
+        params?: PageParamsEvents
     ): Promise<ApiResponse<PageResponse<FamilyEventRes>>> => {
         const res = await api.get<ApiResponse<PageResponse<FamilyEventRes>>>(
             `/family-events/family/${familyId}`,
             { params }
         )
-        return res.data
-    },
-
-    searchEvents: async (
-        data: FamilyEventSearchReq,
-        params?: PageParams
-    ): Promise<ApiResponse<PageResponse<FamilyEventRes>>> => {
-        const res = await api.request<ApiResponse<PageResponse<FamilyEventRes>>>({
-            url: "/family-events/search",
-            method: "GET",
-            data,
-            params
-        })
         return res.data
     },
 

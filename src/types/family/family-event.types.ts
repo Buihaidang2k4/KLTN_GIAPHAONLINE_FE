@@ -1,4 +1,4 @@
-export type FamilyEventStatus = "ACTIVE" | "INACTIVE" 
+export type FamilyEventStatus = "ACTIVE" | "INACTIVE"
 export type CalendarType = "SOLAR" | "LUNAR"
 export type RepeatType = "NONE" | "YEARLY" | "MONTHLY"
 export type ReminderEventType = "DAY_1" | "DAY_3" | "DAY_7" | "DAY_15" | "MONTH_1"
@@ -29,15 +29,6 @@ export interface UpdateFamilyEventReq {
     locationMapUrl?: string | null
     location?: string | null
     note?: string | null
-}
-
-export interface FamilyEventSearchReq {
-    familyId: number
-    keyword?: string | null
-    calendarType?: CalendarType | null
-    startDate?: string | null
-    endDate?: string | null
-    reminderType?: ReminderEventType | null
 }
 
 export interface FamilyEventRes {

@@ -11,7 +11,7 @@ import {
 import type {
     FamilyInvitationStatus,
     InviteInvitationMemberRes,
-} from "@/types/family/family-invitation"
+} from "@/types/family/family-invitation.types"
 
 const props = defineProps<{
     title: string

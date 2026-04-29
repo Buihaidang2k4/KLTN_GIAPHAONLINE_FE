@@ -1,6 +1,6 @@
-import type { FamilyMemberRes } from "@/types/family/family-member";
+import type { FamilyMemberRes } from "@/types/family/family-member.types";
 import api from "./api.base";
-import type { ApiResponse } from "@/types/api-response";
+import type { ApiResponse } from "@/types/api-response.types";
 
 export const familyMemberService = {
 

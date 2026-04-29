@@ -1,5 +1,5 @@
-import type { FamilyRes } from "@/types/auth/auth";
-import type { RoleRes } from "@/types/auth/auth";
+import type { FamilyRes } from "@/types/auth/auth.types";
+import type { RoleRes } from "@/types/auth/auth.types";
 
 export interface AccountDetailsRes {
     accountId: number;

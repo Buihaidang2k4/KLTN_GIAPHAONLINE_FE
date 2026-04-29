@@ -1,6 +1,6 @@
 import { computed, type Ref } from "vue"
 import { useAccountQuery } from "@/hooks/queries/account/useAccount"
-import type { AccountRes } from "@/types/account/account"
+import type { AccountRes } from "@/types/account/account.types"
 
 export function useAccount(accountId: Ref<number | null>) {
     const query = useAccountQuery(accountId)

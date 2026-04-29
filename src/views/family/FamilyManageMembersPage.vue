@@ -8,7 +8,7 @@ import { useInviteMemberMutation } from "@/hooks/queries/family/family_invitaion
 
 import FamilyMemberList from "@/components/family_manage/FamilyMemberList.vue"
 import AddFamilyMemberForm from "@/components/forms/common/AddFamilyInvitaionMemberForm.vue"
-import type { CreateFamilyInvitationReq } from "@/types/family/family-invitation"
+import type { CreateFamilyInvitationReq } from "@/types/family/family-invitation.types"
 import { useRouter } from "vue-router"
 
 const searchKeyword = ref("")

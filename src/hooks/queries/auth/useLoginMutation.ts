@@ -1,6 +1,6 @@
 import { authService } from "@/services/auth.service";
 import { QUERY_KEYS } from "@/hooks/keys/query-keys";
-import type { LoginReq } from "@/types/auth/auth";
+import type { LoginReq } from "@/types/auth/auth.types";
 import { notify } from "@/utils/notify";
 import { useMutation, useQueryClient } from "@tanstack/vue-query";
 import { getApiErrorMessage } from "@/utils/get-api-error-message";

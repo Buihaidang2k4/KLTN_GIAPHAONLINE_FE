@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/vue-query"
 import { computed, toValue, unref, type MaybeRef, type MaybeRefOrGetter } from "vue"
 import { familyService } from "@/services/family.service"
 import { QUERY_KEYS } from "@/hooks/keys/query-keys"
-import type { PageParams } from "@/types/page-response"
+import type { PageParams } from "@/types/page-response.types"
 
 function normalizeParams(params?: MaybeRef<PageParams>) {
     const p = unref(params)

@@ -1,6 +1,6 @@
 import api from "./api.base"
-import type { ApiResponse } from "@/types/api-response"
-import type { PageParams, PageResponse } from "@/types/page-response"
+import type { ApiResponse } from "@/types/api-response.types"
+import type { PageParams, PageResponse } from "@/types/page-response.types"
 import type { FamilyRes } from "@/types/family/family.types"
 
 export const familyService = {

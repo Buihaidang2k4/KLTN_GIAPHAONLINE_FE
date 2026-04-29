@@ -1,7 +1,7 @@
 import api from "./api.base"
-import type { ApiResponse } from "@/types/api-response"
-import type { AccountDetailsRes, AccountRes, ChangePasswordAccountReq, ChangeStatusLockReq, CreateAccountReq, UpdateAccountReq } from "@/types/account/account"
-import type { PageParams, PageResponse } from "@/types/page-response"
+import type { ApiResponse } from "@/types/api-response.types"
+import type { AccountDetailsRes, AccountRes, ChangePasswordAccountReq, ChangeStatusLockReq, CreateAccountReq, UpdateAccountReq } from "@/types/account/account.types"
+import type { PageParams, PageResponse } from "@/types/page-response.types"
 
 export const accountService = {
 

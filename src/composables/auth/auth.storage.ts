@@ -1,4 +1,4 @@
-import type { AccountDetailsRes } from "@/types/account/account";
+import type { AccountDetailsRes } from "@/types/account/account.types";
 
 const CURRENT_USER_KEY = "current_user";
 

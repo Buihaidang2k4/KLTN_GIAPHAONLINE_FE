@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { X, Save, Plus } from 'lucide-vue-next';
-import type { CeremonyTimelineRes, CeremonyTimelinePreparationRes } from '@/types/ceremony/ceremony';
+import type { CeremonyTimelineRes, CeremonyTimelinePreparationRes } from '@/types/ceremony/ceremony.types';
 
 interface Props {
     show: boolean;

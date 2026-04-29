@@ -21,3 +21,11 @@ export interface PageParams {
     size?: number
     sort?: string
 }
+
+export interface PageParamsEvents {
+    page?: number
+    size?: number
+    sort?: string
+    keyword?: string
+}
+

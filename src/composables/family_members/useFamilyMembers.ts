@@ -1,5 +1,5 @@
 import { computed, type Ref } from 'vue'
-import type { FamilyMemberRes } from '@/types/family/family-member'
+import type { FamilyMemberRes } from '@/types/family/family-member.types'
 
 const MEMBER_STATUS = {
     ACTIVE: 'Đang hoạt động',

@@ -1,7 +1,7 @@
 import api from "./api.base";
-import type { ApiResponse } from "@/types/api-response";
-import type { CreateFamilyInvitationReq, InviteInvitationMemberRes } from "@/types/family/family-invitation";
-import type { PageParams, PageResponse } from "@/types/page-response";
+import type { ApiResponse } from "@/types/api-response.types";
+import type { CreateFamilyInvitationReq, InviteInvitationMemberRes } from "@/types/family/family-invitation.types";
+import type { PageParams, PageResponse } from "@/types/page-response.types";
 
 export const familyInvitationService = {
     getMySendInvitations: async (params?: PageParams): Promise<ApiResponse<PageResponse<InviteInvitationMemberRes>>> => {

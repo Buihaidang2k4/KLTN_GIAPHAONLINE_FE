@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, type MaybeRefOrGetter, toValue, reactive } from 'vue'
+import { ref, computed, type MaybeRefOrGetter, toValue, reactive, toRef } from 'vue'
 import {
   Calendar as CalendarIcon,
   Plus,
@@ -13,7 +13,7 @@ import {
   Info
 } from 'lucide-vue-next'
 
-import type { FamilyEventRes } from '@/types/family/family-event'
+import type { FamilyEventRes } from '@/types/family/family-event.types'
 import { formatDate } from '@/utils/format-date'
 import {
   useCreateFamilyEventMutation,
@@ -21,73 +21,19 @@ import {
   useFamilyEventsByFamilyQuery,
   useUpdateFamilyEventMutation
 } from '@/hooks/queries/family/family_event/useFamilyEvent'
-import { useProfileQuery } from '@/hooks/queries/auth/useProfileQuery'
-import { PageResponse } from '@/types/page-response'
 import AppPagination from '@/components/forms/common/AppPagination.vue'
+import { useFamilyStore } from '@/store/family/useFamilyStore'
 
 const activeTab = ref<'all' | 'recent'>('all')
-const searchQuery = ref('')
-
-const { user } = useProfileQuery()
-
-const familyId = computed(() => {
-  return user.value?.families?.[0]?.familyId ?? null
-})
-
-
-const { data: familyEventsData } = useFamilyEventsByFamilyQuery(familyId)
+const familyStore = useFamilyStore();
+const familyId = computed(() => familyStore.currentFamilyId);
 
 const { mutate: createEventMutation } = useCreateFamilyEventMutation()
 const { mutate: deleteEventMutation } = useDeleteFamilyEventMutation()
 const { mutate: updateEventMutation } = useUpdateFamilyEventMutation()
 
-const events = computed<FamilyEventRes[]>(() => {
-  const data = familyEventsData.value?.data
 
-  // Nếu data là PageResponse, lấy items
-  if (data?.items) {
-    return data.items
-  }
-
-  // Nếu data là mảng trực tiếp
-  if (Array.isArray(data)) {
-    return data
-  }
-
-  return []
-})
-
-console.log(familyId.value)
-console.log('familyEventsData', familyEventsData)
-
-const filteredEvents = computed(() => {
-  let list = [...events.value]
-
-  if (activeTab.value === 'recent') {
-    list = list
-      .filter(event => event.status === 'ACTIVE')
-      .sort((a, b) => {
-        const dateA = new Date(`${a.solarDate}T${a.eventTime || '00:00'}`).getTime()
-        const dateB = new Date(`${b.solarDate}T${b.eventTime || '00:00'}`).getTime()
-        return dateA - dateB
-      })
-      .slice(0, 5)
-  }
-
-  if (searchQuery.value.trim()) {
-    const keyword = searchQuery.value.trim().toLowerCase()
-
-    list = list.filter(event =>
-      event.eventName?.toLowerCase().includes(keyword) ||
-      event.location?.toLowerCase().includes(keyword) ||
-      event.note?.toLowerCase().includes(keyword)
-    )
-  }
-
-  return list
-})
-
-
+// ui helper
 type NullableString = string | null | undefined
 
 
@@ -214,16 +160,33 @@ const tableHeaders = [
 
 // panagtion
 const pagination = reactive({
-  page: 0, size: 10
+  page: 0, size: 10, keyword: ''
 })
 
 const params = computed(() => ({
   page: pagination.page,
-  size: pagination.size
+  size: pagination.size,
+  keyword: pagination.keyword
 }))
 
+const { data: familyEventsData } = useFamilyEventsByFamilyQuery(familyId, params)
+
+const events = computed<FamilyEventRes[]>(() => {
+  const data = familyEventsData.value?.data
+
+  if (data?.items) {
+    return data.items
+  }
+
+  if (Array.isArray(data)) {
+    return data
+  }
+
+  return []
+})
+
 const currentTotalPages = computed(() => {
-  return
+  return familyEventsData.value?.data?.totalPages ?? 1
 })
 
 const currentPage = computed(() => pagination.page)
@@ -232,6 +195,11 @@ const hasPrevPage = computed(() => currentPage.value > 0)
 
 const nextPage = () => { if (hasNextPage.value) pagination.page++ }
 const prevPage = () => { if (hasPrevPage.value) pagination.page-- }
+
+const indexUI = (index: number) => {
+  return index + 1 + (currentPage.value) * pagination.size
+}
+
 </script>
 
 <template>
@@ -254,7 +222,8 @@ const prevPage = () => { if (hasPrevPage.value) pagination.page-- }
       </button>
     </div>
 
-    <div class="mb-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+    <div class="rounded-2xl border border-slate-200 bg-white p-4">
+      <!-- Tab Navigation -->
       <div class="flex flex-col items-center justify-between gap-4 lg:flex-row">
         <div class="flex w-full rounded-xl bg-slate-100 p-1 lg:w-auto">
           <button type="button" @click="activeTab = 'all'" :class="[
@@ -278,10 +247,11 @@ const prevPage = () => { if (hasPrevPage.value) pagination.page-- }
           </button>
         </div>
 
+        <!-- Search and Filter -->
         <div class="flex w-full items-center gap-3 lg:w-auto">
           <div class="relative flex-1 lg:w-72">
             <Search class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" :size="18" />
-            <input v-model="searchQuery" type="text" placeholder="Tìm kiếm sự kiện..."
+            <input v-model="searchKeyword" type="text" placeholder="Tìm kiếm sụ kiện theo tên..."
               class="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-4 text-sm transition-all focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
           </div>
 
@@ -294,6 +264,8 @@ const prevPage = () => { if (hasPrevPage.value) pagination.page-- }
     </div>
 
     <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+
+      <!-- Table -->
       <div class="overflow-x-auto">
         <table class="w-full border-collapse text-left">
           <thead>
@@ -305,12 +277,12 @@ const prevPage = () => { if (hasPrevPage.value) pagination.page-- }
             </tr>
           </thead>
 
-          <tbody v-if="filteredEvents.length > 0" class="divide-y divide-slate-100">
-            <tr v-for="(event, index) in filteredEvents" :key="event.familyEventId ?? index"
+          <tbody v-if="events.length > 0" class="divide-y divide-slate-100">
+            <tr v-for="(event, index) in events" :key="event.familyEventId ?? index"
               class="group transition-colors hover:bg-indigo-50/30">
               <td class="px-6 py-4 align-top">
                 <span class="font-bold text-slate-800 group-hover:text-indigo-600">
-                  {{ index + 1 }}
+                  {{ indexUI(index) }}
                 </span>
               </td>
 
@@ -421,7 +393,7 @@ const prevPage = () => { if (hasPrevPage.value) pagination.page-- }
         </table>
       </div>
 
-      <div v-if="filteredEvents.length === 0" class="flex flex-col items-center justify-center py-20">
+      <div v-if="events.length === 0" class="flex flex-col items-center justify-center py-20">
         <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 text-slate-300">
           <CalendarIcon :size="32" />
         </div>
@@ -433,7 +405,7 @@ const prevPage = () => { if (hasPrevPage.value) pagination.page-- }
 
       <div
         class="flex items-center justify-between border-t border-slate-100 bg-slate-50/30 px-6 py-4 text-sm font-medium text-slate-500">
-        <span>Hiển thị {{ filteredEvents.length }} sự kiện</span>
+        <span>Hiển thị {{ events.length }} sự kiện</span>
 
         <div class="flex gap-2">
           <button type="button"

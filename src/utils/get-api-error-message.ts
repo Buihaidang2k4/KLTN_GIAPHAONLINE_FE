@@ -1,6 +1,6 @@
 import axios from "axios";
-import { AUTH_ERROR_MAP } from "@/types/error/auth-error-map";
-import { APP_ERROR_MAP } from "@/types/error/app-error-map";
+import { AUTH_ERROR_MAP } from "@/types/error/auth-error-map.types";
+import { APP_ERROR_MAP } from "@/types/error/app-error-map.types";
 
 type ApiErrorPayload = {
     code?: number;

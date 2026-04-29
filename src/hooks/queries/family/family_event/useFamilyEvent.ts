@@ -3,14 +3,13 @@ import { computed, toValue, unref, type MaybeRef, type MaybeRefOrGetter } from "
 import { familyEventService } from "@/services/family_event.service"
 import { QUERY_KEYS } from "@/hooks/keys/query-keys"
 import { notify } from "@/utils/notify"
-import type { ApiResponse } from "@/types/api-response"
-import type { PageParams, PageResponse } from "@/types/page-response"
+import type { ApiResponse } from "@/types/api-response.types"
+import type { PageParams, PageParamsEvents } from "@/types/page-response.types"
 import type {
     FamilyEventReq,
     FamilyEventRes,
-    FamilyEventSearchReq,
     UpdateFamilyEventReq
-} from "@/types/family/family-event"
+} from "@/types/family/family-event.types"
 
 function normalizeParams(params?: MaybeRef<PageParams>) {
     const p = unref(params)
@@ -38,14 +37,9 @@ type DeleteEventVariables = {
     eventId: number
 }
 
-type SearchEventVariables = {
-    data: FamilyEventSearchReq
-    params?: PageParams
-}
-
 export function useFamilyEventsByFamilyQuery(
-    familyId: MaybeRefOrGetter<number | null>,
-    params?: MaybeRef<PageParams>
+    familyId: MaybeRefOrGetter<number | null | undefined>,
+    params?: MaybeRef<PageParamsEvents>
 ) {
     const resolvedFamilyId = computed(() => toValue(familyId))
     const resolvedParams = computed(() => normalizeParams(params))
@@ -56,13 +50,13 @@ export function useFamilyEventsByFamilyQuery(
         ),
         queryFn: () =>
             familyEventService.getEventsByFamily(resolvedFamilyId.value!, resolvedParams.value),
-        enabled: computed(() => !!resolvedFamilyId.value),
+        enabled: computed(() => !!resolvedFamilyId.value || resolvedParams.value.page > 0 || resolvedParams.value.size > 0 || !!resolvedParams.value.sort),
         staleTime: 30_000,
         placeholderData: (prev) => prev
     })
 }
 
-export function useFamilyEventByIdQuery(eventId: MaybeRefOrGetter<number | null>) {
+export function useFamilyEventByIdQuery(eventId: MaybeRefOrGetter<number | null | undefined>) {
     const resolvedEventId = computed(() => toValue(eventId))
 
     return useQuery({
@@ -73,31 +67,6 @@ export function useFamilyEventByIdQuery(eventId: MaybeRefOrGetter<number | null>
     })
 }
 
-export function useSearchFamilyEventsQuery(
-    searchReq: MaybeRef<FamilyEventSearchReq>,
-    params?: MaybeRef<PageParams>,
-    enabled = true
-) {
-    const resolvedSearchReq = computed(() => unref(searchReq))
-    const resolvedParams = computed(() => normalizeParams(params))
-
-    return useQuery({
-        queryKey: computed(() =>
-            QUERY_KEYS.FAMILY_EVENT.search(resolvedSearchReq.value, resolvedParams.value)
-        ),
-        queryFn: () =>
-            familyEventService.searchEvents(resolvedSearchReq.value, resolvedParams.value),
-        enabled,
-        staleTime: 30_000,
-        placeholderData: (prev) => prev
-    })
-}
-
-export function useSearchFamilyEventsMutation() {
-    return useMutation<ApiResponse<PageResponse<FamilyEventRes>>, Error, SearchEventVariables>({
-        mutationFn: ({ data, params }) => familyEventService.searchEvents(data, params)
-    })
-}
 
 export function useCreateFamilyEventMutation() {
     const queryClient = useQueryClient()

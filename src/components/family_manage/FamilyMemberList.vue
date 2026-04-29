@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { FamilyMemberRes } from '@/types/family/family-member'
+import type { FamilyMemberRes } from '@/types/family/family-member.types'
 import FamilyMemberItem from '@/components/family_manage/FamilyMemberItem.vue'
 
 defineProps<{

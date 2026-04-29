@@ -1,12 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/vue-query"
 import { familyInvitationService } from "@/services/family_invitation.service"
-import type { PageParams } from "@/types/page-response"
+import type { PageParams } from "@/types/page-response.types"
 import { computed, unref, type MaybeRef, type Ref } from "vue"
 import type {
     CreateFamilyInvitationReq,
     InviteInvitationMemberRes
-} from "@/types/family/family-invitation"
-import type { ApiResponse } from "@/types/api-response"
+} from "@/types/family/family-invitation.types"
+import type { ApiResponse } from "@/types/api-response.types"
 import { notify } from "@/utils/notify"
 import { QUERY_KEYS } from "@/hooks/keys/query-keys"
 

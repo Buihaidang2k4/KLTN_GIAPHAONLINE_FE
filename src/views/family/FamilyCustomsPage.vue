@@ -3,7 +3,7 @@ import { ref, computed } from 'vue';
 import {
     BookOpen, Plus, ListOrdered, ArrowLeft, Info
 } from 'lucide-vue-next';
-import type { CeremonyRes, CeremonyTimelineRes } from '@/types/ceremony/ceremony';
+import type { CeremonyRes, CeremonyTimelineRes } from '@/types/ceremony/ceremony.types';
 
 // Import components
 import StepModal from '@/components/family_customs/StepModal.vue';
@@ -1188,7 +1188,8 @@ const deleteStep = (timelineId: number) => {
                                     {{ selectedCeremony?.ceremonyName }}
                                 </h1>
                                 <p class="text-sm text-slate-600 mt-2 leading-relaxed">
-                                    {{ selectedCeremony?.description }}</p>
+                                    {{ selectedCeremony?.description }}
+                                </p>
                             </div>
                         </div>
                     </div>

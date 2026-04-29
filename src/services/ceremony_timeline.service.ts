@@ -1,10 +1,10 @@
-import type { ApiResponse } from "@/types/api-response";
-import type { PageParams, PageResponse } from "@/types/page-response";
+import type { ApiResponse } from "@/types/api-response.types";
+import type { PageParams, PageResponse } from "@/types/page-response.types";
 import type {
     CeremonyTimelineReq,
     CeremonyTimelineRes,
     CeremonyTimelineUpdateReq,
-} from "@/types/ceremony/ceremony";
+} from "@/types/ceremony/ceremony.types";
 import api from "./api.base";
 
 export const ceremonyTimelineService = {

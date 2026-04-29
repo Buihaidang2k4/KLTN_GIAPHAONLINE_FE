@@ -2,10 +2,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/vue-query"
 import { accountService } from "@/services/account.service"
 import { QUERY_KEYS } from "@/hooks/keys/query-keys"
 
-import type { PageParams } from "@/types/page-response"
+import type { PageParams } from "@/types/page-response.types"
 import { computed, toValue, type MaybeRefOrGetter } from "vue"
 import { notify } from "@/utils/notify"
-import type { ChangePasswordAccountReq, UpdateAccountReq } from "@/types/account/account"
+import type { ChangePasswordAccountReq, UpdateAccountReq } from "@/types/account/account.types"
 
 export function useAccountsQuery(params?: PageParams) {
     return useQuery({

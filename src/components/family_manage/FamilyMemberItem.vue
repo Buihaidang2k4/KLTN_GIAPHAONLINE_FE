@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { FamilyMemberRes } from "@/types/family/family-member"
+import type { FamilyMemberRes } from "@/types/family/family-member.types"
 import { formatDate } from "@/utils/format-date"
 import { Mail, Settings, Trash2 } from "lucide-vue-next"
 
