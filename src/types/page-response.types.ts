@@ -27,5 +27,6 @@ export interface PageParamsEvents {
     size?: number
     sort?: string
     keyword?: string
+    option?: 'ALL' | 'UPCOMING'
 }
 

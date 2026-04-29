@@ -13,6 +13,7 @@
     "@tailwindcss/vite": "^4.1.18",
     "@tanstack/vue-query": "^5.92.7",
     "@tanstack/vue-query-devtools": "^6.1.16",
+    "@vueuse/core": "^14.2.1",
     "@wangeditor/editor": "^5.1.23",
     "@wangeditor/editor-for-vue": "^5.1.12",
     "axios": "^1.13.2",

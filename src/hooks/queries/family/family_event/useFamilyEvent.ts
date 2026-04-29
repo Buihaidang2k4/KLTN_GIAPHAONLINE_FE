@@ -17,7 +17,9 @@ function normalizeParams(params?: MaybeRef<PageParams>) {
     return {
         page: p?.page ?? 0,
         size: p?.size ?? 10,
-        sort: p?.sort ?? "createdAt,desc"
+        sort: p?.sort ?? "createdAt,desc",
+        keyword: (p as PageParamsEvents)?.keyword ?? "",
+        option: (p as PageParamsEvents)?.option ?? "ALL"
     }
 }
 

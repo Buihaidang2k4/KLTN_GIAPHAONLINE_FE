@@ -1,4 +1,4 @@
-import type { PageParams } from "@/types/page-response.types";
+import type { PageParams, PageParamsEvents } from "@/types/page-response.types";
 
 export const QUERY_KEYS = {
     AUTH: {
@@ -45,14 +45,11 @@ export const QUERY_KEYS = {
     FAMILY_EVENT: {
         all: ["family-events"] as const,
 
-        listByFamily: (familyId: string | number, params?: PageParams) =>
+        listByFamily: (familyId: string | number, params?: PageParamsEvents) =>
             ["family-events", "family", familyId, params] as const,
 
         detail: (eventId: string | number) =>
             ["family-events", "detail", eventId] as const,
-
-        search: (search?: unknown, params?: PageParams) =>
-            ["family-events", "search", search, params] as const,
 
         familyList: (familyId: string | number) =>
             ["family-events", "family", familyId] as const,
