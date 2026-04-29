@@ -2,21 +2,23 @@
 import { ref, computed, reactive, watch } from 'vue'
 import {
   Calendar as CalendarIcon,
+  Pencil,
+  Trash2,
   Search,
   MapPin,
   Clock,
-  MoreVertical,
   Bell,
   CalendarDays,
   Filter,
-  Info
+  Plus
 } from 'lucide-vue-next'
 import { refDebounced } from '@vueuse/core'
-import type { FamilyEventRes } from '@/types/family/family-event.types'
+import type { FamilyEventReq, FamilyEventRes, UpdateFamilyEventReq } from '@/types/family/family-event.types'
 import { formatDate } from '@/utils/format-date'
-import { useFamilyEventsByFamilyQuery } from '@/hooks/queries/family/family_event/useFamilyEvent'
+import { useCreateFamilyEventMutation, useDeleteFamilyEventMutation, useFamilyEventsByFamilyQuery, useUpdateFamilyEventMutation } from '@/hooks/queries/family/family_event/useFamilyEvent'
 import AppPagination from '@/components/forms/common/AppPagination.vue'
 import { useFamilyStore } from '@/store/family/useFamilyStore'
+import AddOrUpdateEventForm from '@/components/forms/family_event/AddOrUpdateEventForm.vue'
 
 const activeTab = ref<'ALL' | 'UPCOMING'>('ALL')
 const familyStore = useFamilyStore()
@@ -129,6 +131,77 @@ watch(activeTab, (v) => {
 watch(debounceKeyword, () => {
   optionPagination.page = 0
 })
+
+// curd
+const { mutate: createEventMutation } = useCreateFamilyEventMutation();
+const { mutate: updateEventMutation } = useUpdateFamilyEventMutation();
+const { mutate: deleteEventMutation } = useDeleteFamilyEventMutation();
+const mode = {
+  create: 'create',
+  update: 'update',
+} as const
+
+const currentMode = ref<typeof mode[keyof typeof mode]>(mode.create);
+const isShowAddOrUpdateEventForm = ref(false);
+const selectedEvent = ref<FamilyEventRes | null>(null)
+
+const closeEventForm = () => {
+  isShowAddOrUpdateEventForm.value = false
+  selectedEvent.value = null
+}
+
+const openCreateForm = () => {
+  currentMode.value = mode.create
+  selectedEvent.value = null
+  isShowAddOrUpdateEventForm.value = true
+}
+
+const openUpdateForm = (event: FamilyEventRes) => {
+  currentMode.value = mode.update
+  selectedEvent.value = event
+  isShowAddOrUpdateEventForm.value = true
+}
+
+
+const handleCreateEvent = (payload: FamilyEventReq) => {
+  if (!familyId.value) return
+
+  createEventMutation({
+    familyId: familyId.value,
+    data: payload
+  }, {
+    onSuccess: () => {
+      closeEventForm()
+    }
+  })
+}
+
+
+const handleUpdateEvent = (payload: UpdateFamilyEventReq) => {
+  if (!familyId.value || !selectedEvent.value?.familyEventId) return
+
+  updateEventMutation({
+    familyId: familyId.value,
+    eventId: selectedEvent.value.familyEventId,
+    data: payload
+  }, {
+    onSuccess: () => {
+      closeEventForm()
+    }
+  })
+}
+
+
+const handleDeleteEvent = (eventId: number) => {
+  if (!familyId.value) return
+
+  deleteEventMutation({
+    familyId: familyId.value,
+    eventId
+  })
+}
+
+
 </script>
 
 
@@ -185,11 +258,12 @@ watch(debounceKeyword, () => {
             <Filter :size="18" />
           </button>
 
-          <button type="button"
+          <button type="button" @click="openCreateForm"
             class="flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-200 transition-all hover:bg-indigo-700 active:scale-95">
             <Plus :size="18" />
             Tạo sự kiện
           </button>
+
         </div>
       </div>
     </div>
@@ -201,22 +275,16 @@ watch(debounceKeyword, () => {
         <table class="min-w-full border-collapse text-left">
           <thead>
             <tr class="border-b border-slate-200 bg-slate-50/50">
-              <th
-                v-for="(header, index) in tableHeaders"
-                :key="index"
-                class="whitespace-nowrap px-5 py-4 text-[13px] font-black uppercase tracking-wider text-slate-500"
-              >
+              <th v-for="(header, index) in tableHeaders" :key="index"
+                class="whitespace-nowrap px-5 py-4 text-[13px] font-black uppercase tracking-wider text-slate-500">
                 {{ header }}
               </th>
             </tr>
           </thead>
 
           <tbody v-if="events.length > 0" class="divide-y divide-slate-100">
-            <tr
-              v-for="(event, index) in events"
-              :key="event.familyEventId"
-              class="group transition-colors hover:bg-indigo-50/30"
-            >
+            <tr v-for="(event, index) in events" :key="event.familyEventId"
+              class="group transition-colors hover:bg-indigo-50/30">
 
               <!-- STT -->
               <td class="px-5 py-4 align-top">
@@ -269,36 +337,30 @@ watch(debounceKeyword, () => {
 
               <!-- STATUS -->
               <td class="px-5 py-4 align-top">
-                <span
-                  :class="[
-                    'inline-flex whitespace-nowrap rounded-lg border px-2.5 py-1 text-[11px] font-bold',
-                    getStatusClass(event.status)
-                  ]"
-                >
+                <span :class="[
+                  'inline-flex whitespace-nowrap rounded-lg border px-2.5 py-1 text-[11px] font-bold',
+                  getStatusClass(event.status)
+                ]">
                   {{ getStatusText(event.status) }}
                 </span>
               </td>
 
               <!-- REPEAT -->
               <td class="px-5 py-4 align-top">
-                <span
-                  :class="[
-                    'inline-flex whitespace-nowrap rounded-lg px-2.5 py-1 text-[11px] font-bold',
-                    getRepeatType(event.repeatType).class
-                  ]"
-                >
+                <span :class="[
+                  'inline-flex whitespace-nowrap rounded-lg px-2.5 py-1 text-[11px] font-bold',
+                  getRepeatType(event.repeatType).class
+                ]">
                   {{ getRepeatType(event.repeatType).label }}
                 </span>
               </td>
 
               <!-- REMINDER -->
               <td class="px-5 py-4 align-top">
-                <span
-                  :class="[
-                    'inline-flex whitespace-nowrap rounded-lg px-2.5 py-1 text-[11px] font-bold',
-                    getReminderEventType(event.reminderType).class
-                  ]"
-                >
+                <span :class="[
+                  'inline-flex whitespace-nowrap rounded-lg px-2.5 py-1 text-[11px] font-bold',
+                  getReminderEventType(event.reminderType).class
+                ]">
                   {{ getReminderEventType(event.reminderType).label }}
                 </span>
               </td>
@@ -314,12 +376,8 @@ watch(debounceKeyword, () => {
               <td class="px-5 py-4 align-top">
                 <div class="flex max-w-72 items-start gap-2 text-sm text-slate-600">
                   <MapPin :size="14" class="mt-0.5 shrink-0 text-slate-400" />
-                  <a
-                    v-if="event.locationMapUrl"
-                    :href="event.locationMapUrl"
-                    target="_blank"
-                    class="line-clamp-2 font-medium text-indigo-600 hover:underline"
-                  >
+                  <a v-if="event.locationMapUrl" :href="event.locationMapUrl" target="_blank"
+                    class="line-clamp-2 font-medium text-indigo-600 hover:underline">
                     {{ event.location || 'Xem bản đồ' }}
                   </a>
                   <span v-else class="line-clamp-2">
@@ -337,12 +395,20 @@ watch(debounceKeyword, () => {
 
               <!-- ACTION -->
               <td class="px-5 py-4 align-top">
-                <div class="flex items-center justify-center">
+                <div class="flex items-center justify-center gap-1">
                   <button
                     type="button"
-                    class="rounded-lg border border-transparent p-2 text-slate-400 transition-all hover:border-slate-200 hover:bg-white hover:text-slate-800"
+                    @click="openUpdateForm(event)"
+                    class="rounded-lg border border-transparent p-2 text-slate-400 transition-all hover:border-indigo-100 hover:bg-white hover:text-indigo-600"
                   >
-                    <MoreVertical :size="18" />
+                    <Pencil :size="16" />
+                  </button>
+                  <button
+                    type="button"
+                    @click="handleDeleteEvent(event.familyEventId)"
+                    class="rounded-lg border border-transparent p-2 text-slate-400 transition-all hover:border-rose-100 hover:bg-white hover:text-rose-600"
+                  >
+                    <Trash2 :size="16" />
                   </button>
                 </div>
               </td>
@@ -384,6 +450,15 @@ watch(debounceKeyword, () => {
         </div>
       </div>
     </div>
+
+    <AddOrUpdateEventForm
+      :show="isShowAddOrUpdateEventForm"
+      :mode="currentMode"
+      :event="selectedEvent"
+      @close="closeEventForm"
+      @submit="currentMode === mode.create ? handleCreateEvent($event) : handleUpdateEvent($event)"
+    />
+
     <!-- panagtion -->
     <AppPagination :page="currentPage" :total-pages="currentTotalPages" :has-next="hasNextPage" :has-prev="hasPrevPage"
       @next="nextPage" @prev="prevPage" />

@@ -69,5 +69,18 @@ export const QUERY_KEYS = {
 
         DETAILTEMP: ["accounts", "detail"] as const,
         MY_INFO: ["accounts", "my-info"] as const
+    },
+
+    FAMILY_POST_CATEGORY: {
+        all: ["family-post-categories"] as const,
+
+        listByFamily: (familyId: string | number) =>
+            ["family-post-categories", "family", familyId] as const,
+
+        detail: (categoryId: string | number) =>
+            ["family-post-categories", "detail", categoryId] as const,
+
+        allCategories: () =>
+            ["family-post-categories", "all"] as const
     }
 } as const
