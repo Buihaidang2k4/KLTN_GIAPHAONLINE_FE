@@ -4,11 +4,11 @@ import { familyPostCategoryService } from "@/services/family_post_category.servi
 import { QUERY_KEYS } from "@/hooks/keys/query-keys"
 import { notify } from "@/utils/notify"
 import type { ApiResponse } from "@/types/api-response.types"
+import type { PageParams } from "@/types/page-response.types"
 import type {
     FamilyPostCategoryRes,
     PostCategoryReq
-} from "@/types/family_post_category/post_category.types"
-import type { PageParams } from "@/types/page-response.types"
+} from "@/types/family/post_category.types"
 
 type CreatePostCategoryVariables = {
     familyId: number
@@ -39,21 +39,27 @@ function normalizeParams(params?: MaybeRefOrGetter<PageParams>) {
 
 /**
  * Query: Lấy danh sách category theo familyId
- */
-export function useFamilyPostCategoriesByFamilyQuery(
+
+ */export function useFamilyPostCategoriesByFamilyQuery(
     familyId: MaybeRefOrGetter<number | null | undefined>,
-    keyword?: MaybeRefOrGetter<string | null | undefined>,
+    keyword?: MaybeRefOrGetter<string | null>,
     params?: MaybeRefOrGetter<PageParams>
 ) {
+
     const resolvedFamilyId = computed(() => toValue(familyId))
+    const resolvedKeyword = computed(() => keyword ? toValue(keyword) : null)
     const normalizedParams = computed(() => normalizeParams(params))
 
     return useQuery({
         queryKey: computed(() =>
-            QUERY_KEYS.FAMILY_POST_CATEGORY.listByFamily(resolvedFamilyId.value ?? "unknown")
+            [...QUERY_KEYS.FAMILY_POST_CATEGORY.listByFamily(resolvedFamilyId.value ?? "unknown", normalizedParams.value), resolvedKeyword.value] as const
         ),
         queryFn: () =>
-            familyPostCategoryService.getPostCategoriesByFamilyId(resolvedFamilyId.value!, toValue(keyword), normalizedParams.value),
+            familyPostCategoryService.getPostCategoriesByFamilyId(
+                resolvedFamilyId.value!,
+                resolvedKeyword.value,
+                normalizedParams.value
+            ),
         enabled: computed(() => !!resolvedFamilyId.value),
         staleTime: 30_000,
         placeholderData: (prev) => prev
@@ -88,7 +94,7 @@ export function useAllFamilyPostCategoriesQuery(params?: MaybeRefOrGetter<PagePa
     const normalizedParams = computed(() => normalizeParams(params))
 
     return useQuery({
-        queryKey: QUERY_KEYS.FAMILY_POST_CATEGORY.allCategories(),
+        queryKey: computed(() => [...QUERY_KEYS.FAMILY_POST_CATEGORY.allCategories(), normalizedParams.value]),
         queryFn: () => familyPostCategoryService.getPostCategories(normalizedParams.value),
         staleTime: 30_000,
         placeholderData: (prev) => prev
@@ -101,17 +107,19 @@ export function useAllFamilyPostCategoriesQuery(params?: MaybeRefOrGetter<PagePa
 export function useCreateFamilyPostCategoryMutation() {
     const queryClient = useQueryClient()
 
-    return useMutation<ApiResponse<FamilyPostCategoryRes>, Error, CreatePostCategoryVariables>({
+    const mutation = useMutation<ApiResponse<FamilyPostCategoryRes>, Error, CreatePostCategoryVariables>({
         mutationFn: ({ familyId, data }) =>
             familyPostCategoryService.createFamilyPostCategory(familyId, data),
 
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({
-                queryKey: QUERY_KEYS.FAMILY_POST_CATEGORY.listByFamily(variables.familyId)
+                queryKey: ["family-post-categories", "family", variables.familyId],
+                exact: false
             })
 
             queryClient.invalidateQueries({
-                queryKey: QUERY_KEYS.FAMILY_POST_CATEGORY.allCategories()
+                queryKey: QUERY_KEYS.FAMILY_POST_CATEGORY.allCategories(),
+                exact: false
             })
 
             notify.success("Thông báo", "Tạo danh mục thành công")
@@ -121,6 +129,11 @@ export function useCreateFamilyPostCategoryMutation() {
             notify.error("Thông báo", "Tạo danh mục thất bại")
         }
     })
+
+    return {
+        mutate: mutation.mutate,
+        isPending: mutation.isPending
+    }
 }
 
 /**
@@ -129,21 +142,24 @@ export function useCreateFamilyPostCategoryMutation() {
 export function useUpdateFamilyPostCategoryMutation() {
     const queryClient = useQueryClient()
 
-    return useMutation<ApiResponse<FamilyPostCategoryRes>, Error, UpdatePostCategoryVariables>({
+    const mutation = useMutation<ApiResponse<FamilyPostCategoryRes>, Error, UpdatePostCategoryVariables>({
         mutationFn: ({ familyId, categoryId, data }) =>
             familyPostCategoryService.updatePostCategory(familyId, categoryId, data),
 
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({
-                queryKey: QUERY_KEYS.FAMILY_POST_CATEGORY.listByFamily(variables.familyId)
+                queryKey: ["family-post-categories", "family", variables.familyId],
+                exact: false
             })
 
             queryClient.invalidateQueries({
-                queryKey: QUERY_KEYS.FAMILY_POST_CATEGORY.detail(variables.categoryId)
+                queryKey: QUERY_KEYS.FAMILY_POST_CATEGORY.detail(variables.categoryId),
+                exact: false
             })
 
             queryClient.invalidateQueries({
-                queryKey: QUERY_KEYS.FAMILY_POST_CATEGORY.allCategories()
+                queryKey: QUERY_KEYS.FAMILY_POST_CATEGORY.allCategories(),
+                exact: false
             })
 
             notify.success("Thông báo", "Cập nhật danh mục thành công")
@@ -153,6 +169,11 @@ export function useUpdateFamilyPostCategoryMutation() {
             notify.error("Thông báo", "Cập nhật danh mục thất bại")
         }
     })
+
+    return {
+        mutate: mutation.mutate,
+        isPending: mutation.isPending
+    }
 }
 
 /**
@@ -161,17 +182,19 @@ export function useUpdateFamilyPostCategoryMutation() {
 export function useDeleteFamilyPostCategoryMutation() {
     const queryClient = useQueryClient()
 
-    return useMutation<ApiResponse<void>, Error, DeletePostCategoryVariables>({
+    const mutation = useMutation<ApiResponse<void>, Error, DeletePostCategoryVariables>({
         mutationFn: ({ familyId, categoryId }) =>
             familyPostCategoryService.deletePostCategory(familyId, categoryId),
 
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({
-                queryKey: QUERY_KEYS.FAMILY_POST_CATEGORY.listByFamily(variables.familyId)
+                queryKey: ["family-post-categories", "family", variables.familyId],
+                exact: false
             })
 
             queryClient.invalidateQueries({
-                queryKey: QUERY_KEYS.FAMILY_POST_CATEGORY.allCategories()
+                queryKey: QUERY_KEYS.FAMILY_POST_CATEGORY.allCategories(),
+                exact: false
             })
 
             queryClient.removeQueries({
@@ -185,4 +208,9 @@ export function useDeleteFamilyPostCategoryMutation() {
             notify.error("Thông báo", "Xóa danh mục thất bại")
         }
     })
+
+    return {
+        mutate: mutation.mutate,
+        isPending: mutation.isPending
+    }
 }

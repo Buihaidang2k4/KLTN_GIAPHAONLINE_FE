@@ -74,8 +74,8 @@ export const QUERY_KEYS = {
     FAMILY_POST_CATEGORY: {
         all: ["family-post-categories"] as const,
 
-        listByFamily: (familyId: string | number) =>
-            ["family-post-categories", "family", familyId] as const,
+        listByFamily: (familyId: string | number, params?: PageParams) =>
+            ["family-post-categories", "family", familyId, params] as const,
 
         detail: (categoryId: string | number) =>
             ["family-post-categories", "detail", categoryId] as const,

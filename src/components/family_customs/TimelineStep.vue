@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Edit3, Trash2 } from 'lucide-vue-next';
-import type { CeremonyTimelineRes } from '@/types/ceremony/ceremony.types';
+import type { CeremonyTimelineRes } from '@/types/family/ceremony.types';
 
 interface Props {
     step: CeremonyTimelineRes;

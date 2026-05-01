@@ -3,7 +3,7 @@ import { ref, computed } from 'vue';
 import {
     BookOpen, Plus, ListOrdered, ArrowLeft, Info
 } from 'lucide-vue-next';
-import type { CeremonyRes, CeremonyTimelineRes } from '@/types/ceremony/ceremony.types';
+import type { CeremonyRes, CeremonyTimelineRes } from '@/types/family/ceremony.types';
 
 // Import components
 import StepModal from '@/components/family_customs/StepModal.vue';

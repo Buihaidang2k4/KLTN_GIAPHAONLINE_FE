@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Clock, ListOrdered, ChevronRight } from 'lucide-vue-next';
-import type { CeremonyRes } from '@/types/ceremony/ceremony.types';
+import type { CeremonyRes } from '@/types/family/ceremony.types';
 
 interface Props {
     ceremony: CeremonyRes;

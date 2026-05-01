@@ -1,8 +1,8 @@
 import { toValue, type MaybeRefOrGetter } from "vue";
 import api from "./api.base";
 import type { ApiResponse } from "@/types/api-response.types";
-import type { FamilyPostCategoryRes, PostCategoryReq } from "@/types/family_post_category/post_category.types";
-import type { PageParams } from "@/types/page-response.types";
+import type { FamilyPostCategoryRes, PostCategoryReq } from "@/types/family/post_category.types";
+import type { PageParams, PageResponse } from "@/types/page-response.types";
 
 
 export const familyPostCategoryService = {
@@ -61,24 +61,25 @@ export const familyPostCategoryService = {
         return res.data;
     },
 
-
     getPostCategoriesByFamilyId: async (
-        familyId: MaybeRefOrGetter<number | null | undefined>,
-        keyword?: MaybeRefOrGetter<string | null | undefined>,
+        familyId: MaybeRefOrGetter<number | null>,
+        keyword?: MaybeRefOrGetter<string | null>,
         params?: PageParams
-    ): Promise<ApiResponse<FamilyPostCategoryRes[]>> => {
+    ): Promise<ApiResponse<PageResponse<FamilyPostCategoryRes>>> => {
+
         const res = await api.get(`/family-post-categories`, {
             params: {
                 familyId: toValue(familyId),
-                keyword: toValue(keyword),
+                keyword: keyword ? toValue(keyword) : undefined,
                 ...params
             }
         });
+
         return res.data;
     },
 
 
-    getPostCategories: async (params?: PageParams): Promise<ApiResponse<FamilyPostCategoryRes[]>> => {
+    getPostCategories: async (params?: PageParams): Promise<ApiResponse<PageResponse<FamilyPostCategoryRes>>> => {
         const res = await api.get(`/family-post-categories/all`, { params });
         return res.data;
     }

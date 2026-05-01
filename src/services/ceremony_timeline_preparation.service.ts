@@ -4,7 +4,7 @@ import type {
     CeremonyTimelinePreparationReq,
     CeremonyTimelinePreparationRes,
     CeremonyTimelinePreparationUpdateReq,
-} from "@/types/ceremony/ceremony.types";
+} from "@/types/family/ceremony.types";
 import api from "./api.base";
 
 export const ceremonyTimelinePreparationService = {

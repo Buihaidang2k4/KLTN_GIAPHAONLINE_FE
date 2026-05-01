@@ -1,6 +1,6 @@
 import api from "./api.base";
 import type { ApiResponse } from "@/types/api-response.types";
-import type { CeremonyReq, CeremonyRes, CeremonyTimelinePreparationReq, CeremonyTimelinePreparationRes, CeremonyTimelinePreparationUpdateReq, CeremonyTimelineReq, CeremonyTimelineRes, CeremonyTimelineUpdateReq, CeremonyUpdateReq } from "@/types/ceremony/ceremony.types";
+import type { CeremonyReq, CeremonyRes, CeremonyTimelinePreparationReq, CeremonyTimelinePreparationRes, CeremonyTimelinePreparationUpdateReq, CeremonyTimelineReq, CeremonyTimelineRes, CeremonyTimelineUpdateReq, CeremonyUpdateReq } from "@/types/family/ceremony.types";
 import type { PageResponse } from "@/types/page-response.types";
 
 

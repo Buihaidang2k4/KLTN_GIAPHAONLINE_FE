@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { BookOpen, ShieldCheck, Sparkles, ArrowRight } from 'lucide-vue-next';
-import { SubscriptionPlan, PlanName } from '@/types/subscription/subscription.types';
+import { SubscriptionPlan, PlanName } from '@/types/family/subscription.types';
 import PackageCard from '@/components/family_service/PackageCard.vue';
 
 const MOCK_PLANS: SubscriptionPlan[] = [

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Zap, Users, HardDrive, Calendar } from 'lucide-vue-next';
-import { SubscriptionPlan, PlanName } from '@/types/subscription/subscription.types';
+import { SubscriptionPlan, PlanName } from '@/types/family/subscription.types';
 
 interface Props {
     plan: SubscriptionPlan;

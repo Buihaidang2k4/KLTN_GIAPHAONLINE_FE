@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive, watch } from 'vue'
 import { X } from 'lucide-vue-next'
-import type { FamilyEventReq, FamilyEventRes } from '@/types/family/family-event.types'
+import type { FamilyEventReq, FamilyEventRes, UpdateFamilyEventReq } from '@/types/family/family-event.types'
 
 type CalendarType = 'SOLAR' | 'LUNAR'
 type RepeatType = 'NONE' | 'YEARLY'

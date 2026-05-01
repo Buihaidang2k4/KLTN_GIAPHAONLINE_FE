@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, reactive, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import {
   Calendar as CalendarIcon,
   Pencil,
@@ -19,6 +19,7 @@ import { useCreateFamilyEventMutation, useDeleteFamilyEventMutation, useFamilyEv
 import AppPagination from '@/components/forms/common/AppPagination.vue'
 import { useFamilyStore } from '@/store/family/useFamilyStore'
 import AddOrUpdateEventForm from '@/components/forms/family_event/AddOrUpdateEventForm.vue'
+import { usePagination } from '@/composables/common/usePagination'
 
 const activeTab = ref<'ALL' | 'UPCOMING'>('ALL')
 const familyStore = useFamilyStore()
@@ -86,20 +87,26 @@ const tableHeaders = [
 ]
 
 // ===== SEARCH + PAGINATION =====
+const {
+  pagination,
+  currentPage,
+  hasNextPage,
+  hasPrevPage,
+  nextPage,
+  prevPage,
+  setTotalPages
+} = usePagination(10, 0)
+
 const keyword = ref('')
 const debounceKeyword = refDebounced(keyword, 400)
 
-const optionPagination = reactive({
-  page: 0,
-  size: 10,
-  option: 'ALL' as 'ALL' | 'UPCOMING'
-})
+const option = ref<'ALL' | 'UPCOMING'>('ALL')
 
 const params = computed(() => ({
-  page: optionPagination.page,
-  size: optionPagination.size,
+  page: pagination.page,
+  size: pagination.size,
   keyword: debounceKeyword.value,
-  option: optionPagination.option
+  option: option.value
 }))
 
 const { data: familyEventsData } =
@@ -109,27 +116,22 @@ const events = computed<FamilyEventRes[]>(() => {
   return familyEventsData.value?.data?.items ?? []
 })
 
-const currentPage = computed(() => optionPagination.page)
-
-const hasNextPage = computed(() => currentPage.value + 1 < currentTotalPages.value)
-const hasPrevPage = computed(() => currentPage.value > 0)
-const currentTotalPages = computed(
-  () => familyEventsData.value?.data?.totalPages ?? 1
+watch(
+  () => familyEventsData.value?.data?.totalPages,
+  (total) => setTotalPages(total || 0),
+  { immediate: true }
 )
 
-const nextPage = () => optionPagination.page++
-const prevPage = () => optionPagination.page--
-
 const indexUI = (index: number) =>
-  index + 1 + optionPagination.page * optionPagination.size
+  index + 1 + pagination.page * pagination.size
 
 watch(activeTab, (v) => {
-  optionPagination.option = v
-  optionPagination.page = 0
+  option.value = v
+  pagination.page = 0
 })
 
 watch(debounceKeyword, () => {
-  optionPagination.page = 0
+  pagination.page = 0
 })
 
 // curd
@@ -396,18 +398,12 @@ const handleDeleteEvent = (eventId: number) => {
               <!-- ACTION -->
               <td class="px-5 py-4 align-top">
                 <div class="flex items-center justify-center gap-1">
-                  <button
-                    type="button"
-                    @click="openUpdateForm(event)"
-                    class="rounded-lg border border-transparent p-2 text-slate-400 transition-all hover:border-indigo-100 hover:bg-white hover:text-indigo-600"
-                  >
+                  <button type="button" @click="openUpdateForm(event)"
+                    class="rounded-lg border border-transparent p-2 text-slate-400 transition-all hover:border-indigo-100 hover:bg-white hover:text-indigo-600">
                     <Pencil :size="16" />
                   </button>
-                  <button
-                    type="button"
-                    @click="handleDeleteEvent(event.familyEventId)"
-                    class="rounded-lg border border-transparent p-2 text-slate-400 transition-all hover:border-rose-100 hover:bg-white hover:text-rose-600"
-                  >
+                  <button type="button" @click="handleDeleteEvent(event.familyEventId)"
+                    class="rounded-lg border border-transparent p-2 text-slate-400 transition-all hover:border-rose-100 hover:bg-white hover:text-rose-600">
                     <Trash2 :size="16" />
                   </button>
                 </div>
@@ -451,16 +447,12 @@ const handleDeleteEvent = (eventId: number) => {
       </div>
     </div>
 
-    <AddOrUpdateEventForm
-      :show="isShowAddOrUpdateEventForm"
-      :mode="currentMode"
-      :event="selectedEvent"
+    <AddOrUpdateEventForm :show="isShowAddOrUpdateEventForm" :mode="currentMode" :event="selectedEvent"
       @close="closeEventForm"
-      @submit="currentMode === mode.create ? handleCreateEvent($event) : handleUpdateEvent($event)"
-    />
+      @submit="currentMode === mode.create ? handleCreateEvent($event) : handleUpdateEvent($event)" />
 
     <!-- panagtion -->
-    <AppPagination :page="currentPage" :total-pages="currentTotalPages" :has-next="hasNextPage" :has-prev="hasPrevPage"
+    <AppPagination :page="currentPage" :total-pages="pagination.totalPages" :has-next="hasNextPage" :has-prev="hasPrevPage"
       @next="nextPage" @prev="prevPage" />
   </div>
 </template>

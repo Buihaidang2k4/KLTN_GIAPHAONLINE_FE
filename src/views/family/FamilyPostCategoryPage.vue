@@ -1,84 +1,137 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import {
   FolderTree,
   Plus,
   Search,
   Edit2,
   Trash2,
-  Eye,
-  ChevronRight,
   Hash,
   LayoutGrid
 } from 'lucide-vue-next'
+import { formatDate } from '@/utils/format-date';
+import { useCreateFamilyPostCategoryMutation, useDeleteFamilyPostCategoryMutation, useFamilyPostCategoriesByFamilyQuery, useUpdateFamilyPostCategoryMutation } from '@/hooks/queries/family/family_post_category/useFamilyPostCategory';
+import type { FamilyPostCategoryRes, PostCategoryReq } from '@/types/family/post_category.types';
+import { useFamilyStore } from '@/store/family/useFamilyStore';
+import CreateUpdateFamilyPostCategoryForm from '@/components/forms/family_post_category/CreateUpdateFamilyPostCategoryForm.vue';
+import AppPagination from '@/components/forms/common/AppPagination.vue';
+import { usePagination } from '@/composables/common/usePagination';
 
-interface Category {
-  id: number;
-  name: string;
-  slug: string;
-  description: string;
-  postCount: number;
-  status: 'active' | 'hidden';
-  color: string;
-  lastUpdated: string;
-}
+const familyStore = useFamilyStore();
+const familyId = computed(() => familyStore.currentFamilyId)
+
+const {
+  pagination,
+  currentPage,
+  hasNextPage,
+  hasPrevPage,
+  nextPage,
+  prevPage,
+  setTotalPages
+} = usePagination(10, 0)
 
 const searchQuery = ref('')
+const keyword = computed(() => searchQuery.value.trim() || null)
 
-const categories = ref<Category[]>([
-  {
-    id: 1,
-    name: "Lịch sử dòng họ",
-    slug: "lich-su-dong-ho",
-    description: "Các bài viết về nguồn gốc, gia phả và các câu chuyện truyền thống.",
-    postCount: 12,
-    status: 'active',
-    color: 'bg-amber-500',
-    lastUpdated: "2024-03-15"
-  },
-  {
-    id: 2,
-    name: "Gương sáng gia đình",
-    slug: "guong-sang",
-    description: "Tuyên dương các thành viên có thành tích xuất sắc trong học tập và công tác.",
-    postCount: 8,
-    status: 'active',
-    color: 'bg-blue-500',
-    lastUpdated: "2024-03-10"
-  },
-  {
-    id: 3,
-    name: "Thông báo chung",
-    slug: "thong-bao",
-    description: "Các tin tức ngắn, thông báo họp mặt hoặc việc hiếu hỷ.",
-    postCount: 25,
-    status: 'active',
-    color: 'bg-emerald-500',
-    lastUpdated: "2024-03-18"
-  },
-  {
-    id: 4,
-    name: "Kỷ niệm & Hình ảnh",
-    slug: "ky-niem-hinh-anh",
-    description: "Kho lưu trữ những khoảnh khắc đáng nhớ qua các thời kỳ.",
-    postCount: 45,
-    status: 'hidden',
-    color: 'bg-purple-500',
-    lastUpdated: "2024-02-20"
-  }
-])
+const params = computed(() => ({
+  page: pagination.page,
+  size: pagination.size,
+}))
 
-const filteredCategories = computed(() => {
-  if (!searchQuery.value) return categories.value
-  return categories.value.filter(c =>
-    c.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-    c.description.toLowerCase().includes(searchQuery.value.toLowerCase())
-  )
+const { data: familyPostCategoriesData } = useFamilyPostCategoriesByFamilyQuery(familyId, keyword, params)
+const categories = computed(() => familyPostCategoriesData.value?.data?.items || []);
+
+watch(
+  () => familyPostCategoriesData.value?.data?.totalPages,
+  (total) => setTotalPages(total || 0),
+  { immediate: true }
+)
+
+// Reset page when searching
+watch(searchQuery, () => {
+  pagination.page = 0
 })
 
-const formatDate = (dateStr: string) => {
-  return new Date(dateStr).toLocaleDateString('vi-VN')
+const { mutate: createCategory, isPending: isCreatePending } = useCreateFamilyPostCategoryMutation();
+const { mutate: updateCategory, isPending: isUpdatePending } = useUpdateFamilyPostCategoryMutation();
+const { mutate: deleteCategory, isPending: isDeletePending } = useDeleteFamilyPostCategoryMutation();
+
+const isLoading = computed(() => isCreatePending.value || isUpdatePending.value || isDeletePending.value)
+
+const mode = {
+  create: 'create',
+  update: 'update',
+} as const
+
+const currentMode = ref<typeof mode[keyof typeof mode]>(mode.create);
+const isShowAddOrUpdatePostForm = ref(false);
+const selectedPostCategory = ref<FamilyPostCategoryRes | null>(null)
+
+const closePostForm = () => {
+  isShowAddOrUpdatePostForm.value = false
+  selectedPostCategory.value = null
 }
+
+const openCreateForm = () => {
+  currentMode.value = mode.create
+  selectedPostCategory.value = null
+  isShowAddOrUpdatePostForm.value = true
+}
+
+const openUpdateForm = (postCategory: FamilyPostCategoryRes) => {
+  currentMode.value = mode.update
+  selectedPostCategory.value = postCategory
+  isShowAddOrUpdatePostForm.value = true
+}
+
+const handleFormSubmit = (payload: PostCategoryReq) => {
+  if (!familyId.value) return
+
+  if (currentMode.value === 'create') {
+    createCategory({
+      familyId: familyId.value,
+      data: payload
+    })
+  } else {
+    if (!selectedPostCategory.value?.categoryId) return
+    updateCategory({
+      familyId: familyId.value,
+      categoryId: selectedPostCategory.value.categoryId,
+      data: payload
+    })
+  }
+}
+
+const handleDeletePostCategory = (categoryId: number) => {
+  if (!familyId.value) return
+
+  if (confirm('Bạn có chắc chắn muốn xóa danh mục này?')) {
+    deleteCategory({
+      familyId: familyId.value,
+      categoryId
+    })
+  }
+}
+
+// Watch for successful mutations to close form
+watch(
+  () => [isCreatePending.value, isUpdatePending.value],
+  ([createPending, updatePending]) => {
+    if (!createPending && !updatePending && currentMode.value) {
+      closePostForm()
+    }
+  }
+)
+
+const tableHeaders = [
+  { label: '#' },
+  { label: 'Tên danh mục' },
+  { label: 'Mô tả' },
+  { label: 'Trạng thái' },
+  { label: 'Ngày tạo' },
+  { label: 'Cập nhật' },
+  { label: 'Hành động' },
+]
 </script>
 
 <template>
@@ -94,7 +147,7 @@ const formatDate = (dateStr: string) => {
         <p class="text-slate-500 text-sm mt-1">Phân loại các bài viết để con cháu dễ dàng tìm kiếm thông tin.</p>
       </div>
 
-      <button
+      <button @click="openCreateForm"
         class="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-2xl transition-all shadow-lg active:scale-95 font-bold">
         <Plus :size="20" />
         Thêm danh mục
@@ -112,7 +165,7 @@ const formatDate = (dateStr: string) => {
         <div class="h-10 w-px bg-slate-100 mx-2 hidden md:block"></div>
         <div class="hidden md:flex items-center gap-2 text-slate-500 font-bold px-4">
           <LayoutGrid :size="18" />
-          <span class="text-sm whitespace-nowrap">{{ categories.length }} Danh mục</span>
+          <span class="text-sm whitespace-nowrap">{{ categories.length || 0 }} Danh mục</span>
         </div>
       </div>
 
@@ -134,67 +187,61 @@ const formatDate = (dateStr: string) => {
         <table class="w-full text-left border-collapse">
           <thead>
             <tr class="bg-slate-50/80 border-b border-slate-100">
-              <th class="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest">Tên danh mục</th>
-              <th class="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest">Slug (Đường dẫn)
+              <th v-for="(title, index) in tableHeaders" :key="index"
+                class="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">
+                {{ title.label }}
               </th>
-              <th class="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">Số bài
-                viết</th>
-              <th class="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest">Trạng thái</th>
-              <th class="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest">Cập nhật</th>
-              <th class="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest"></th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-50">
-            <tr v-for="cat in filteredCategories" :key="cat.id" class="hover:bg-slate-50/50 transition-all group">
+            <tr v-for="(category, index) in categories" :key="category.categoryId"
+              class="hover:bg-slate-50/50 transition-all group">
+              <!-- STT -->
+              <td class="px-8 py-6 font-mono text-slate-500 font-bold">
+                {{ (pagination.page * pagination.size) + index + 1 }}
+              </td>
+
+              <!-- Tên danh mục -->
               <td class="px-8 py-6">
-                <div class="flex items-center gap-4">
-                  <div
-                    :class="['w-12 h-12 rounded-2xl shrink-0 flex items-center justify-center text-white font-black text-lg', cat.color]">
-                    {{ cat.name.charAt(0) }}
-                  </div>
-                  <div class="flex flex-col">
-                    <span class="font-bold text-slate-800 text-base leading-tight">{{ cat.name }}</span>
-                    <span class="text-xs text-slate-400 mt-1 line-clamp-1 italic">{{ cat.description }}</span>
-                  </div>
+                <div class="flex flex-col">
+                  <span class="font-bold text-slate-800 text-base leading-tight">{{ category.name }}</span>
+                  <span class="text-xs text-slate-400 mt-1 line-clamp-1 italic">ID: {{ category.categoryId }}</span>
                 </div>
               </td>
+
+              <!-- Mô tả -->
               <td class="px-8 py-6">
-                <code class="px-2 py-1 bg-slate-100 text-slate-500 rounded text-xs font-mono">/{{ cat.slug }}</code>
+                <span class="text-sm text-slate-600 line-clamp-2">{{ category.description || '-' }}</span>
               </td>
-              <td class="px-8 py-6 text-center">
-                <div
-                  class="inline-flex items-center justify-center w-10 h-10 bg-indigo-50 rounded-xl font-black text-indigo-600 text-sm">
-                  {{ cat.postCount }}
-                </div>
-              </td>
+
+              <!-- Trạng thái -->
               <td class="px-8 py-6">
-                <div v-if="cat.status === 'active'"
-                  class="flex items-center gap-1.5 text-emerald-600 font-bold text-xs uppercase">
-                  <div class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-                  Hiển thị
-                </div>
-                <div v-else class="flex items-center gap-1.5 text-slate-400 font-bold text-xs uppercase">
-                  <div class="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
-                  Đã ẩn
-                </div>
+                <span
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-full text-xs font-semibold border border-emerald-100">
+                  <span class="w-2 h-2 bg-emerald-500 rounded-full"></span>
+                  Hoạt động
+                </span>
               </td>
-              <td class="px-8 py-6 text-sm text-slate-500 font-medium">
-                {{ formatDate(cat.lastUpdated) }}
+
+              <!-- Ngày tạo -->
+              <td class="px-8 py-6 text-sm text-slate-600">{{ formatDate(category.createdAt) }}</td>
+
+              <!-- Cập nhật -->
+              <td class="px-8 py-6 text-sm text-slate-600">
+                {{ category.updatedAt ? formatDate(category.updatedAt) : '-' }}
               </td>
+
+              <!-- Hành động -->
               <td class="px-8 py-6">
                 <div
                   class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
-                  <button
+                  <button @click="openUpdateForm(category)"
                     class="p-2.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors"
                     title="Sửa">
                     <Edit2 :size="18" />
                   </button>
-                  <button
-                    class="p-2.5 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-colors"
-                    title="Xem">
-                    <Eye :size="18" />
-                  </button>
-                  <button class="p-2.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+                  <button @click="handleDeletePostCategory(category.categoryId)"
+                    class="p-2.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
                     title="Xóa">
                     <Trash2 :size="18" />
                   </button>
@@ -205,24 +252,14 @@ const formatDate = (dateStr: string) => {
         </table>
       </div>
 
-      <!-- Table Footer -->
-      <div
-        class="px-8 py-5 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-slate-100">
-        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">
-          Trang 1 của 1
-        </p>
-        <div class="flex items-center gap-1">
-          <button class="p-2 rounded-xl text-slate-300 cursor-not-allowed">
-            <ChevronRight class="rotate-180" :size="20" />
-          </button>
-          <button
-            class="w-8 h-8 flex items-center justify-center bg-indigo-600 text-white rounded-xl text-xs font-black shadow-md">1</button>
-          <button class="p-2 rounded-xl text-slate-400 hover:bg-white hover:text-indigo-600 transition-colors">
-            <ChevronRight :size="20" />
-          </button>
-        </div>
-      </div>
     </div>
+
+    <!-- Form Modal -->
+    <CreateUpdateFamilyPostCategoryForm :is-open="isShowAddOrUpdatePostForm" :mode="currentMode"
+      :data="selectedPostCategory" :is-loading="isLoading" @close="closePostForm" @submit="handleFormSubmit" />
+
+    <AppPagination :page="currentPage" :total-pages="pagination.totalPages" :has-next="hasNextPage" :has-prev="hasPrevPage"
+      @next="nextPage" @prev="prevPage" />
   </div>
 </template>
 
