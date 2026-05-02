@@ -103,7 +103,7 @@ const selectFamily = (familyId: number) => {
 
 <template>
   <header
-    class="h-16 bg-white/90 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-4 md:px-8 sticky top-0 z-50 font-sans shadow-[0_1px_2px_rgba(0,0,0,0,02)]">
+    class="h-16 bg-white/90 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-4 md:px-8 sticky top-0 z-30 font-sans shadow-[0_1px_2px_rgba(0,0,0,0,02)]">
     <div class="flex min-w-0 flex-1 items-center gap-4 md:gap-5">
       <nav class="hidden lg:flex items-center gap-2 text-sm font-medium">
         <button class="p-1.5 hover:bg-slate-100 rounded-md text-slate-400 hover:text-slate-600 transition-colors">

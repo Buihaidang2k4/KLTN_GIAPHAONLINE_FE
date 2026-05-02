@@ -176,9 +176,13 @@ export const useDeleteFamilyAchievementMutation = () => {
             familyId,
             achievementId
         }: {
-            familyId: number
-            achievementId: number
-        }) => achievementService.delete(familyId, achievementId),
+            familyId: MaybeRefOrGetter<number | null | undefined>
+            achievementId: MaybeRefOrGetter<number | null | undefined>
+        }) =>
+            achievementService.delete(
+                toValue(familyId),
+                toValue(achievementId)
+            ),
 
         onSuccess: (_res, variables) => {
             queryClient.invalidateQueries({
@@ -186,13 +190,13 @@ export const useDeleteFamilyAchievementMutation = () => {
             })
 
             queryClient.invalidateQueries({
-                queryKey: [...achievementKeys.all, 'list', variables.familyId]
+                queryKey: [...achievementKeys.all, 'list', toValue(variables.familyId)]
             })
 
             queryClient.removeQueries({
                 queryKey: achievementKeys.detail(
-                    variables.familyId,
-                    variables.achievementId
+                    toValue(variables.familyId),
+                    toValue(variables.achievementId)
                 )
             })
         }

@@ -57,8 +57,8 @@ export const achievementService = {
     },
 
     delete: async (
-        familyId: MaybeRefOrGetter<number | null>,
-        achievementId: MaybeRefOrGetter<number | null>
+        familyId: MaybeRefOrGetter<number | null | undefined>,
+        achievementId: MaybeRefOrGetter<number | null | undefined>
     ): Promise<ApiResponse<void>> => {
         const res = await api.delete(
             `/families/${toValue(familyId)}/achievements/${toValue(achievementId)}`

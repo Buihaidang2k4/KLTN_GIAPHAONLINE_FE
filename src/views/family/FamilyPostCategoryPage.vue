@@ -258,8 +258,8 @@ const tableHeaders = [
     <CreateUpdateFamilyPostCategoryForm :is-open="isShowAddOrUpdatePostForm" :mode="currentMode"
       :data="selectedPostCategory" :is-loading="isLoading" @close="closePostForm" @submit="handleFormSubmit" />
 
-    <AppPagination :page="currentPage" :total-pages="pagination.totalPages" :has-next="hasNextPage" :has-prev="hasPrevPage"
-      @next="nextPage" @prev="prevPage" />
+    <AppPagination :page="currentPage" :total-pages="pagination.totalPages" :has-next="hasNextPage"
+      :has-prev="hasPrevPage" @next="nextPage" @prev="prevPage" />
   </div>
 </template>
 

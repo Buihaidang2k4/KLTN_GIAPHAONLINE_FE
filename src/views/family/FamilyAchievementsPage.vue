@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, reactive } from 'vue'
+import { ref, computed, watch } from 'vue'
 import {
     Trophy,
     Medal,
@@ -8,13 +8,17 @@ import {
     Search,
     CalendarDays,
     Eye,
-    User
+    User,
+    Trash2
 } from 'lucide-vue-next'
 import { formatDate } from '@/utils/format-date'
 import { useFamilyStore } from '@/store/family/useFamilyStore';
 import { useCreateFamilyAchievementMutation, useFamilyAchievementsQuery, useUpdateFamilyAchievementMutation, useDeleteFamilyAchievementMutation } from '@/hooks/queries/family/family_achievement/useFamilyAchievement';
 import { usePagination } from '@/composables/common/usePagination';
 import AppPagination from '@/components/forms/common/AppPagination.vue';
+import type { FamilyAchievementReq, FamilyAchievementRes, UpdateFamilyAchievementReq } from '@/types/family/family-achievement.types';
+import CreateOrUpdateAchievementForm from '@/components/forms/family_achievement/CreateOrUpdateAchievementForm.vue';
+import { notify } from '@/utils/notify';
 
 const familyStore = useFamilyStore();
 const familyId = computed(() => familyStore.currentFamilyId);
@@ -43,7 +47,6 @@ const keyword = ref('');
 
 const { data: achievements } = useFamilyAchievementsQuery(familyId, paginationPage, keyword)
 
-// set total pages when achievements data changes
 watch(
     () => achievements.value?.data?.totalPages,
     total => {
@@ -86,6 +89,78 @@ const getTypeStyle = (type: string) => {
 }
 
 
+// actions
+const isOpenForm = ref<boolean>(false)
+const formMode = ref<'create' | 'update'>('create')
+const selectedAchievement = ref<FamilyAchievementRes | null>(null)
+
+const openCreateForm = () => {
+    formMode.value = 'create'
+    selectedAchievement.value = null
+    isOpenForm.value = true
+}
+
+const openUpdateForm = (achievement: FamilyAchievementRes) => {
+    console.log('achievement', achievement.achievementId)
+    formMode.value = 'update'
+    selectedAchievement.value = achievement
+    isOpenForm.value = true
+}
+
+const closeForm = () => {
+    isOpenForm.value = false
+    selectedAchievement.value = null
+}
+
+// action
+const hanldeDeleteAchievement = (achievementId: number) => {
+    deleteAchievement({ familyId: familyId.value!, achievementId },
+        {
+            onSuccess: () => {
+                notify.success(
+                    "Thông báo",
+                    "Xóa thành tích thành công"
+                )
+            }
+        }
+    )
+}
+const handleCreateOrUpdateAchievement = (payload: {
+    data: FamilyAchievementReq | UpdateFamilyAchievementReq
+    evidenceFile: File | null
+}) => {
+    if (formMode.value === 'create') {
+        createAchievement(
+            {
+                familyId: familyId.value!,
+                data: payload.data as FamilyAchievementReq,
+                evidenceFile: payload.evidenceFile
+            },
+            {
+                onSuccess: () => {
+                    notify.success('Thông báo', 'Thêm thành tích thành công')
+                    closeForm()
+                }
+            }
+        )
+    } else {
+        updateAchievement(
+            {
+                familyId: familyId.value!,
+                achievementId: selectedAchievement.value!.achievementId,
+                data: payload.data as UpdateFamilyAchievementReq,
+                evidenceFile: payload.evidenceFile
+            },
+            {
+                onSuccess: () => {
+                    notify.success('Thông báo', 'Cập nhật thành tích thành công')
+                    closeForm()
+                }
+            }
+        )
+    }
+}
+
 </script>
 
 <template>
@@ -119,8 +194,10 @@ const getTypeStyle = (type: string) => {
                     </div>
                     <!-- Action Button -->
                     <div class="flex items-center gap-3">
-                        <button class="bg-indigo-600 px-4 py-2 rounded-2xl text-white cursor-pointer ">Thêm thành
-                            tích</button>
+                        <button class="bg-indigo-600 px-4 py-2 rounded-2xl text-white cursor-pointer "
+                            @click="openCreateForm">
+                            Thêm thành tích
+                        </button>
                     </div>
                 </div>
             </div>
@@ -181,16 +258,25 @@ const getTypeStyle = (type: string) => {
 
                     <!-- footer -->
                     <div class="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
-                        <button
-                            class="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50 transition">
-                            <Eye :size="16" />
-                            Xem chi tiết
-                        </button>
+                        <div>
+                            <button @click="openUpdateForm(achievement)"
+                                class="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50 transition">
+                                <Eye :size="16" />
+                                Xem chi tiết
+                            </button>
+
+                            <button @click="hanldeDeleteAchievement(achievement.achievementId)"
+                                class="text-sm text-red-600 hover:text-red-800 transition">
+                                <Trash2 :size="16" />
+                            </button>
+                        </div>
 
                         <div class="text-xs text-slate-400">
-                            ID: #{{ achievement.achievementId }}
+                            Num: {{ achievement.achievementId }}
                         </div>
                     </div>
+
+
                 </div>
             </div>
 
@@ -204,6 +290,10 @@ const getTypeStyle = (type: string) => {
                     Không có dữ liệu phù hợp với từ khóa "{{ keyword }}"
                 </p>
             </div>
+
+            <!-- Form Modal -->
+            <CreateOrUpdateAchievementForm v-if="isOpenForm" :show="isOpenForm" :achievement="selectedAchievement"
+                :mode="formMode" @close="closeForm" @submit="handleCreateOrUpdateAchievement($event)" />
 
             <!-- Pagination -->
             <AppPagination :total-pages="pagination.totalPages" :page="currentPage" :has-prev="hasPrevPage"
