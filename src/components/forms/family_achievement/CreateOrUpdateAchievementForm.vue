@@ -50,8 +50,6 @@ const initialValues = computed(() => ({
     evidenceUrl: props.achievement?.evidenceUrl ?? ''
 }))
 
-
-
 // valid 
 const validationSchema = toTypedSchema(
     z.object({
@@ -127,8 +125,6 @@ watch(
 )
 
 
-
-
 const selectedEvidenceFile = ref<File | null>(null)
 const previewEvidenceUrl = ref('')
 
@@ -183,6 +179,7 @@ const handleClose = () => {
 
     emit('close')
 }
+
 const titleText = computed(() => props.mode === 'create' ? 'Thêm thành tích gia đình' : 'Cập nhật thành tích gia đình');
 
 
