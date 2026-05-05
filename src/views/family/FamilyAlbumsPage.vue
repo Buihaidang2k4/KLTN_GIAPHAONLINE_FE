@@ -23,6 +23,7 @@ import { useFamilyStore } from '@/store/family/useFamilyStore'
 import {
   useAlbumMediaQuery,
   useCreateAlbumMutation,
+  useDeleteAlbumMediaMutation,
   useDeleteAlbumMutation,
   useFamilyAlbumsQuery,
   useUpdateAlbumMutation
@@ -34,6 +35,9 @@ import { refDebounced } from '@vueuse/core'
 import { usePagination } from '@/composables/common/usePagination'
 import AppPagination from '@/components/forms/common/AppPagination.vue'
 import PreviewImageModal from '@/components/forms/album/PreviewImageModal.vue'
+import PreviewVideoModal from '@/components/forms/album/PreviewVideoModal.vue'
+import PreviewDocsModal from '@/components/forms/album/PreviewDocsModal.vue'
+import UploadMediaForm from '@/components/forms/album/UploadMediaForm.vue'
 
 const keyword = ref('')
 const debounceKeyword = refDebounced(keyword, 400)
@@ -43,6 +47,7 @@ const familyStore = useFamilyStore()
 const familyId = computed(() => familyStore.currentFamilyId)
 const selectedAlbum = ref<AlbumRes | null>(null)
 const edittingAlbum = ref<AlbumRes | null>(null)
+const isShowUploadModal = ref(false)
 
 const { mutate: createAlbumMutation, isPending: isCreatingAlbum } = useCreateAlbumMutation()
 const { mutate: updateAlbumMutation, isPending: isUpdatingAlbum } = useUpdateAlbumMutation()
@@ -56,7 +61,7 @@ const {
   nextPage,
   prevPage,
   setTotalPages
-} = usePagination(8, 0)
+} = usePagination(9, 0)
 
 const params = computed(() => ({
   page: pagination.page,
@@ -151,9 +156,12 @@ const handelUpdateAlbum = (payload: AlbumReq) => {
 const activeTab = ref<'IMAGE' | 'VIDEO' | 'DOCUMENT'>('IMAGE')
 const mediaType = computed(() => activeTab.value)
 const selectedAlbumId = computed(() => selectedAlbum.value?.albumId)
-const { data: mediaData } = useAlbumMediaQuery(selectedAlbumId, mediaType, params)
+const { data: mediaData } = useAlbumMediaQuery(selectedAlbumId, mediaType, { page: 0, size: 100 })
 const safeMedia = computed(() => mediaData.value?.data?.items ?? [])
 const previewMedia = ref<AlbumMediaRes | null>(null)
+const { mutate: deleteMediaMutation } = useDeleteAlbumMediaMutation();
+
+
 
 const moveOnToDetailMedia = (album: AlbumRes) => {
   selectedAlbum.value = album
@@ -169,6 +177,76 @@ const openPreviewImageModal = (media: AlbumMediaRes) => {
 const closePreviewImageModal = () => {
   previewMedia.value = null
 }
+
+const openPreviewVideoModal = (media: AlbumMediaRes) => {
+  previewMedia.value = media
+}
+
+const closePreviewVideoModal = () => {
+  previewMedia.value = null
+}
+
+const openPreviewDocsModal = (media: AlbumMediaRes) => {
+  previewMedia.value = media
+}
+
+const closePreviewDocsModal = () => {
+  previewMedia.value = null
+}
+
+const handleDeleteMedia = (mediaId: number) => {
+  if (!mediaId) {
+    notify.error('Thông báo', 'Không tìm thấy media')
+    return
+  }
+
+  const isDelete = window.confirm('Bạn có muốn xóa media này không?')
+
+  if (!isDelete) return
+
+  deleteMediaMutation({ mediaId }, {
+    onSuccess: () => {
+      notify.success('Thông báo', 'Xóa media thành công')
+    },
+    onError: () => {
+      notify.error('Thông báo', 'Xóa media không thành công')
+    }
+  })
+}
+
+const openUploadModal = () => {
+  isShowUploadModal.value = true
+}
+
+const closeUploadModal = () => {
+  isShowUploadModal.value = false
+}
+
+const handleUploadSuccess = () => {
+  closeUploadModal()
+}
+
+const handleDownloadMedia = async (media: AlbumMediaRes) => {
+  if (!media?.mediaUrl) {
+    notify.error('Thông báo', 'Không tìm thấy tài liệu để tải')
+    return
+  }
+
+  const response = await fetch(media.mediaUrl)
+  const blob = await response.blob()
+
+  const url = window.URL.createObjectURL(blob)
+
+  const link = document.createElement('a')
+  link.href = url
+  link.download = media.title || `media_${media.albumMediaId}`
+
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+
+  window.URL.revokeObjectURL(url)
+}
 </script>
 
 <template>
@@ -177,7 +255,14 @@ const closePreviewImageModal = () => {
     <CreateOrUpdateAlbumForm :mode="mode" :album="edittingAlbum" :show="isShowAlbumForm" :family-id="familyId"
       :is-loading="isCreatingAlbum || isUpdatingAlbum" @close="closeFormAlbum" @create="handleCreateAlbum"
       @update="handelUpdateAlbum" />
-    <PreviewImageModal :show="!!previewMedia" :media="previewMedia" @close="closePreviewImageModal" />
+    <PreviewImageModal :show="!!previewMedia && mediaType === 'IMAGE'" :media="previewMedia"
+      @close="closePreviewImageModal" />
+    <PreviewVideoModal :show="!!previewMedia && mediaType === 'VIDEO'" :media="previewMedia"
+      @close="closePreviewVideoModal" />
+    <PreviewDocsModal :show="!!previewMedia && mediaType === 'DOCUMENT'" :media="previewMedia"
+      @close="closePreviewDocsModal" />
+    <UploadMediaForm :show="isShowUploadModal" :album-id="selectedAlbumId" @close="closeUploadModal"
+      @success="handleUploadSuccess" />
 
     <div class="mx-auto max-w-7xl">
       <div v-if="!selectedAlbum" class="animate-in fade-in flex min-h-[calc(100vh-8rem)] flex-col duration-500">
@@ -199,7 +284,8 @@ const closePreviewImageModal = () => {
               <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
                 <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Tổng album</p>
                 <p class="mt-1 text-2xl font-black text-slate-900">
-                  {{ albumData?.data?.totalElements ?? safeAlbums.length }}</p>
+                  {{ albumData?.data?.totalElements ?? safeAlbums.length }}
+                </p>
               </div>
               <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
                 <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Đang hiển thị</p>
@@ -234,11 +320,11 @@ const closePreviewImageModal = () => {
 
               <div class="absolute left-4 top-4 flex flex-wrap gap-2">
                 <div
-                  class="rounded-full border border-white/30 bg-white/15 px-3 py-1.5 text-[10px] font-black text-white backdrop-blur-md">
+                  class="rounded-full border border-black/50 bg-black/60 px-3 py-1.5 text-[10px] font-black text-white backdrop-blur-md">
                   {{ album.mediaCount }} mục
                 </div>
                 <div
-                  class="flex items-center gap-1.5 rounded-full border border-white/30 bg-white/15 px-3 py-1.5 text-[10px] font-black text-white backdrop-blur-md">
+                  class="flex items-center gap-1.5 rounded-full border border-black/50 bg-black/60 px-3 py-1.5 text-[10px] font-black text-white backdrop-blur-md">
                   <HardDrive :size="12" /> {{ formatByte(album.totalSize) }}
                 </div>
               </div>
@@ -306,15 +392,23 @@ const closePreviewImageModal = () => {
               </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-3 md:min-w-[19rem]">
-              <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Dung lượng</p>
-                <p class="mt-1 text-sm font-black text-slate-900">{{ currentAlbumSize }}</p>
+            <div class="flex items-center gap-3 md:min-w-[19rem]">
+              <div class="grid grid-cols-2 gap-3">
+                <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Dung lượng</p>
+                  <p class="mt-1 text-sm font-black text-slate-900">{{ currentAlbumSize }}</p>
+                </div>
+                <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Ngày tạo</p>
+                  <p class="mt-1 text-sm font-black text-slate-900">{{ formatDate(selectedAlbum.createdAt) }}</p>
+                </div>
               </div>
-              <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Ngày tạo</p>
-                <p class="mt-1 text-sm font-black text-slate-900">{{ formatDate(selectedAlbum.createdAt) }}</p>
-              </div>
+
+              <button @click="openUploadModal"
+                class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-bold text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600">
+                <Plus :size="14" />
+                Thêm tài liệu
+              </button>
             </div>
           </div>
         </section>
@@ -379,24 +473,29 @@ const closePreviewImageModal = () => {
           <div v-else class="animate-in fade-in zoom-in-95 duration-300">
             <template v-if="activeTab === 'IMAGE'">
               <div class="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
-                <div v-for="m in safeMedia" :key="m.albumMediaId"
+                <div v-for="media in safeMedia" :key="media.albumMediaId"
                   class="group overflow-hidden rounded-[1.35rem] border border-slate-200 bg-white p-2 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-                  <div
-                    class="relative aspect-square cursor-zoom-in overflow-hidden rounded-[1rem] bg-slate-100"
-                    @click="openPreviewImageModal(m)"
-                  >
-                    <img :src="m.mediaUrl"
+                  <div class="relative aspect-square cursor-zoom-in overflow-hidden rounded-[1rem] bg-slate-100"
+                    @click="openPreviewImageModal(media)">
+                    <img :src="media.mediaUrl"
                       class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
                     <div class="absolute inset-x-0 bottom-0 bg-linear-to-t from-slate-950/70 to-transparent p-2">
-                      <p class="line-clamp-1 text-xs font-bold text-white">{{ m.title }}</p>
+                      <p class="line-clamp-1 text-xs font-bold text-white">{{ media.title }}</p>
                     </div>
                   </div>
                   <div class="mt-2 flex items-center justify-between gap-2 px-1 pb-1">
-                    <p class="line-clamp-1 text-xs font-bold text-slate-700">{{ formatByte(m.fileSizeBytes) }}</p>
-                    <button
-                      class="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-500 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600">
-                      <Download :size="14" />
-                    </button>
+                    <p class="line-clamp-1 text-xs font-bold text-slate-700">{{ formatByte(media.fileSizeBytes) }}</p>
+                    <div class="flex items-center gap-2">
+
+                      <button @click.stop="handleDownloadMedia(media)"
+                        class="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-500 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600">
+                        <Download :size="14" />
+                      </button>
+                      <button @click.stop="handleDeleteMedia(media.albumMediaId)"
+                        class="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-500 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600">
+                        <Trash2 :size="14" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -404,10 +503,11 @@ const closePreviewImageModal = () => {
 
             <template v-if="activeTab === 'VIDEO'">
               <div class="grid gap-4 lg:grid-cols-2">
-                <div v-for="m in safeMedia" :key="m.albumMediaId"
+                <div v-for="media in safeMedia" :key="media.albumMediaId"
                   class="group grid gap-4 rounded-[1.5rem] border border-slate-200 bg-white p-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:grid-cols-[220px_1fr]">
-                  <div class="relative aspect-video overflow-hidden rounded-[1rem] bg-slate-100">
-                    <img :src="m.thumbnailUrl || m.mediaUrl" class="h-full w-full object-cover" />
+                  <div class="relative aspect-video cursor-pointer overflow-hidden rounded-[1rem] bg-slate-100"
+                    @click="openPreviewVideoModal(media)">
+                    <img :src="media.thumbnailUrl || media.mediaUrl" class="h-full w-full object-cover" />
                     <div class="absolute inset-0 flex items-center justify-center bg-slate-950/20">
                       <div
                         class="flex h-12 w-12 items-center justify-center rounded-full border border-white/50 bg-white/25 text-white backdrop-blur transition-transform group-hover:scale-110">
@@ -417,25 +517,33 @@ const closePreviewImageModal = () => {
                   </div>
                   <div class="flex min-w-0 flex-col justify-between">
                     <div>
-                      <h4 class="line-clamp-2 text-sm font-black leading-6 text-slate-900">{{ m.title }}</h4>
+                      <h4 class="line-clamp-2 text-sm font-black leading-6 text-slate-900">{{ media.title }}</h4>
                       <p class="mt-2 line-clamp-2 text-sm text-slate-500">
-                        {{ m.description || 'Video được lưu trong album gia đình.' }}</p>
+                        {{ media.description || 'Video được lưu trong album gia đình.' }}
+                      </p>
                     </div>
                     <div class="mt-4 flex items-center justify-between">
                       <div class="flex flex-wrap gap-2">
                         <span
                           class="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-bold text-slate-500">
-                          {{ formatByte(m.fileSizeBytes) }}
+                          {{ formatByte(media.fileSizeBytes) }}
                         </span>
                         <span
                           class="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-bold text-slate-500">
-                          {{ m.mimeType }}
+                          {{ media.mimeType }}
                         </span>
                       </div>
-                      <button
-                        class="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-500 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600">
-                        <Download :size="16" />
-                      </button>
+                      <div class="flex items-center gap-2">
+
+                        <button @click.stop="handleDownloadMedia(media)"
+                          class="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-500 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600">
+                          <Download :size="16" />
+                        </button>
+                        <button @click.stop="handleDeleteMedia(media.albumMediaId)"
+                          class="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-500 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600">
+                          <Trash2 :size="16" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -445,7 +553,7 @@ const closePreviewImageModal = () => {
             <template v-if="activeTab === 'DOCUMENT'">
               <div class="rounded-[1.75rem] border border-slate-200 bg-slate-50/70 p-3">
                 <div class="grid gap-3">
-                  <div v-for="m in safeMedia" :key="m.albumMediaId"
+                  <div v-for="media in safeMedia" :key="media.albumMediaId"
                     class="group flex items-center justify-between rounded-[1.25rem] border border-slate-200 bg-white px-4 py-3 shadow-sm transition hover:border-slate-300 hover:shadow-md">
                     <div class="flex min-w-0 items-center gap-4">
                       <div
@@ -453,22 +561,27 @@ const closePreviewImageModal = () => {
                         <FileText :size="22" />
                       </div>
                       <div class="min-w-0">
-                        <h4 class="line-clamp-1 font-black text-slate-800">{{ m.title || 'Tài liệu không tên' }}</h4>
+                        <h4 class="line-clamp-1 font-black text-slate-800">{{ media.title || 'Tài liệu không tên' }}
+                        </h4>
                         <p class="mt-1 flex flex-wrap items-center gap-2 text-xs font-bold text-slate-400">
-                          <span class="rounded-full bg-slate-100 px-2.5 py-1">{{ m.mimeType }}</span>
-                          <span>{{ formatByte(m.fileSizeBytes) }}</span>
+                          <span class="rounded-full bg-slate-100 px-2.5 py-1">{{ media.mimeType }}</span>
+                          <span>{{ formatByte(media.fileSizeBytes) }}</span>
                         </p>
                       </div>
                     </div>
 
                     <div class="flex items-center gap-2">
-                      <button
+                      <button @click.stop="openPreviewDocsModal(media)"
                         class="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-500 transition hover:border-slate-300 hover:bg-white">
                         <Eye :size="16" />
                       </button>
-                      <button
+                      <button @click.stop="handleDownloadMedia(media)"
                         class="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-500 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600">
                         <Download :size="16" />
+                      </button>
+                      <button @click.stop="handleDeleteMedia(media.albumMediaId)"
+                        class="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-500 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600">
+                        <Trash2 :size="16" />
                       </button>
                     </div>
                   </div>

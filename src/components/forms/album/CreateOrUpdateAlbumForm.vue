@@ -5,6 +5,7 @@ import { toTypedSchema } from '@vee-validate/zod'
 import { ErrorMessage, Field, useForm } from 'vee-validate'
 import { computed, watch } from 'vue'
 import { z } from 'zod'
+import { X, ImagePlus } from 'lucide-vue-next'
 
 const props = defineProps<{
     show: boolean
@@ -32,6 +33,7 @@ const validationSchema = toTypedSchema(
             .trim()
             .min(1, 'Vui lòng nhập tên album')
             .max(255, 'Tên album không được quá 255 ký tự'),
+
         description: z
             .string()
             .trim()
@@ -58,23 +60,28 @@ watch(
     { immediate: true }
 )
 
-const handleClose = () => {
-    emit('close')
-}
-
 const titleText = computed(() =>
     props.mode === 'create' ? 'Thêm album mới' : 'Cập nhật album'
 )
 
+const subText = computed(() =>
+    props.mode === 'create'
+        ? 'Tạo album để lưu trữ ảnh, video và tư liệu của gia đình.'
+        : 'Chỉnh sửa thông tin album hiện tại.'
+)
+
+const handleClose = () => {
+    emit('close')
+}
+
 const onSubmit = handleSubmit((values) => {
     const payload: AlbumReq = {
-        title: values.title,
-        description: values.description
+        title: values.title.trim(),
+        description: values.description.trim()
     }
 
     if (props.mode === 'create') {
         emit('create', payload)
-        handleClose()
         return
     }
 
@@ -85,75 +92,76 @@ const onSubmit = handleSubmit((values) => {
 <template>
     <Teleport to="body">
         <div v-if="show">
-            <div class="fixed inset-0 z-40 bg-slate-950/55 backdrop-blur-sm" @click="handleClose"></div>
+            <div class="fixed inset-0 z-40 bg-slate-950/50" @click="handleClose"></div>
 
             <div class="fixed inset-0 z-50 flex items-center justify-center px-4">
-                <div class="w-full max-w-2xl overflow-hidden rounded-[2rem] border border-white/70 bg-white shadow-[0_35px_90px_-40px_rgba(15,23,42,0.45)]">
-                    <div class="border-b border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] px-6 py-5">
-                        <div class="flex items-start justify-between gap-4">
-                            <div>
-                                <div class="inline-flex items-center rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-indigo-700">
-                                    {{ mode === 'create' ? 'Tạo album' : 'Chỉnh sửa album' }}
-                                </div>
-                                <h2 class="mt-3 text-2xl font-bold text-slate-800">
-                                    {{ titleText }}
-                                </h2>
-                                <p class="mt-1 text-sm leading-6 text-slate-500">
-                                    Nhập thông tin cơ bản cho album ảnh hoặc tư liệu của gia đình.
-                                </p>
+                <div class="w-full max-w-xl overflow-hidden rounded-2xl bg-white shadow-2xl">
+                    <!-- Header -->
+                    <div class="flex items-start justify-between border-b border-slate-200 px-6 py-5">
+                        <div class="flex gap-4">
+                            <div
+                                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white">
+                                <ImagePlus :size="22" />
                             </div>
 
-                            <button
-                                type="button"
-                                class="rounded-full px-3 py-1.5 text-xl text-slate-500 transition hover:bg-slate-100"
-                                @click="handleClose"
-                            >
-                                x
-                            </button>
+                            <div>
+                                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                    {{ mode === 'create' ? 'Tạo album' : 'Chỉnh sửa' }}
+                                </p>
+
+                                <h2 class="mt-1 text-xl font-bold text-slate-900">
+                                    {{ titleText }}
+                                </h2>
+
+                                <p class="mt-1 text-sm leading-6 text-slate-500">
+                                    {{ subText }}
+                                </p>
+                            </div>
                         </div>
+
+                        <button type="button"
+                            class="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                            @click="handleClose">
+                            <X :size="20" />
+                        </button>
                     </div>
 
-                    <form :key="mode + (album?.albumId ?? 'new')" class="p-6" @submit.prevent="onSubmit">
-                        <div class="grid grid-cols-1 gap-4">
-                            <div class="rounded-[1.5rem] border border-slate-200 bg-slate-50/70 p-4">
-                                <label class="mb-2 block text-sm font-medium text-slate-700">
-                                    Tên album
+                    <!-- Form -->
+                    <form :key="mode + (album?.albumId ?? 'new')" class="px-6 py-5" @submit.prevent="onSubmit">
+                        <div class="space-y-5">
+                            <div>
+                                <label class="mb-1.5 block text-sm font-semibold text-slate-700">
+                                    Tên album <span class="text-red-500">*</span>
                                 </label>
-                                <Field
-                                    name="title"
-                                    type="text"
-                                    placeholder="VD: Kỷ niệm đám cưới Hùng và Lan"
+
+                                <Field name="title" type="text" placeholder="VD: Kỷ niệm đám cưới Hùng và Lan"
                                     validate-on-blur
-                                    class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-                                />
+                                    class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-800 outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10" />
+
                                 <ErrorMessage name="title" class="mt-1 block text-sm text-red-500" />
                             </div>
 
-                            <div class="rounded-[1.5rem] border border-slate-200 bg-slate-50/70 p-4">
-                                <label class="mb-2 block text-sm font-medium text-slate-700">
-                                    Mô tả
+                            <div>
+                                <label class="mb-1.5 block text-sm font-semibold text-slate-700">
+                                    Mô tả <span class="text-red-500">*</span>
                                 </label>
-                                <Field
-                                    as="textarea"
-                                    name="description"
-                                    rows="5"
-                                    validate-on-blur
+
+                                <Field as="textarea" name="description" rows="5" validate-on-blur
                                     placeholder="Nhập mô tả ngắn cho album, ví dụ nội dung, thời gian hoặc ý nghĩa của bộ sưu tập..."
-                                    class="w-full resize-none rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm leading-6 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-                                />
+                                    class="w-full resize-none rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm leading-6 text-slate-800 outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10" />
+
                                 <ErrorMessage name="description" class="mt-1 block text-sm text-red-500" />
                             </div>
                         </div>
 
-                        <div
-                            v-if="album"
-                            class="mt-5 rounded-[1.5rem] border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600"
-                        >
+                        <!-- Meta info -->
+                        <div v-if="album" class="mt-5 border-t border-slate-200 pt-4 text-sm text-slate-500">
                             <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
                                 <p>
                                     <span class="font-medium text-slate-700">Ngày tạo:</span>
                                     {{ formatDate(album.createdAt) }}
                                 </p>
+
                                 <p>
                                     <span class="font-medium text-slate-700">Cập nhật:</span>
                                     {{ formatDate(album.updatedAt) }}
@@ -161,21 +169,17 @@ const onSubmit = handleSubmit((values) => {
                             </div>
                         </div>
 
+                        <!-- Actions -->
                         <div class="mt-6 flex justify-end gap-3 border-t border-slate-200 pt-5">
-                            <button
-                                type="button"
-                                class="rounded-xl border border-slate-300 px-5 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-                                @click="handleClose"
-                            >
+                            <button type="button"
+                                class="rounded-lg border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                                @click="handleClose">
                                 Hủy
                             </button>
 
-                            <button
-                                type="submit"
-                                :disabled="isLoading || !meta.valid"
-                                class="rounded-xl bg-slate-900 px-5 py-3 text-sm font-medium text-white shadow transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-                            >
-                                {{ isLoading ? 'Đang lưu...' : mode === 'create' ? 'Thêm' : 'Cập nhật' }}
+                            <button type="submit" :disabled="isLoading || !meta.valid"
+                                class="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60">
+                                {{ isLoading ? 'Đang lưu...' : mode === 'create' ? 'Thêm album' : 'Lưu thay đổi' }}
                             </button>
                         </div>
                     </form>
