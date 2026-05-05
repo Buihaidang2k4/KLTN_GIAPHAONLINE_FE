@@ -21,13 +21,30 @@ const emit = defineEmits<{
 }>()
 
 const getTypeStyle = (type: string) => {
-    switch (type) {
-        case 'Hỷ sự': return 'bg-slate-700/10 text-slate-900 border-slate-700/20';
-        case 'Tang lễ': return 'bg-slate-100 text-slate-700 border-slate-200';
-        case 'Lễ Tết': return 'bg-slate-50 text-slate-700 border-slate-200';
-        default: return 'bg-slate-50 text-slate-600 border-slate-100';
+    const styles: Record<string, { background: string; color: string; borderColor: string }> = {
+        'Hỷ sự': { background: '#fef2f2', color: '#be123c', borderColor: '#fecdd3' },
+        'Tang lễ': { background: '#f1f5f9', color: '#475569', borderColor: '#cbd5e1' },
+        'Lễ Tết': { background: '#fefce8', color: '#a16207', borderColor: '#fde68a' },
+        'Cúng giỗ': { background: '#faf5ff', color: '#7e22ce', borderColor: '#e9d5ff' },
+        'Sinh nhật': { background: '#fdf2f8', color: '#be185d', borderColor: '#fbcfe8' },
+        'Mừng thọ': { background: '#fff7ed', color: '#c2410c', borderColor: '#fed7aa' },
+        'Khánh thành': { background: '#ecfdf5', color: '#047857', borderColor: '#a7f3d0' },
+        'Tân gia': { background: '#eff6ff', color: '#1d4ed8', borderColor: '#bfdbfe' },
+        'Tâm linh': { background: '#f5f3ff', color: '#6d28d9', borderColor: '#ddd6fe' },
+        'Gia đình': { background: '#f0fdfa', color: '#0f766e', borderColor: '#99f6e4' },
+        'Truyền thống': { background: '#fffbeb', color: '#b45309', borderColor: '#fde68a' },
+        'Khác': { background: '#f8fafc', color: '#64748b', borderColor: '#e2e8f0' },
+    }
+
+    const style = styles[type] ?? { background: '#f8fafc', color: '#64748b', borderColor: '#e2e8f0' }
+
+    return {
+        backgroundColor: style.background,
+        color: style.color,
+        borderColor: style.borderColor
     }
 };
+
 
 const selectCeremony = (id: number) => {
     emit('select', id)
@@ -75,8 +92,8 @@ const handleAction = (action: ActionKey, id: number) => {
     <div
         class="group bg-white rounded-2xl border border-slate-200  p-6 shadow-sm hover:shadow-xl hover:border-slate-700/30 transition-all  flex flex-col h-full relative">
         <div class="flex justify-between items-start mb-6">
-            <span
-                :class="['text-[8px] uppercase font-bold px-3 py-1.5 rounded-lg border tracking-[0.15em] shadow-sm', getTypeStyle(ceremony.ceremonyType)]">
+            <span class="text-[8px] uppercase font-bold px-3 py-1.5 rounded-lg border tracking-[0.15em] shadow-sm"
+                :style="getTypeStyle(ceremony.ceremonyType)">
                 {{ ceremony.ceremonyType }}
             </span>
             <Clock class="w-4 h-4 text-slate-400" />

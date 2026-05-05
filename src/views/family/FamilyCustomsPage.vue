@@ -320,12 +320,15 @@ const scrollToTimelineStep = (timelineId: number) => {
                     leave-active-class="transform transition duration-400 ease-in"
                     leave-from-class="opacity-100 translate-y-0" leave-to-class="opacity-0 -translate-y-12">
                     <!-- LIST VIEW CEREMONY -->
-                    <div v-if="!selectedCeremonyId" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <CeremonyCard v-for="ceremony in safeCeremonies" :key="ceremony.ceremonyId" :ceremony="ceremony"
-                            @select="handleSelectCeremony" @delete="hanldeDeleteCeremony"
-                            @listener="listenerUpdateCeremony" />
+                    <div v-if="!selectedCeremonyId" class="flex flex-col">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+                            style="min-height: 580px; align-content: start;">
+                            <CeremonyCard v-for="ceremony in safeCeremonies" :key="ceremony.ceremonyId"
+                                :ceremony="ceremony" @select="handleSelectCeremony" @delete="hanldeDeleteCeremony"
+                                @listener="listenerUpdateCeremony" />
+                        </div>
 
-                        <div class="col-span-full flex justify-center mt-4">
+                        <div class="flex justify-center mt-6">
                             <AppPagination :page="currentPage" :total-pages="pagination.totalPages"
                                 :has-next="hasNextPage" :has-prev="hasPrevPage" @next="nextPage" @prev="prevPage" />
                         </div>
@@ -373,13 +376,11 @@ const scrollToTimelineStep = (timelineId: number) => {
                                             </div>
 
                                             <div class="flex flex-col gap-1">
-                                                <div v-for="(step, index) in selectedTimelines"
-                                                    :key="step.timelineId"
+                                                <div v-for="(step, index) in selectedTimelines" :key="step.timelineId"
                                                     class="group relative flex items-center gap-4 py-1.5">
 
                                                     <!-- Dot -->
-                                                    <button type="button"
-                                                        @click="scrollToTimelineStep(step.timelineId)"
+                                                    <button type="button" @click="scrollToTimelineStep(step.timelineId)"
                                                         class="absolute -left-6 z-10 shrink-0 cursor-pointer">
                                                         <!-- Glow ring -->
                                                         <span
@@ -395,8 +396,7 @@ const scrollToTimelineStep = (timelineId: number) => {
                                                     </button>
 
                                                     <!-- Content Card -->
-                                                    <button type="button"
-                                                        @click="scrollToTimelineStep(step.timelineId)"
+                                                    <button type="button" @click="scrollToTimelineStep(step.timelineId)"
                                                         class="flex-1 ml-6 flex items-center gap-3 rounded-xl border border-slate-200/80 bg-gradient-to-r from-white to-slate-50/50 px-4 py-2.5 text-left shadow-sm cursor-pointer transition-all duration-300 group-hover:border-slate-300 group-hover:shadow-md group-hover:translate-x-1 group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-slate-100/60">
                                                         <div class="flex-1 min-w-0">
                                                             <p

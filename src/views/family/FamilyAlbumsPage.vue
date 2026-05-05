@@ -1,325 +1,536 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { 
-  Image as ImageIcon, 
-  Video, 
-  FileText, 
-  ChevronLeft, 
-  Folder, 
+import { ref, computed, watch } from 'vue'
+import {
+  Image as ImageIcon,
+  Video,
+  FileText,
+  ChevronLeft,
+  Folder,
   Calendar,
   Layers,
-  ArrowRight,
   Plus,
-  Search,
   Download,
   Eye,
   PlayCircle,
   HardDrive,
-  MoreVertical
+  Search,
+  Trash2,
+  Edit
 } from 'lucide-vue-next'
+import { formatByte } from '@/utils/format-byte'
+import CreateOrUpdateAlbumForm from '@/components/forms/album/CreateOrUpdateAlbumForm.vue'
+import { useFamilyStore } from '@/store/family/useFamilyStore'
+import {
+  useAlbumMediaQuery,
+  useCreateAlbumMutation,
+  useDeleteAlbumMutation,
+  useFamilyAlbumsQuery,
+  useUpdateAlbumMutation
+} from '@/hooks/queries/family/album/useAlbum'
+import { notify } from '@/utils/notify'
+import type { AlbumMediaRes, AlbumReq, AlbumRes } from '@/types/family/album.types'
+import { formatDate } from '@/utils/format-date'
+import { refDebounced } from '@vueuse/core'
+import { usePagination } from '@/composables/common/usePagination'
+import AppPagination from '@/components/forms/common/AppPagination.vue'
+import PreviewImageModal from '@/components/forms/album/PreviewImageModal.vue'
 
-// --- ĐỊNH NGHĨA KIỂU DỮ LIỆU THEO SCHEMA ---
-interface Album {
-  album_id: number;
-  family_id: number;
-  created_by_account_id: number;
-  title: string;
-  slug: string;
-  description: string;
-  cover_url: string;
-  total_size: number; // bytes
-  media_count: number;
-  created_at: string;
-  updated_at: string;
-}
+const keyword = ref('')
+const debounceKeyword = refDebounced(keyword, 400)
+const mode = ref<'create' | 'update'>('create')
+const isShowAlbumForm = ref(false)
+const familyStore = useFamilyStore()
+const familyId = computed(() => familyStore.currentFamilyId)
+const selectedAlbum = ref<AlbumRes | null>(null)
+const edittingAlbum = ref<AlbumRes | null>(null)
 
-interface AlbumMedia {
-  album_media_id: number;
-  album_id: number;
-  title: string;
-  description: string;
-  media_url: string;
-  thumbnail_url: string;
-  mime_type: string;
-  file_size_bytes: number;
-  media_type: 'IMAGE' | 'VIDEO' | 'DOCUMENT';
-  created_at: string;
-}
+const { mutate: createAlbumMutation, isPending: isCreatingAlbum } = useCreateAlbumMutation()
+const { mutate: updateAlbumMutation, isPending: isUpdatingAlbum } = useUpdateAlbumMutation()
+const { mutate: deleteAlbumMutation } = useDeleteAlbumMutation()
 
-// --- DỮ LIỆU MẪU (Mô phỏng dữ liệu từ API) ---
-const albums = ref<Album[]>([
-  { 
-    album_id: 1, 
-    family_id: 101, 
-    created_by_account_id: 1, 
-    title: 'Kỷ niệm Đám cưới Hùng & Lan', 
-    slug: 'ky-niem-dam-cuoi',
-    description: 'Bộ sưu tập hình ảnh và video từ ngày trọng đại 20/12/2023',
-    cover_url: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=800',
-    total_size: 157286400, // 150MB
-    media_count: 45,
-    created_at: '2023-12-20T08:00:00Z',
-    updated_at: '2024-01-05T10:00:00Z'
+const {
+  pagination,
+  currentPage,
+  hasNextPage,
+  hasPrevPage,
+  nextPage,
+  prevPage,
+  setTotalPages
+} = usePagination(8, 0)
+
+const params = computed(() => ({
+  page: pagination.page,
+  size: pagination.size
+}))
+
+const { data: albumData } = useFamilyAlbumsQuery(familyId, params, debounceKeyword)
+const safeAlbums = computed(() => albumData.value?.data?.items || [])
+
+watch(
+  () => albumData.value?.data?.totalPages,
+  (total) => {
+    setTotalPages(total || 0)
   },
-  { 
-    album_id: 2, 
-    family_id: 101, 
-    created_by_account_id: 1, 
-    title: 'Du xuân Giáp Thìn 2024', 
-    slug: 'du-xuan-2024',
-    description: 'Chuyến đi lễ chùa và du xuân của đại gia đình tại miền Bắc',
-    cover_url: 'https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=800',
-    total_size: 524288000, // 500MB
-    media_count: 128,
-    created_at: '2024-02-12T09:00:00Z',
-    updated_at: '2024-02-15T15:00:00Z'
+  { immediate: true }
+)
+
+const openFormCreateAlbum = () => {
+  mode.value = 'create'
+  isShowAlbumForm.value = true
+}
+
+const openFormUpdateAlbum = (album: AlbumRes) => {
+  mode.value = 'update'
+  isShowAlbumForm.value = true
+  edittingAlbum.value = album
+}
+
+const closeFormAlbum = () => {
+  isShowAlbumForm.value = false
+  edittingAlbum.value = null
+}
+
+const handleCreateAlbum = (payload: AlbumReq) => {
+  if (!familyId.value) {
+    notify.error('Thông báo', 'Không tìm thấy gia phả hiện tại')
+    return
   }
-])
 
-const allMedia = ref<AlbumMedia[]>([
-  { album_media_id: 1, album_id: 1, title: 'Ảnh cổng', description: '', media_url: 'https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=500', thumbnail_url: '', mime_type: 'image/jpeg', file_size_bytes: 2048000, media_type: 'IMAGE', created_at: '2023-12-20' },
-  { album_media_id: 2, album_id: 1, title: 'Lễ rước dâu', description: '', media_url: 'https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?q=80&w=500', thumbnail_url: '', mime_type: 'image/jpeg', file_size_bytes: 3500000, media_type: 'IMAGE', created_at: '2023-12-20' },
-  { album_media_id: 3, album_id: 1, title: 'Highlight Đám Cưới', description: '', media_url: '#', thumbnail_url: 'https://images.unsplash.com/photo-1492691523567-6170c817538a?q=80&w=500', mime_type: 'video/mp4', file_size_bytes: 50000000, media_type: 'VIDEO', created_at: '2023-12-21' },
-  { album_media_id: 4, album_id: 1, title: 'Danh sách khách mời', description: '', media_url: '#', thumbnail_url: '', mime_type: 'application/pdf', file_size_bytes: 1200000, media_type: 'DOCUMENT', created_at: '2023-12-15' },
-])
+  createAlbumMutation(
+    {
+      familyId: familyId.value,
+      data: payload
+    },
+    {
+      onSuccess: () => {
+        notify.success('Thông báo', 'Tạo album thành công')
+        closeFormAlbum()
+      },
+      onError: () => {
+        notify.error('Thông báo', 'Tạo album thất bại')
+      }
+    }
+  )
+}
 
-// --- TRẠNG THÁI GIAO DIỆN ---
-const selectedAlbum = ref<Album | null>(null)
+const handleDeleteAlbum = (id: number) => {
+  if (!id) {
+    notify.error('Thông báo', 'Không tìm thấy album')
+    return
+  }
+
+  const isDelete = window.confirm('Bạn có muốn xóa album này không?')
+
+  if (!isDelete) return
+
+  deleteAlbumMutation(id, {
+    onSuccess: () => {
+      notify.success('Thông báo', 'Xóa album thành công')
+    },
+    onError: () => {
+      notify.error('Thông báo', 'Xóa album không thành công')
+    }
+  })
+}
+
+const handelUpdateAlbum = (payload: AlbumReq) => {
+  updateAlbumMutation(
+    { albumId: edittingAlbum.value?.albumId, data: payload },
+    {
+      onSuccess: () => {
+        notify.success('Thông báo', 'Cập nhật album thành công')
+        closeFormAlbum()
+      },
+      onError: () => {
+        notify.error('Thông báo', 'Cập nhật album không thành công')
+      }
+    }
+  )
+}
+
 const activeTab = ref<'IMAGE' | 'VIDEO' | 'DOCUMENT'>('IMAGE')
+const mediaType = computed(() => activeTab.value)
+const selectedAlbumId = computed(() => selectedAlbum.value?.albumId)
+const { data: mediaData } = useAlbumMediaQuery(selectedAlbumId, mediaType, params)
+const safeMedia = computed(() => mediaData.value?.data?.items ?? [])
+const previewMedia = ref<AlbumMediaRes | null>(null)
 
-// --- LOGIC PHÂN LOẠI MEDIA TRONG ALBUM ĐANG CHỌN ---
-const filteredMedia = computed(() => {
-  if (!selectedAlbum.value) return []
-  return allMedia.value.filter(m => m.album_id === selectedAlbum.value?.album_id && m.media_type === activeTab.value)
-})
-
-// --- HELPER FUNCTIONS ---
-const formatSize = (bytes: number) => {
-  if (bytes === 0) return '0 Bytes'
-  const k = 1024
-  const sizes = ['Bytes', 'KB', 'MB', 'GB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
-}
-
-const formatDate = (dateStr: string) => {
-  return new Date(dateStr).toLocaleDateString('vi-VN')
-}
-
-const openAlbum = (album: Album) => {
+const moveOnToDetailMedia = (album: AlbumRes) => {
   selectedAlbum.value = album
   activeTab.value = 'IMAGE'
+}
+
+const currentAlbumSize = computed(() => formatByte(selectedAlbum.value?.totalSize))
+
+const openPreviewImageModal = (media: AlbumMediaRes) => {
+  previewMedia.value = media
+}
+
+const closePreviewImageModal = () => {
+  previewMedia.value = null
 }
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#f8fafc] p-4 md:p-8 font-sans text-slate-900">
-    <div class="max-w-7xl mx-auto">
-      
-      <!-- [MÀN HÌNH NGOÀI]: DANH SÁCH ALBUMS -->
-      <div v-if="!selectedAlbum" class="animate-in fade-in duration-500">
-        <header class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
-          <div>
-            <h1 class="text-4xl font-black tracking-tight text-slate-900">Kho Kỷ Niệm</h1>
-            <p class="text-slate-500 mt-2 font-medium flex items-center gap-2">
-              <Folder :size="18" class="text-indigo-500" /> Quản lý các album gia đình tập trung
-            </p>
+  <div
+    class="min-h-screen bg-[radial-gradient(circle_at_top,#eef4ff,transparent_35%),linear-gradient(180deg,#f8fafc_0%,#f1f5f9_100%)] p-4 font-sans text-slate-900 md:p-8">
+    <CreateOrUpdateAlbumForm :mode="mode" :album="edittingAlbum" :show="isShowAlbumForm" :family-id="familyId"
+      :is-loading="isCreatingAlbum || isUpdatingAlbum" @close="closeFormAlbum" @create="handleCreateAlbum"
+      @update="handelUpdateAlbum" />
+    <PreviewImageModal :show="!!previewMedia" :media="previewMedia" @close="closePreviewImageModal" />
+
+    <div class="mx-auto max-w-7xl">
+      <div v-if="!selectedAlbum" class="animate-in fade-in flex min-h-[calc(100vh-8rem)] flex-col duration-500">
+        <header
+          class="mb-8 rounded-[2rem] border border-white/70 bg-white/85 p-6 shadow-[0_20px_60px_-42px_rgba(15,23,42,0.35)] backdrop-blur">
+          <div class="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+            <div>
+              <div
+                class="inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.22em] text-indigo-700">
+                <Folder :size="14" /> Album gia đình
+              </div>
+              <h1 class="mt-4 text-3xl font-black tracking-tight text-slate-900 md:text-4xl">Kho Kỷ Niệm</h1>
+              <p class="mt-2 max-w-2xl text-sm font-medium leading-6 text-slate-500">
+                Sắp xếp ảnh, video và tài liệu gia đình theo từng album với bố cục gọn hơn và dễ quét nội dung hơn.
+              </p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 md:min-w-[18rem]">
+              <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Tổng album</p>
+                <p class="mt-1 text-2xl font-black text-slate-900">
+                  {{ albumData?.data?.totalElements ?? safeAlbums.length }}</p>
+              </div>
+              <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Đang hiển thị</p>
+                <p class="mt-1 text-2xl font-black text-slate-900">{{ safeAlbums.length }}</p>
+              </div>
+            </div>
           </div>
-          <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-2xl font-bold flex items-center justify-center gap-3 shadow-xl shadow-indigo-100 transition-all active:scale-95 group">
-            <Plus :size="22" /> Tạo Album Mới
-          </button>
+
+          <div class="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <label class="relative w-full sm:max-w-md">
+              <Search :size="18" class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input v-model="keyword" type="text" placeholder="Tìm kiếm album..."
+                class="w-full rounded-2xl border border-slate-200 bg-slate-50 pl-11 pr-4 py-3.5 text-sm font-medium text-slate-700 placeholder:text-slate-400 shadow-sm outline-none transition focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-100" />
+            </label>
+
+            <button @click="openFormCreateAlbum"
+              class="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-slate-900/10 transition-all hover:bg-slate-800 active:scale-95">
+              <Plus :size="18" /> Tạo Album Mới
+            </button>
+          </div>
         </header>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-          <div 
-            v-for="album in albums" 
-            :key="album.album_id"
-            @click="openAlbum(album)"
-            class="group bg-white rounded-[2.5rem] overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 cursor-pointer border border-white"
-          >
-            <!-- Cover Image -->
-            <div class="relative h-64 overflow-hidden">
-              <img :src="album.cover_url" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-              <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity"></div>
-              
-              <!-- Stats Overlay -->
-              <div class="absolute top-4 right-4 flex flex-col gap-2">
-                <div class="bg-white/20 backdrop-blur-md border border-white/30 text-white px-3 py-1.5 rounded-xl text-[10px] font-black flex items-center gap-1.5 self-end">
-                   <HardDrive :size="12" /> {{ formatSize(album.total_size) }}
+        <div class="grid flex-1 content-start grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+          <article v-for="album in safeAlbums" :key="album.albumId"
+            class="group overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white shadow-[0_18px_45px_-38px_rgba(15,23,42,0.45)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_25px_65px_-36px_rgba(15,23,42,0.35)]">
+            <div @click="moveOnToDetailMedia(album)" class="relative h-56 cursor-pointer overflow-hidden">
+              <img :src="album.coverUrl"
+                class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" />
+              <div
+                class="absolute inset-0 bg-linear-to-t from-slate-950/90 via-slate-950/10 to-transparent opacity-75 transition-opacity group-hover:opacity-90">
+              </div>
+
+              <div class="absolute left-4 top-4 flex flex-wrap gap-2">
+                <div
+                  class="rounded-full border border-white/30 bg-white/15 px-3 py-1.5 text-[10px] font-black text-white backdrop-blur-md">
+                  {{ album.mediaCount }} mục
+                </div>
+                <div
+                  class="flex items-center gap-1.5 rounded-full border border-white/30 bg-white/15 px-3 py-1.5 text-[10px] font-black text-white backdrop-blur-md">
+                  <HardDrive :size="12" /> {{ formatByte(album.totalSize) }}
                 </div>
               </div>
 
               <div class="absolute bottom-6 left-6 right-6">
-                 <div class="flex items-center gap-2 text-white/80 text-xs font-bold mb-1">
-                   <Layers :size="14" /> {{ album.media_count }} tài liệu
-                 </div>
-                 <h3 class="text-white text-xl font-black leading-tight line-clamp-1">{{ album.title }}</h3>
+                <div
+                  class="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-white/70">
+                  <Layers :size="14" /> Bộ sưu tập
+                </div>
+                <h3 class="line-clamp-2 text-xl font-black leading-tight text-white">{{ album.title }}</h3>
               </div>
             </div>
 
-            <!-- Content -->
-            <div class="p-6">
-              <p class="text-slate-500 text-sm line-clamp-2 leading-relaxed mb-6 h-10">{{ album.description }}</p>
-              <div class="pt-4 border-t border-slate-100 flex items-center justify-between">
-                <span class="text-[11px] font-bold text-slate-400 flex items-center gap-1.5">
-                  <Calendar :size="14" /> {{ formatDate(album.created_at) }}
+            <div class="p-5">
+              <p class="mb-5 line-clamp-2 min-h-10 text-sm leading-6 text-slate-500">{{ album.description }}</p>
+
+              <div class="grid grid-cols-[1fr_auto] items-center gap-3 border-t border-slate-100 pt-4">
+                <span class="flex items-center gap-1.5 text-[11px] font-bold text-slate-400">
+                  <Calendar :size="14" /> {{ formatDate(album.createdAt) }}
                 </span>
-                <div class="w-10 h-10 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-sm">
-                  <ArrowRight :size="18" />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      <!-- [MÀN HÌNH TRONG]: CHI TIẾT ALBUM & PHÂN LOẠI MEDIA -->
-      <div v-else class="animate-in slide-in-from-right-10 duration-500">
-        <!-- Header điều hướng -->
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
-          <div class="flex items-center gap-5">
-            <button @click="selectedAlbum = null" class="w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center hover:bg-slate-50 transition-colors border border-slate-200 text-slate-600">
-              <ChevronLeft :size="28" />
-            </button>
-            <div>
-              <div class="flex items-center gap-2 text-indigo-500 text-xs font-black uppercase tracking-[0.2em]">
-                Album Detail
-              </div>
-              <h2 class="text-3xl font-black text-slate-900 mt-0.5">{{ selectedAlbum.title }}</h2>
-            </div>
-          </div>
-          <div class="flex items-center gap-3">
-             <div class="bg-white px-5 py-3 rounded-2xl border border-slate-200 shadow-sm flex flex-col">
-               <span class="text-[10px] font-bold text-slate-400 uppercase">Dung lượng</span>
-               <span class="text-sm font-black text-slate-800">{{ formatSize(selectedAlbum.total_size) }}</span>
-             </div>
-             <button class="bg-slate-900 text-white w-14 h-14 rounded-2xl flex items-center justify-center hover:bg-slate-800 transition-all shadow-lg">
-                <Plus :size="24" />
-             </button>
-          </div>
-        </div>
-
-        <!-- Thanh phân loại Tab (Media Type) -->
-        <div class="grid grid-cols-3 gap-2 bg-slate-200/50 p-1.5 rounded-3xl mb-8 max-w-2xl mx-auto md:mx-0">
-          <button 
-            @click="activeTab = 'IMAGE'"
-            :class="[
-              'flex items-center justify-center gap-2 py-4 rounded-2xl text-sm font-bold transition-all',
-              activeTab === 'IMAGE' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
-            ]"
-          >
-            <ImageIcon :size="20" /> Ảnh
-          </button>
-          <button 
-            @click="activeTab = 'VIDEO'"
-            :class="[
-              'flex items-center justify-center gap-2 py-4 rounded-2xl text-sm font-bold transition-all',
-              activeTab === 'VIDEO' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
-            ]"
-          >
-            <Video :size="20" /> Video
-          </button>
-          <button 
-            @click="activeTab = 'DOCUMENT'"
-            :class="[
-              'flex items-center justify-center gap-2 py-4 rounded-2xl text-sm font-bold transition-all',
-              activeTab === 'DOCUMENT' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
-            ]"
-          >
-            <FileText :size="20" /> Tài liệu
-          </button>
-        </div>
-
-        <!-- Khu vực hiển thị nội dung Media -->
-        <div class="min-h-[500px]">
-          <!-- EMPTY STATE -->
-          <div v-if="filteredMedia.length === 0" class="flex flex-col items-center justify-center py-20 bg-white rounded-[3rem] border-2 border-dashed border-slate-200 text-slate-400">
-             <div class="w-20 h-20 rounded-full bg-slate-50 flex items-center justify-center mb-4">
-                <Layers :size="32" class="opacity-20" />
-             </div>
-             <p class="font-bold">Chưa có mục nào trong danh mục này</p>
-             <button class="text-indigo-600 text-sm font-black mt-2 underline">Tải lên ngay</button>
-          </div>
-
-          <!-- GRID HIỂN THỊ -->
-          <div v-else class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 animate-in fade-in zoom-in-95 duration-300">
-            
-            <!-- HIỂN THỊ ẢNH -->
-            <template v-if="activeTab === 'IMAGE'">
-              <div v-for="m in filteredMedia" :key="m.album_media_id" class="group relative aspect-[4/5] rounded-[2rem] overflow-hidden bg-white shadow-sm hover:shadow-xl transition-all border border-slate-100">
-                <img :src="m.media_url" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity p-4 flex flex-col justify-end">
-                   <p class="text-white text-sm font-bold mb-3">{{ m.title }}</p>
-                   <div class="flex gap-2">
-                     <button class="flex-1 py-2 bg-white/20 backdrop-blur-md rounded-xl text-white text-xs font-bold hover:bg-white/40 transition-colors">Xem</button>
-                     <button class="w-10 h-10 bg-white rounded-xl text-slate-900 flex items-center justify-center"><Download :size="16" /></button>
-                   </div>
-                </div>
-              </div>
-            </template>
-
-            <!-- HIỂN THỊ VIDEO -->
-            <template v-if="activeTab === 'VIDEO'">
-              <div v-for="m in filteredMedia" :key="m.album_media_id" class="group bg-white rounded-[2rem] overflow-hidden border border-slate-200 shadow-sm hover:shadow-md transition-all">
-                <div class="relative aspect-video">
-                   <img :src="m.thumbnail_url" class="w-full h-full object-cover" />
-                   <div class="absolute inset-0 flex items-center justify-center">
-                      <div class="w-14 h-14 rounded-full bg-white/30 backdrop-blur-md flex items-center justify-center text-white border border-white/50 group-hover:scale-110 transition-transform cursor-pointer">
-                         <PlayCircle :size="32" />
-                      </div>
-                   </div>
-                </div>
-                <div class="p-5 flex items-center justify-between">
-                   <div>
-                     <h4 class="text-sm font-black text-slate-800 line-clamp-1">{{ m.title }}</h4>
-                     <span class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{{ formatSize(m.file_size_bytes) }}</span>
-                   </div>
-                   <button class="text-slate-400 hover:text-indigo-600"><Download :size="18" /></button>
-                </div>
-              </div>
-            </template>
-
-            <!-- HIỂN THỊ TÀI LIỆU -->
-            <template v-if="activeTab === 'DOCUMENT'">
-              <div v-for="m in filteredMedia" :key="m.album_media_id" class="col-span-full md:col-span-2 lg:col-span-2 bg-white p-5 rounded-3xl border border-slate-100 flex items-center justify-between hover:shadow-lg transition-all group">
-                <div class="flex items-center gap-4">
-                  <div class="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-                    <FileText :size="24" />
-                  </div>
-                  <div>
-                    <h4 class="font-black text-slate-800">{{ m.title || 'Tài liệu không tên' }}</h4>
-                    <p class="text-xs font-bold text-slate-400 flex items-center gap-2">
-                       <span class="px-2 py-0.5 bg-slate-100 rounded text-[9px]">{{ m.mime_type }}</span>
-                       {{ formatSize(m.file_size_bytes) }}
-                    </p>
-                  </div>
-                </div>
                 <div class="flex items-center gap-2">
-                   <button class="p-3 text-slate-400 hover:bg-slate-50 rounded-xl"><Eye :size="20" /></button>
-                   <button class="p-3 text-slate-400 hover:bg-slate-50 rounded-xl"><Download :size="20" /></button>
+                  <button @click.stop="openFormUpdateAlbum(album)"
+                    class="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-500 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600">
+                    <Edit :size="16" />
+                  </button>
+                  <button @click.stop="moveOnToDetailMedia(album)"
+                    class="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-500 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600">
+                    <Eye :size="16" />
+                  </button>
+                  <button @click.stop="handleDeleteAlbum(album.albumId)"
+                    class="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-500 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600">
+                    <Trash2 :size="16" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <div class="mt-auto pt-8">
+          <AppPagination :page="currentPage" :total-pages="pagination.totalPages" :has-next="hasNextPage"
+            :has-prev="hasPrevPage" @next="nextPage" @prev="prevPage" />
+        </div>
+      </div>
+
+      <div v-else class="animate-in slide-in-from-right-10 space-y-6 duration-500">
+        <section
+          class="rounded-[2rem] border border-white/70 bg-white/85 p-5 shadow-[0_20px_60px_-42px_rgba(15,23,42,0.35)] backdrop-blur">
+          <div class="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+            <div class="flex items-center gap-4">
+              <button @click="selectedAlbum = null"
+                class="flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-600 transition-colors hover:bg-slate-100">
+                <ChevronLeft :size="24" />
+              </button>
+
+              <div>
+                <div class="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.22em] text-indigo-500">
+                  Album Detail
+                </div>
+                <h2 class="mt-1 text-3xl font-black text-slate-900">{{ selectedAlbum.title }}</h2>
+                <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+                  {{ selectedAlbum.description }}
+                </p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 md:min-w-[19rem]">
+              <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Dung lượng</p>
+                <p class="mt-1 text-sm font-black text-slate-900">{{ currentAlbumSize }}</p>
+              </div>
+              <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Ngày tạo</p>
+                <p class="mt-1 text-sm font-black text-slate-900">{{ formatDate(selectedAlbum.createdAt) }}</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section
+          class="rounded-[2rem] border border-white/70 bg-white/85 p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.3)] backdrop-blur">
+          <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p class="text-[11px] font-bold uppercase tracking-[0.22em] text-slate-400">Phân loại nội dung</p>
+              <h3 class="mt-2 text-lg font-black text-slate-900">Hiển thị theo từng loại media</h3>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-1.5 lg:w-[28rem]">
+              <button @click="activeTab = 'IMAGE'" :class="[
+                'flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold transition-all',
+                activeTab === 'IMAGE' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+              ]">
+                <ImageIcon :size="18" /> Ảnh
+              </button>
+              <button @click="activeTab = 'VIDEO'" :class="[
+                'flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold transition-all',
+                activeTab === 'VIDEO' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+              ]">
+                <Video :size="18" /> Video
+              </button>
+              <button @click="activeTab = 'DOCUMENT'" :class="[
+                'flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold transition-all',
+                activeTab === 'DOCUMENT' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+              ]">
+                <FileText :size="18" /> Tài liệu
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section
+          class="rounded-[2rem] border border-white/70 bg-white/85 p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.3)] backdrop-blur">
+          <div class="mb-5 flex items-center justify-between border-b border-slate-200 pb-4">
+            <div>
+              <p class="text-[11px] font-bold uppercase tracking-[0.22em] text-slate-400">Nội dung hiển thị</p>
+              <h3 class="mt-1 text-lg font-black text-slate-900">
+                {{ activeTab === 'IMAGE' ? 'Bộ ảnh' : activeTab === 'VIDEO' ? 'Kho video' : 'Tài liệu đính kèm' }}
+              </h3>
+            </div>
+            <div class="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-bold text-slate-600">
+              {{ safeMedia.length }} mục
+            </div>
+          </div>
+
+          <div v-if="safeMedia.length === 0"
+            class="flex flex-col items-center justify-center rounded-[1.75rem] border border-dashed border-slate-300 bg-slate-50/80 py-20 text-slate-400">
+            <div class="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-sm">
+              <Layers :size="32" class="opacity-20" />
+            </div>
+            <p class="font-bold">Chưa có mục nào trong danh mục này</p>
+            <button
+              class="mt-3 rounded-full border border-indigo-200 bg-indigo-50 px-4 py-2 text-xs font-black uppercase tracking-[0.2em] text-indigo-600">
+              Tải lên ngay
+            </button>
+          </div>
+
+          <div v-else class="animate-in fade-in zoom-in-95 duration-300">
+            <template v-if="activeTab === 'IMAGE'">
+              <div class="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
+                <div v-for="m in safeMedia" :key="m.albumMediaId"
+                  class="group overflow-hidden rounded-[1.35rem] border border-slate-200 bg-white p-2 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                  <div
+                    class="relative aspect-square cursor-zoom-in overflow-hidden rounded-[1rem] bg-slate-100"
+                    @click="openPreviewImageModal(m)"
+                  >
+                    <img :src="m.mediaUrl"
+                      class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                    <div class="absolute inset-x-0 bottom-0 bg-linear-to-t from-slate-950/70 to-transparent p-2">
+                      <p class="line-clamp-1 text-xs font-bold text-white">{{ m.title }}</p>
+                    </div>
+                  </div>
+                  <div class="mt-2 flex items-center justify-between gap-2 px-1 pb-1">
+                    <p class="line-clamp-1 text-xs font-bold text-slate-700">{{ formatByte(m.fileSizeBytes) }}</p>
+                    <button
+                      class="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-500 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600">
+                      <Download :size="14" />
+                    </button>
+                  </div>
                 </div>
               </div>
             </template>
 
-          </div>
-        </div>
-      </div>
+            <template v-if="activeTab === 'VIDEO'">
+              <div class="grid gap-4 lg:grid-cols-2">
+                <div v-for="m in safeMedia" :key="m.albumMediaId"
+                  class="group grid gap-4 rounded-[1.5rem] border border-slate-200 bg-white p-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:grid-cols-[220px_1fr]">
+                  <div class="relative aspect-video overflow-hidden rounded-[1rem] bg-slate-100">
+                    <img :src="m.thumbnailUrl || m.mediaUrl" class="h-full w-full object-cover" />
+                    <div class="absolute inset-0 flex items-center justify-center bg-slate-950/20">
+                      <div
+                        class="flex h-12 w-12 items-center justify-center rounded-full border border-white/50 bg-white/25 text-white backdrop-blur transition-transform group-hover:scale-110">
+                        <PlayCircle :size="26" />
+                      </div>
+                    </div>
+                  </div>
+                  <div class="flex min-w-0 flex-col justify-between">
+                    <div>
+                      <h4 class="line-clamp-2 text-sm font-black leading-6 text-slate-900">{{ m.title }}</h4>
+                      <p class="mt-2 line-clamp-2 text-sm text-slate-500">
+                        {{ m.description || 'Video được lưu trong album gia đình.' }}</p>
+                    </div>
+                    <div class="mt-4 flex items-center justify-between">
+                      <div class="flex flex-wrap gap-2">
+                        <span
+                          class="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-bold text-slate-500">
+                          {{ formatByte(m.fileSizeBytes) }}
+                        </span>
+                        <span
+                          class="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-bold text-slate-500">
+                          {{ m.mimeType }}
+                        </span>
+                      </div>
+                      <button
+                        class="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-500 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600">
+                        <Download :size="16" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </template>
 
+            <template v-if="activeTab === 'DOCUMENT'">
+              <div class="rounded-[1.75rem] border border-slate-200 bg-slate-50/70 p-3">
+                <div class="grid gap-3">
+                  <div v-for="m in safeMedia" :key="m.albumMediaId"
+                    class="group flex items-center justify-between rounded-[1.25rem] border border-slate-200 bg-white px-4 py-3 shadow-sm transition hover:border-slate-300 hover:shadow-md">
+                    <div class="flex min-w-0 items-center gap-4">
+                      <div
+                        class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-amber-100 bg-amber-50 text-amber-600 transition-colors group-hover:bg-amber-100">
+                        <FileText :size="22" />
+                      </div>
+                      <div class="min-w-0">
+                        <h4 class="line-clamp-1 font-black text-slate-800">{{ m.title || 'Tài liệu không tên' }}</h4>
+                        <p class="mt-1 flex flex-wrap items-center gap-2 text-xs font-bold text-slate-400">
+                          <span class="rounded-full bg-slate-100 px-2.5 py-1">{{ m.mimeType }}</span>
+                          <span>{{ formatByte(m.fileSizeBytes) }}</span>
+                        </p>
+                      </div>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                      <button
+                        class="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-500 transition hover:border-slate-300 hover:bg-white">
+                        <Eye :size="16" />
+                      </button>
+                      <button
+                        class="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-500 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600">
+                        <Download :size="16" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </template>
+          </div>
+        </section>
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
-@keyframes slide-in-from-right-10 { from { transform: translateX(2.5rem); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-@keyframes zoom-in-95 { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in-from-right-10 {
+  from {
+    transform: translateX(2.5rem);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes zoom-in-95 {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
 
 .animate-in {
   animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   animation-fill-mode: both;
 }
 
-.fade-in { animation-name: fade-in; }
-.slide-in-from-right-10 { animation-name: slide-in-from-right-10; }
-.zoom-in-95 { animation-name: zoom-in-95; }
+.fade-in {
+  animation-name: fade-in;
+}
+
+.slide-in-from-right-10 {
+  animation-name: slide-in-from-right-10;
+}
+
+.zoom-in-95 {
+  animation-name: zoom-in-95;
+}
 </style>
