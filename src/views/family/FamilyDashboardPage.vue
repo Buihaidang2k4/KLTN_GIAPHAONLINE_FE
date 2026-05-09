@@ -76,7 +76,7 @@ const handleViewDetailEvents = () => router.push("/family/su-kien");
 </script>
 
 <template>
-  <div class="min-h-screen bg-slate-50 p-4 md:p-8 text-slate-900 font-sans">
+  <div class="min-h-screen bg-[#fbfaf5] p-4 md:p-8 text-slate-900 font-sans">
     <div class="max-w-7xl mx-auto space-y-8">
 
       <!-- HEADER & ADMIN INFO -->

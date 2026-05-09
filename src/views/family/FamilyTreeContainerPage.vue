@@ -77,7 +77,7 @@ const viewDetail = (f: Family) => {
 </script>
 
 <template>
-    <div id="app" class="p-6 md:p-8">
+    <div id="app" class="min-h-screen bg-[#fbfaf5] p-6 md:p-8">
         <main class="max-w-7xl mx-auto">
             <!-- Header -->
             <div class="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">

@@ -164,7 +164,7 @@ const handleCreateOrUpdateAchievement = (payload: {
 </script>
 
 <template>
-    <div class="min-h-screen bg-slate-50 p-4 md:p-8">
+    <div class="min-h-screen bg-[#fbfaf5] p-4 md:p-8">
         <div class="max-w-7xl mx-auto space-y-6">
 
             <!-- Header -->

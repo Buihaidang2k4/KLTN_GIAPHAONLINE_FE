@@ -5,6 +5,7 @@ import { ErrorMessage, Field, useForm } from 'vee-validate'
 import { computed, watch } from 'vue'
 import { z } from 'zod'
 import { formatDate } from '@/utils/format-date'
+import { X, Scroll, Sparkles, History, BookmarkCheck } from 'lucide-vue-next'
 
 const props = defineProps<{
     show: boolean
@@ -109,98 +110,148 @@ const onSubmit = handleSubmit((values) => {
 
 <template>
     <Teleport to="body">
-        <div v-if="show">
-            <div class="fixed inset-0 z-40 bg-black/50" @click="handleClose"></div>
+        <Transition name="fade">
+            <div v-if="show" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+                <!-- Backdrop -->
+                <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]" @click="handleClose"></div>
 
-            <div class="fixed inset-0 z-50 flex items-center justify-center px-4">
-                <div class="w-full max-w-3xl overflow-hidden rounded-2xl bg-white shadow-2xl">
-                    <div class="border-b border-slate-200 px-6 py-5">
-                        <div class="flex items-start justify-between gap-4">
-                            <div>
-                                <h2 class="text-2xl font-bold text-slate-800">
-                                    {{ titleText }}
-                                </h2>
-                                <p class="mt-1 text-sm text-slate-500">
-                                    Nhập thông tin cơ bản cho nghi lễ của gia đình.
-                                </p>
-                            </div>
-
-                            <button type="button"
-                                class="rounded-full px-3 py-1.5 text-xl text-slate-500 hover:bg-slate-100"
-                                @click="handleClose">
-                                x
-                            </button>
-                        </div>
+                <!-- Modal Container -->
+                <div class="relative w-full max-w-lg overflow-hidden rounded-[2rem] bg-[#fefaf6] shadow-2xl border border-amber-200/30 animate-in fade-in zoom-in duration-200">
+                    
+                    <!-- Subtle Ornaments -->
+                    <div class="absolute top-0 right-0 w-24 h-24 bg-[radial-gradient(circle_at_top_right,rgba(180,83,9,0.03),transparent)] pointer-events-none"></div>
+                    <div class="absolute top-6 left-6 text-amber-900/[0.03] pointer-events-none">
+                        <Scroll :size="80" />
                     </div>
 
-                    <form :key="mode + (ceremony?.ceremonyId ?? 'new')" class="p-6" @submit.prevent="onSubmit">
-                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            <div>
-                                <label class="mb-1 block text-sm font-medium text-slate-700">
-                                    Loại nghi lễ
-                                </label>
-                                <Field as="select" name="ceremonyType" validate-on-blur
-                                    class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
-                                    <option value="">Chọn loại nghi lễ</option>
-                                    <option v-for="item in ceremonyTypes" :key="item.value" :value="item.value">
-                                        {{ item.label }}
-                                    </option>
-                                </Field>
-                                <ErrorMessage name="ceremonyType" class="mt-1 block text-sm text-red-500" />
+                    <!-- Header Section -->
+                    <div class="relative px-6 pt-8 pb-4 text-center">
+                        <div class="inline-flex items-center gap-1.5 mb-2 px-2.5 py-0.5 bg-amber-50 rounded-full border border-amber-100/50">
+                            <Sparkles :size="12" class="text-amber-600" />
+                            <span class="text-[9px] font-bold text-amber-700 uppercase tracking-widest">Số hóa truyền thống</span>
+                        </div>
+                        <h2 class="text-xl font-black text-slate-900 tracking-tight">
+                            {{ titleText }}
+                        </h2>
+                        <p class="mt-1 text-xs text-slate-500 font-medium max-w-[280px] mx-auto leading-relaxed">
+                            Điền thông tin để lưu giữ nét đẹp văn hóa cho thế hệ mai sau.
+                        </p>
+
+                        <button @click="handleClose" 
+                            class="absolute top-5 right-5 p-1.5 rounded-full hover:bg-amber-50 text-slate-400 hover:text-amber-600 transition-all active:scale-90">
+                            <X :size="18" />
+                        </button>
+                    </div>
+
+                    <!-- Form Body -->
+                    <form :key="mode + (ceremony?.ceremonyId ?? 'new')" 
+                        class="relative px-6 pb-8" @submit.prevent="onSubmit">
+                        
+                        <div class="space-y-5">
+                            <!-- Vertical Stack for focus -->
+                            <div class="space-y-4">
+                                <!-- Loại nghi lễ -->
+                                <div class="space-y-1.5">
+                                    <label class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
+                                        <BookmarkCheck :size="14" class="text-amber-600/70" />
+                                        Loại nghi lễ <span class="text-red-400">*</span>
+                                    </label>
+                                    <Field as="select" name="ceremonyType" validate-on-blur
+                                        class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-500/5 transition-all appearance-none cursor-pointer shadow-sm">
+                                        <option value="">Chọn loại nghi lễ</option>
+                                        <option v-for="item in ceremonyTypes" :key="item.value" :value="item.value">
+                                            {{ item.label }}
+                                        </option>
+                                    </Field>
+                                    <ErrorMessage name="ceremonyType" class="mt-1 ml-1 block text-[10px] font-bold text-red-500" />
+                                </div>
+
+                                <!-- Tên nghi lễ -->
+                                <div class="space-y-1.5">
+                                    <label class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
+                                        Tên nghi lễ <span class="text-red-400">*</span>
+                                    </label>
+                                    <Field name="ceremonyName" type="text" placeholder="Ví dụ: Lễ mừng thọ"
+                                        validate-on-blur
+                                        class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-500/5 transition-all shadow-sm" />
+                                    <ErrorMessage name="ceremonyName" class="mt-1 ml-1 block text-[10px] font-bold text-red-500" />
+                                </div>
+
+                                <!-- Mô tả -->
+                                <div class="space-y-1.5">
+                                    <label class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
+                                        Mô tả chi tiết <span class="text-red-400">*</span>
+                                    </label>
+                                    <Field as="textarea" name="description" rows="4" validate-on-blur
+                                        placeholder="Ý nghĩa và các bước thực hiện..."
+                                        class="w-full resize-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-500/5 transition-all leading-relaxed shadow-sm" />
+                                    <ErrorMessage name="description" class="mt-1 ml-1 block text-[10px] font-bold text-red-500" />
+                                </div>
                             </div>
 
-                            <div>
-                                <label class="mb-1 block text-sm font-medium text-slate-700">
-                                    Tên nghi lễ
-                                </label>
-                                <Field name="ceremonyName" type="text" placeholder="VD: Lễ cưới truyền thống Việt Nam"
-                                    validate-on-blur
-                                    class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" />
-                                <ErrorMessage name="ceremonyName" class="mt-1 block text-sm text-red-500" />
-                            </div>
-
-                            <div class="sm:col-span-2">
-                                <label class="mb-1 block text-sm font-medium text-slate-700">
-                                    Mô tả
-                                </label>
-                                <Field as="textarea" name="description" rows="5" validate-on-blur
-                                    placeholder="Nhập mô tả chi tiết về nghi lễ, phong tục, ý nghĩa hoặc cách thực hiện..."
-                                    class="w-full resize-none rounded-xl border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" />
-                                <ErrorMessage name="description" class="mt-1 block text-sm text-red-500" />
+                            <!-- Audit Info -->
+                            <div v-if="ceremony"
+                                class="flex items-center justify-between p-3 bg-amber-50/40 rounded-xl border border-amber-100/30">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="p-1.5 bg-white rounded-lg shadow-sm">
+                                        <History :size="14" class="text-amber-600" />
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <span class="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">Cập nhật lúc</span>
+                                        <span class="text-[10px] font-bold text-slate-600">{{ formatDate(ceremony.updatedAt || ceremony.createdAt) }}</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        <div v-if="ceremony"
-                            class="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-                            <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                                <p>
-                                    <span class="font-medium text-slate-700">Ngày tạo:</span>
-                                    {{ formatDate(ceremony.createdAt) }}
-                                </p>
-                                <p>
-                                    <span class="font-medium text-slate-700">Cập nhật:</span>
-                                    {{ formatDate(ceremony.updatedAt) ?? 'Chưa cập nhật' }}
-                                </p>
-                            </div>
-                        </div>
-
-                        <div class="mt-6 flex justify-end gap-3 border-t border-slate-200 pt-5">
+                        <!-- Action Buttons -->
+                        <div class="mt-8 flex items-center justify-center gap-3">
                             <button type="button"
-                                class="rounded-xl border border-slate-300 px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                                class="flex-1 py-2.5 rounded-xl text-xs font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-all"
                                 @click="handleClose">
-                                Hủy
+                                Quay lại
                             </button>
 
                             <button type="submit" :disabled="isLoading || !meta.valid"
-                                class="rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white shadow hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60">
-                                {{ isLoading ? 'Đang lưu...' : mode === 'create' ? 'Thêm' : 'Cập nhật' }}
+                                class="flex-[1.5] py-2.5 rounded-xl bg-slate-900 text-white font-bold text-xs shadow-lg shadow-slate-200 hover:bg-slate-800 transition-all active:scale-[0.98] disabled:opacity-40">
+                                {{ isLoading ? 'Đang lưu...' : mode === 'create' ? 'Lưu thông tin' : 'Cập nhật' }}
                             </button>
                         </div>
                     </form>
                 </div>
             </div>
-        </div>
+        </Transition>
     </Teleport>
 </template>
 
-<style scoped></style>
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+}
+
+select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2392400e' stroke-width='2.5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19.5 8.25l-7.5 7.5-7.5-7.5' /%3E%3C/svg%3E");
+    background-position: right 1rem center;
+    background-repeat: no-repeat;
+    background-size: 0.85rem;
+}
+
+.rounded-\[2rem\]::before {
+    content: '';
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    width: 30px;
+    height: 30px;
+    border-top: 2px solid rgba(217, 119, 6, 0.08);
+    border-left: 2px solid rgba(217, 119, 6, 0.08);
+    border-radius: 10px 0 0 0;
+    pointer-events: none;
+}
+</style>

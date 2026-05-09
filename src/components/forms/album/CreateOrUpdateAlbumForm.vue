@@ -5,7 +5,7 @@ import { toTypedSchema } from '@vee-validate/zod'
 import { ErrorMessage, Field, useForm } from 'vee-validate'
 import { computed, watch } from 'vue'
 import { z } from 'zod'
-import { X, ImagePlus } from 'lucide-vue-next'
+import { X, Save, Sparkles, FolderPlus, History, Scroll, FolderHeart } from 'lucide-vue-next'
 
 const props = defineProps<{
     show: boolean
@@ -61,13 +61,7 @@ watch(
 )
 
 const titleText = computed(() =>
-    props.mode === 'create' ? 'Thêm album mới' : 'Cập nhật album'
-)
-
-const subText = computed(() =>
-    props.mode === 'create'
-        ? 'Tạo album để lưu trữ ảnh, video và tư liệu của gia đình.'
-        : 'Chỉnh sửa thông tin album hiện tại.'
+    props.mode === 'create' ? 'Tạo tập kỷ niệm' : 'Chỉnh sửa tập kỷ niệm'
 )
 
 const handleClose = () => {
@@ -91,102 +85,143 @@ const onSubmit = handleSubmit((values) => {
 
 <template>
     <Teleport to="body">
-        <div v-if="show">
-            <div class="fixed inset-0 z-40 bg-slate-950/50" @click="handleClose"></div>
+        <Transition name="fade">
+            <div v-if="show" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+                <!-- Backdrop -->
+                <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]" @click="handleClose"></div>
 
-            <div class="fixed inset-0 z-50 flex items-center justify-center px-4">
-                <div class="w-full max-w-xl overflow-hidden rounded-2xl bg-white shadow-2xl">
+                <!-- Modal Container -->
+                <div class="relative w-full max-w-xl max-h-[90vh] flex flex-col overflow-hidden rounded-[2.5rem] bg-[#fefaf6] shadow-2xl border border-amber-200/30 animate-in fade-in zoom-in duration-300">
+                    
+                    <!-- Subtle Decoration -->
+                    <div class="absolute -top-12 -right-12 text-amber-900/[0.03] pointer-events-none">
+                        <FolderHeart :size="200" />
+                    </div>
+
                     <!-- Header -->
-                    <div class="flex items-start justify-between border-b border-slate-200 px-6 py-5">
-                        <div class="flex gap-4">
-                            <div
-                                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white">
-                                <ImagePlus :size="22" />
-                            </div>
-
-                            <div>
-                                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                    {{ mode === 'create' ? 'Tạo album' : 'Chỉnh sửa' }}
-                                </p>
-
-                                <h2 class="mt-1 text-xl font-bold text-slate-900">
-                                    {{ titleText }}
-                                </h2>
-
-                                <p class="mt-1 text-sm leading-6 text-slate-500">
-                                    {{ subText }}
-                                </p>
-                            </div>
+                    <div class="relative shrink-0 px-8 pt-8 pb-4 text-center md:text-left">
+                        <div class="inline-flex items-center gap-1.5 mb-2 px-2.5 py-0.5 bg-amber-50 rounded-full border border-amber-100/50">
+                            <Sparkles :size="12" class="text-amber-600" />
+                            <span class="text-[9px] font-bold text-amber-700 uppercase tracking-widest">Lưu giữ khoảnh khắc</span>
                         </div>
+                        <h2 class="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                            {{ titleText }}
+                        </h2>
+                        <p class="mt-1 text-xs text-slate-500 font-medium leading-relaxed max-w-sm">
+                            Tổ chức những hình ảnh, video và tư liệu quý giá của dòng tộc vào từng chủ đề riêng biệt.
+                        </p>
 
-                        <button type="button"
-                            class="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
-                            @click="handleClose">
+                        <button @click="handleClose" 
+                            class="absolute top-8 right-8 p-1.5 rounded-full hover:bg-amber-50 text-slate-400 hover:text-amber-600 transition-all active:scale-90">
                             <X :size="20" />
                         </button>
                     </div>
 
-                    <!-- Form -->
-                    <form :key="mode + (album?.albumId ?? 'new')" class="px-6 py-5" @submit.prevent="onSubmit">
-                        <div class="space-y-5">
-                            <div>
-                                <label class="mb-1.5 block text-sm font-semibold text-slate-700">
-                                    Tên album <span class="text-red-500">*</span>
+                    <!-- Form Body -->
+                    <div class="custom-scrollbar flex-1 overflow-y-auto px-8 pb-4">
+                        <form id="albumForm" :key="mode + (album?.albumId ?? 'new')" @submit.prevent="onSubmit" class="space-y-6 pt-2">
+                            
+                            <!-- Tên Album -->
+                            <div class="space-y-1.5">
+                                <label class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
+                                    <FolderPlus :size="14" class="text-amber-600/70" />
+                                    Tên tập kỷ niệm <span class="text-red-400">*</span>
                                 </label>
-
-                                <Field name="title" type="text" placeholder="VD: Kỷ niệm đám cưới Hùng và Lan"
+                                <Field name="title" type="text" placeholder="VD: Lễ thượng thọ cụ nội 2024"
                                     validate-on-blur
-                                    class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-800 outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10" />
-
-                                <ErrorMessage name="title" class="mt-1 block text-sm text-red-500" />
+                                    class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-500/5 transition-all shadow-sm" />
+                                <ErrorMessage name="title" class="mt-1 ml-1 block text-[10px] font-bold text-red-500" />
                             </div>
 
-                            <div>
-                                <label class="mb-1.5 block text-sm font-semibold text-slate-700">
-                                    Mô tả <span class="text-red-500">*</span>
+                            <!-- Mô tả -->
+                            <div class="space-y-1.5">
+                                <label class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
+                                    <Scroll :size="14" class="text-amber-600/70" />
+                                    Ghi chú & Ý nghĩa <span class="text-red-400">*</span>
                                 </label>
-
-                                <Field as="textarea" name="description" rows="5" validate-on-blur
-                                    placeholder="Nhập mô tả ngắn cho album, ví dụ nội dung, thời gian hoặc ý nghĩa của bộ sưu tập..."
-                                    class="w-full resize-none rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm leading-6 text-slate-800 outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10" />
-
-                                <ErrorMessage name="description" class="mt-1 block text-sm text-red-500" />
+                                <Field as="textarea" name="description" rows="4" validate-on-blur
+                                    placeholder="Chia sẻ về nội dung hoặc ý nghĩa đặc biệt của tập kỷ niệm này..."
+                                    class="w-full resize-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-500/5 transition-all leading-relaxed shadow-sm" />
+                                <ErrorMessage name="description" class="mt-1 ml-1 block text-[10px] font-bold text-red-500" />
                             </div>
-                        </div>
 
-                        <!-- Meta info -->
-                        <div v-if="album" class="mt-5 border-t border-slate-200 pt-4 text-sm text-slate-500">
-                            <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                                <p>
-                                    <span class="font-medium text-slate-700">Ngày tạo:</span>
-                                    {{ formatDate(album.createdAt) }}
-                                </p>
-
-                                <p>
-                                    <span class="font-medium text-slate-700">Cập nhật:</span>
-                                    {{ formatDate(album.updatedAt) }}
-                                </p>
+                            <!-- Audit Info -->
+                            <div v-if="album"
+                                class="flex items-center justify-between p-4 bg-amber-50/40 rounded-2xl border border-amber-100/30">
+                                <div class="flex items-center gap-3">
+                                    <div class="p-2 bg-white rounded-xl shadow-sm">
+                                        <History :size="16" class="text-amber-600" />
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Cập nhật lần cuối</span>
+                                        <span class="text-[11px] font-bold text-slate-700">{{ formatDate(album.updatedAt) }}</span>
+                                    </div>
+                                </div>
+                                <span class="text-[10px] font-bold text-amber-700/60 uppercase">Đã đồng bộ</span>
                             </div>
-                        </div>
+                        </form>
+                    </div>
 
-                        <!-- Actions -->
-                        <div class="mt-6 flex justify-end gap-3 border-t border-slate-200 pt-5">
-                            <button type="button"
-                                class="rounded-lg border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-                                @click="handleClose">
-                                Hủy
-                            </button>
+                    <!-- Fixed Footer Actions -->
+                    <div class="shrink-0 flex items-center justify-end gap-3 px-8 py-5 border-t border-amber-100/30 bg-[#fefaf6]/80 backdrop-blur-sm">
+                        <button type="button" @click="handleClose"
+                            class="px-8 py-2.5 rounded-xl text-xs font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-all">
+                            Quay lại
+                        </button>
 
-                            <button type="submit" :disabled="isLoading || !meta.valid"
-                                class="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60">
-                                {{ isLoading ? 'Đang lưu...' : mode === 'create' ? 'Thêm album' : 'Lưu thay đổi' }}
-                            </button>
-                        </div>
-                    </form>
+                        <button type="submit" form="albumForm" :disabled="isLoading || !meta.valid"
+                            class="flex items-center gap-2 px-10 py-2.5 rounded-xl bg-slate-900 text-white font-bold text-xs shadow-lg shadow-slate-200 hover:bg-slate-800 transition-all active:scale-[0.98] disabled:opacity-40">
+                            <Save :size="14" />
+                            <span>{{ isLoading ? 'Đang lưu...' : mode === 'create' ? 'Tạo ngay' : 'Cập nhật' }}</span>
+                        </button>
+                    </div>
+                    
+                    <!-- Decorative footer line -->
+                    <div class="h-1.5 w-full bg-[linear-gradient(90deg,transparent_0%,#d97706_50%,transparent_100%)] opacity-10"></div>
                 </div>
             </div>
-        </div>
+        </Transition>
     </Teleport>
 </template>
 
-<style scoped></style>
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #3a3a2815;
+    border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #3a3a2830;
+}
+
+.rounded-\[2\.5rem\]::before {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    width: 40px;
+    height: 40px;
+    border-top: 2px solid rgba(217, 119, 6, 0.08);
+    border-left: 2px solid rgba(217, 119, 6, 0.08);
+    border-radius: 12px 0 0 0;
+    pointer-events: none;
+}
+</style>

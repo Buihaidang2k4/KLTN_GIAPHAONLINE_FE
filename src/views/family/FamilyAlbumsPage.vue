@@ -251,7 +251,7 @@ const handleDownloadMedia = async (media: AlbumMediaRes) => {
 
 <template>
   <div
-    class="min-h-screen bg-[radial-gradient(circle_at_top,#eef4ff,transparent_35%),linear-gradient(180deg,#f8fafc_0%,#f1f5f9_100%)] p-4 font-sans text-slate-900 md:p-8">
+    class="min-h-screen bg-[#fbfaf5] p-4 font-sans text-slate-900 md:p-8">
     <CreateOrUpdateAlbumForm :mode="mode" :album="edittingAlbum" :show="isShowAlbumForm" :family-id="familyId"
       :is-loading="isCreatingAlbum || isUpdatingAlbum" @close="closeFormAlbum" @create="handleCreateAlbum"
       @update="handelUpdateAlbum" />

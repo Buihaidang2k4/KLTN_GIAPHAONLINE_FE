@@ -72,7 +72,7 @@ const handleSelectPlan = (plan: SubscriptionPlanRes) => {
 </script>
 
 <template>
-    <div class="min-h-screen bg-stone-50 text-slate-900 selection:bg-slate-200 mb-16 px-4 sm:px-6">
+    <div class="min-h-screen bg-[#fbfaf5] text-slate-900 selection:bg-slate-200 mb-16 px-4 sm:px-6">
         <!-- Header Section -->
         <header class="max-w-6xl mx-auto pt-16 pb-12 text-center">
             <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-slate-200 mb-6">

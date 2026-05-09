@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue'
-import { X, Save } from 'lucide-vue-next'
+import { X, Save, Sparkles, Scroll, BookmarkCheck } from 'lucide-vue-next'
 import { Field, ErrorMessage, useForm } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/zod'
 import { z } from 'zod'
@@ -19,7 +19,7 @@ const emit = defineEmits<{
 }>()
 
 const titleText = computed(() =>
-    props.mode === 'update' ? 'Sửa bước hướng dẫn' : 'Thêm bước mới'
+    props.mode === 'update' ? 'Cập nhật bước hướng dẫn' : 'Thêm bước thực hiện mới'
 )
 
 const validationSchema = toTypedSchema(
@@ -86,81 +86,90 @@ const handleClose = () => {
 
 <template>
     <Teleport to="body">
-        <Transition enter-active-class="transition duration-300 ease-out" enter-from-class="opacity-0 scale-95"
-            enter-to-class="opacity-100 scale-100" leave-active-class="transition duration-200 ease-in"
-            leave-from-class="opacity-100 scale-100" leave-to-class="opacity-0 scale-95">
-            <div v-if="show"
-                class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm">
-                <div
-                    class="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
-                    <div
-                        class="flex shrink-0 items-center justify-between border-b border-slate-200 bg-slate-50/50 p-5">
-                        <h3 class="text-lg font-bold text-slate-900">
-                            {{ titleText }}
-                        </h3>
+        <Transition name="fade">
+            <div v-if="show" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+                <!-- Backdrop -->
+                <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]" @click="handleClose"></div>
 
-                        <button type="button" @click="handleClose"
-                            class="mr-1 rounded-md p-1.5 transition-colors hover:bg-white">
-                            <X class="h-4 w-4 text-slate-400" />
+                <!-- Modal Container -->
+                <div class="relative w-full max-w-lg overflow-hidden rounded-[2rem] bg-[#fefaf6] shadow-2xl border border-amber-200/30 animate-in fade-in zoom-in duration-200">
+                    
+                    <!-- Subtle Ornaments -->
+                    <div class="absolute top-0 right-0 w-24 h-24 bg-[radial-gradient(circle_at_top_right,rgba(180,83,9,0.03),transparent)] pointer-events-none"></div>
+                    <div class="absolute top-6 left-6 text-amber-900/[0.03] pointer-events-none">
+                        <Scroll :size="80" />
+                    </div>
+
+                    <!-- Header Section -->
+                    <div class="relative px-6 pt-8 pb-4 text-center">
+                        <div class="inline-flex items-center gap-1.5 mb-2 px-2.5 py-0.5 bg-amber-50 rounded-full border border-amber-100/50">
+                            <Sparkles :size="12" class="text-amber-600" />
+                            <span class="text-[9px] font-bold text-amber-700 uppercase tracking-widest">Tiến trình nghi lễ</span>
+                        </div>
+                        <h2 class="text-xl font-black text-slate-900 tracking-tight">
+                            {{ titleText }}
+                        </h2>
+                        <p class="mt-1 text-xs text-slate-500 font-medium max-w-[280px] mx-auto leading-relaxed">
+                            Mô tả chi tiết từng bước để con cháu thực hiện đúng lễ nghi.
+                        </p>
+
+                        <button @click="handleClose" 
+                            class="absolute top-5 right-5 p-1.5 rounded-full hover:bg-amber-50 text-slate-400 hover:text-amber-600 transition-all active:scale-90">
+                            <X :size="18" />
                         </button>
                     </div>
 
-                    <form class="flex min-h-0 flex-1 flex-col" @submit.prevent="onSubmit">
-                        <div class="custom-scrollbar space-y-6 overflow-y-auto p-6">
-                            <div class="grid grid-cols-1 gap-5">
-                                <div>
-                                    <label
-                                        class="mb-2 ml-1 block text-[8px] font-bold uppercase tracking-widest text-slate-700 opacity-60">
-                                        Tên bước thực hiện
-                                    </label>
+                    <!-- Form Body -->
+                    <form class="relative px-6 pb-8" @submit.prevent="onSubmit">
+                        
+                        <div class="space-y-4">
+                            <!-- Tên bước thực hiện -->
+                            <div class="space-y-1.5">
+                                <label class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
+                                    <BookmarkCheck :size="14" class="text-amber-600/70" />
+                                    Tên bước thực hiện <span class="text-red-400">*</span>
+                                </label>
+                                <Field name="stepName" type="text" placeholder="Ví dụ: Lễ dâng hương..."
+                                    validate-on-blur
+                                    class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-500/5 transition-all shadow-sm" />
+                                <ErrorMessage name="stepName" class="mt-1 ml-1 block text-[10px] font-bold text-red-500" />
+                            </div>
 
-                                    <Field name="stepName" type="text" placeholder="Ví dụ: Lễ dâng hương..."
-                                        validate-on-blur
-                                        class="w-full rounded-lg border border-slate-200 px-4 py-3 font-semibold outline-none transition-all placeholder:font-medium placeholder:text-slate-300 focus:border-slate-700 focus:ring-2 focus:ring-slate-700/20" />
+                            <!-- Mô tả ngắn -->
+                            <div class="space-y-1.5">
+                                <label class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
+                                    Mô tả ngắn <span class="text-red-400">*</span>
+                                </label>
+                                <Field name="stepDescription" type="text" placeholder="Tóm tắt ý nghĩa bước này"
+                                    validate-on-blur
+                                    class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-500/5 transition-all shadow-sm" />
+                                <ErrorMessage name="stepDescription" class="mt-1 ml-1 block text-[10px] font-bold text-red-500" />
+                            </div>
 
-                                    <ErrorMessage name="stepName" class="mt-1 block text-xs font-medium text-red-500" />
-                                </div>
-
-                                <div>
-                                    <label
-                                        class="mb-2 ml-1 block text-[8px] font-bold uppercase tracking-widest text-slate-700 opacity-60">
-                                        Mô tả ngắn
-                                    </label>
-
-                                    <Field name="stepDescription" type="text" placeholder="Tóm tắt ý nghĩa bước này"
-                                        validate-on-blur
-                                        class="w-full rounded-lg border border-slate-200 px-4 py-3 font-semibold outline-none transition-all placeholder:font-medium placeholder:text-slate-300 focus:border-slate-700 focus:ring-2 focus:ring-slate-700/20" />
-
-                                    <ErrorMessage name="stepDescription"
-                                        class="mt-1 block text-xs font-medium text-red-500" />
-                                </div>
-
-                                <div>
-                                    <label
-                                        class="mb-2 ml-1 block text-[8px] font-bold uppercase tracking-widest text-slate-700 opacity-60">
-                                        Hướng dẫn chi tiết
-                                    </label>
-
-                                    <Field as="textarea" name="stepGuideline" rows="5"
-                                        placeholder="Nhập chi tiết các bước cần làm..." validate-on-blur
-                                        class="w-full resize-none rounded-lg border border-slate-200 px-4 py-3 font-medium leading-relaxed text-slate-700 outline-none transition-all focus:border-slate-700 focus:ring-2 focus:ring-slate-700/20" />
-
-                                    <ErrorMessage name="stepGuideline"
-                                        class="mt-1 block text-xs font-medium text-red-500" />
-                                </div>
+                            <!-- Hướng dẫn chi tiết -->
+                            <div class="space-y-1.5">
+                                <label class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
+                                    Hướng dẫn chi tiết <span class="text-red-400">*</span>
+                                </label>
+                                <Field as="textarea" name="stepGuideline" rows="5"
+                                    placeholder="Nhập chi tiết các bước cần làm, lời khấn hoặc lưu ý..." validate-on-blur
+                                    class="w-full resize-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-500/5 transition-all leading-relaxed shadow-sm" />
+                                <ErrorMessage name="stepGuideline" class="mt-1 ml-1 block text-[10px] font-bold text-red-500" />
                             </div>
                         </div>
 
-                        <div class="flex shrink-0 gap-3 border-t border-slate-200 bg-slate-50 p-5">
-                            <button type="button" @click="handleClose"
-                                class="flex-1 rounded-lg border border-transparent py-3 text-[8px] font-bold uppercase tracking-widest text-slate-900 transition-all hover:border-slate-200 hover:bg-white">
-                                Hủy bỏ
+                        <!-- Action Buttons -->
+                        <div class="mt-8 flex items-center justify-center gap-3">
+                            <button type="button"
+                                class="flex-1 py-2.5 rounded-xl text-xs font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-all"
+                                @click="handleClose">
+                                Quay lại
                             </button>
 
                             <button type="submit" :disabled="isLoading || !meta.valid"
-                                class="flex flex-[2] items-center justify-center gap-2 rounded-lg bg-slate-700 py-3 text-[8px] font-bold uppercase tracking-widest text-white shadow-lg shadow-slate-700/20 transition-all hover:bg-slate-600 disabled:cursor-not-allowed disabled:opacity-60">
-                                <Save class="h-4 w-4" />
-                                {{ isLoading ? 'Đang lưu...' : 'Lưu bước này' }}
+                                class="flex-[1.5] flex items-center justify-center gap-2 py-2.5 rounded-xl bg-slate-900 text-white font-bold text-xs shadow-lg shadow-slate-200 hover:bg-slate-800 transition-all active:scale-[0.98] disabled:opacity-40">
+                                <Save :size="14" />
+                                <span>{{ isLoading ? 'Đang lưu...' : 'Lưu bước này' }}</span>
                             </button>
                         </div>
                     </form>
@@ -171,20 +180,26 @@ const handleClose = () => {
 </template>
 
 <style scoped>
-.custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.2s ease;
 }
 
-.custom-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #3a3a2820;
-    border-radius: 10px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #3a3a2840;
+.rounded-\[2rem\]::before {
+    content: '';
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    width: 30px;
+    height: 30px;
+    border-top: 2px solid rgba(217, 119, 6, 0.08);
+    border-left: 2px solid rgba(217, 119, 6, 0.08);
+    border-radius: 10px 0 0 0;
+    pointer-events: none;
 }
 </style>

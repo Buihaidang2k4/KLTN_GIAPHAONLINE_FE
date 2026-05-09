@@ -74,7 +74,7 @@ function handleSearch() {
 </script>
 
 <template>
-    <div class="min-h-screen bg-slate-50 p-4 sm:p-6">
+    <div class="min-h-screen bg-[#fbfaf5] p-4 sm:p-6">
         <div class="mx-auto max-w-7xl space-y-4">
             <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <h1 class="text-2xl font-semibold text-slate-800">Quản trị viên</h1>

@@ -243,7 +243,7 @@ const scrollToTimelineStep = (timelineId: number) => {
 </script>
 
 <template>
-    <div class="min-h-screen bg-white text-slate-900 selection:bg-slate-100 selection:text-slate-900">
+    <div class="min-h-screen bg-[#fbfaf5] text-slate-900 selection:bg-slate-100 selection:text-slate-900">
 
         <TimelineStepModal :show="showStepModal" :mode="modeTimeline" :editing-step="editingStep"
             @close="closeStepModal" @save="handleTimelineSave" />

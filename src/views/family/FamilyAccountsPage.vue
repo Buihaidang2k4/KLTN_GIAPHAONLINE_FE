@@ -190,7 +190,7 @@ function handleChangePassword() {
 }
 </script>
 <template>
-    <div class="min-h-screen bg-slate-50">
+    <div class="min-h-screen bg-[#fbfaf5]">
         <div class="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
             <div class="mb-6">
                 <h1 class="text-2xl font-bold text-slate-800">Tài khoản</h1>

@@ -107,7 +107,7 @@ const getStatusDetails = (status: string) => {
 </script>
 
 <template>
-  <div class="p-6 bg-[#f8fafc] min-h-screen font-sans text-slate-900">
+  <div class="p-6 bg-[#fbfaf5] min-h-screen font-sans text-slate-900">
     <!-- Header Section -->
     <div class="max-w-[1400px] mx-auto space-y-6">
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">

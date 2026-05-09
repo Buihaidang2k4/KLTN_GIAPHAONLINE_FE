@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { computed, onUnmounted, ref, watch } from 'vue'
-import { Form, Field, ErrorMessage, useForm } from 'vee-validate'
+import { Field, ErrorMessage, useForm } from 'vee-validate'
 import type {
     FamilyAchievementReq,
     FamilyAchievementRes,
     UpdateFamilyAchievementReq
 } from '@/types/family/family-achievement.types'
 import { formatDate } from '@/utils/format-date';
-import { Camera } from 'lucide-vue-next';
+import { Camera, X, Save, Sparkles, Scroll, Trophy, BookmarkCheck, History, User } from 'lucide-vue-next';
 import { z } from 'zod'
 import { toTypedSchema } from '@vee-validate/zod'
 
@@ -180,231 +180,279 @@ const handleClose = () => {
     emit('close')
 }
 
-const titleText = computed(() => props.mode === 'create' ? 'Thêm thành tích gia đình' : 'Cập nhật thành tích gia đình');
-
+const titleText = computed(() => props.mode === 'create' ? 'Tôn vinh thành tích' : 'Cập nhật vinh danh');
 
 </script>
 
 <template>
     <Teleport to="body">
-        <div v-if="show">
-            <div class="fixed inset-0 z-40 bg-black/50 transition opacity-20" @click="handleClose"></div>
+        <Transition name="fade">
+            <div v-if="show" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+                <!-- Backdrop -->
+                <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]" @click="handleClose"></div>
 
-            <div class="fixed inset-0 z-99 flex items-center justify-center px-4">
-                <div class="w-full max-w-5xl overflow-hidden rounded-2xl bg-white shadow-2xl">
-                    <div class="grid grid-cols-1 md:grid-cols-[42%_58%]">
+                <!-- Modal Container -->
+                <div class="relative w-full max-w-5xl h-[90vh] flex flex-col overflow-hidden rounded-[2.5rem] bg-[#fefaf6] shadow-2xl border border-amber-200/30 animate-in fade-in zoom-in duration-300">
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-[40%_60%] flex-1 overflow-hidden">
 
-                        <!-- LEFT IMAGE -->
-                        <div class="flex min-h-105 flex-col bg-white">
-                            <!-- ẢNH -->
-                            <div class="p-4 pb-0">
-                                <div
-                                    class="group relative h-82 w-full overflow-hidden rounded-2xl bg-slate-100 shadow-sm">
-                                    <img v-if="displayImageUrl" :src="displayImageUrl" alt="Ảnh minh chứng thành tích"
-                                        class="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+                        <!-- LEFT: PREVIEW & IMAGE -->
+                        <div class="relative flex flex-col bg-amber-50/20 border-b md:border-b-0 md:border-r border-amber-100/50 h-full overflow-hidden">
+                            <!-- Subtle Ornament -->
+                            <div class="absolute top-12 left-12 text-amber-900/[0.03] pointer-events-none">
+                                <Trophy :size="160" />
+                            </div>
 
-                                    <div v-else
-                                        class="flex h-full w-full flex-col items-center justify-center px-6 text-center text-slate-500">
-                                        <div
-                                            class="mb-4 flex h-20 w-20 items-center justify-center rounded-2xl bg-white text-4xl shadow-sm">
-                                            🏆
+                            <div class="flex-1 flex flex-col p-6 min-h-0 overflow-y-auto custom-scrollbar">
+                                <!-- Image Card -->
+                                <div class="relative group min-h-[300px] flex-1 rounded-3xl overflow-hidden bg-white shadow-inner border border-amber-200/40 shrink-0 mb-6">
+                                    <img v-if="displayImageUrl" :src="displayImageUrl" alt="Minh chứng"
+                                        class="h-full w-full object-cover transition duration-700 group-hover:scale-110" />
+                                    
+                                    <div v-else class="flex h-full w-full flex-col items-center justify-center p-8 text-center bg-[radial-gradient(circle_at_center,rgba(251,191,36,0.05),transparent)]">
+                                        <div class="w-20 h-20 mb-4 bg-amber-50 rounded-2xl flex items-center justify-center shadow-sm">
+                                            <Trophy :size="32" class="text-amber-500" />
                                         </div>
-
-                                        <p class="text-base font-semibold text-slate-800">
-                                            Chưa có ảnh minh chứng
-                                        </p>
-
-                                        <p class="mt-1 text-sm text-slate-500">
-                                            Chọn ảnh để xem trước tại đây
-                                        </p>
+                                        <p class="text-sm font-black text-slate-800 uppercase tracking-widest">Chưa có minh chứng</p>
+                                        <p class="mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Hình ảnh bằng khen hoặc kỷ niệm</p>
                                     </div>
 
+                                    <!-- Upload Overlay -->
+                                    <label class="absolute inset-0 bg-slate-900/0 hover:bg-slate-900/40 transition-all cursor-pointer flex flex-col items-center justify-center opacity-0 hover:opacity-100">
+                                        <Camera :size="32" class="text-white mb-2" />
+                                        <span class="text-white text-xs font-bold uppercase tracking-widest">Thay đổi ảnh</span>
+                                        <input type="file" accept="image/*" class="hidden" @change="onSelectEvidenceImage" />
+                                    </label>
+
                                     <div v-if="selectedEvidenceFile"
-                                        class="absolute right-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-indigo-600 shadow backdrop-blur">
+                                        class="absolute top-4 right-4 px-3 py-1 bg-amber-500 text-white text-[9px] font-black uppercase tracking-widest rounded-full shadow-lg">
                                         Ảnh mới
                                     </div>
                                 </div>
-                            </div>
 
-                            <!-- INFO CARD -->
-                            <div class="px-4">
-                                <div
-                                    class="relative z-10 -mt-9 rounded-2xl border border-slate-100 bg-white/95 p-4 shadow-lg backdrop-blur">
-                                    <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                                        Người đạt thành tích
-                                    </p>
-
-                                    <p class="mt-1 truncate text-lg font-bold text-slate-900">
-                                        {{ achievement?.personName || 'Chưa nhập tên người đạt' }}
-                                    </p>
-
-                                    <p class="mt-2 line-clamp-2 text-sm text-slate-500">
-                                        {{ achievement?.name || 'Thông tin thành tích sẽ hiển thị tại đây' }}
-                                    </p>
+                                <!-- Preview Info -->
+                                <div class="p-5 bg-white rounded-2xl border border-amber-100/50 shadow-sm relative overflow-hidden shrink-0">
+                                    <div class="absolute top-0 right-0 p-3 opacity-5">
+                                        <Scroll :size="48" />
+                                    </div>
+                                    <span class="text-[9px] font-black text-amber-600 uppercase tracking-[0.2em] mb-1 block">Người đạt được</span>
+                                    <h4 class="text-lg font-black text-slate-900 truncate leading-tight">
+                                        {{ achievement?.personName || 'Tên thành viên' }}
+                                    </h4>
+                                    <div class="mt-2 flex items-center gap-2">
+                                        <div class="w-1.5 h-1.5 rounded-full bg-amber-500"></div>
+                                        <p class="text-xs font-bold text-slate-500 italic truncate">
+                                            {{ achievement?.name || 'Vinh danh thành tích dòng tộc' }}
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
 
-                            <!-- ACTION CHỌN ẢNH -->
-                            <div class="mt-auto space-y-3 border-t border-slate-100 bg-white p-4">
-                                <label
-                                    class="flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-600">
-                                    <Camera :size="17" />
-                                    {{ displayImageUrl ? 'Đổi ảnh minh chứng' : 'Chọn ảnh minh chứng' }}
-
-                                    <input type="file" accept="image/*" class="hidden"
-                                        @change="onSelectEvidenceImage" />
-                                </label>
-
-                                <div v-if="selectedEvidenceFile"
-                                    class="flex items-center justify-between gap-3 rounded-2xl border border-indigo-100 bg-indigo-50 px-3 py-2">
-                                    <div class="min-w-0">
-                                        <p class="truncate text-sm font-semibold text-indigo-700">
-                                            {{ selectedEvidenceFile.name }}
-                                        </p>
-                                        <p class="text-xs text-indigo-500">
-                                            Ảnh sẽ lưu khi bấm {{ mode === 'create' ? 'Thêm' : 'Cập nhật' }}
-                                        </p>
+                            <!-- Image Management Footer -->
+                            <div v-if="selectedEvidenceFile" class="p-4 bg-white/50 border-t border-amber-100/30 shrink-0">
+                                <div class="flex items-center justify-between gap-3 bg-white p-2 rounded-xl border border-amber-100">
+                                    <div class="min-w-0 px-1">
+                                        <p class="text-[10px] font-bold text-slate-700 truncate">{{ selectedEvidenceFile.name }}</p>
                                     </div>
-
-                                    <button type="button"
-                                        class="shrink-0 rounded-lg px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-50"
-                                        @click="removeSelectedImage">
-                                        Xóa
+                                    <button @click="removeSelectedImage" class="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-all">
+                                        <X :size="14" />
                                     </button>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- RIGHT FORM -->
-                        <div class="max-h-[90vh] overflow-y-auto p-6">
-                            <div class="mb-6 flex items-start justify-between gap-4">
-                                <div>
-                                    <h2 class="text-2xl font-bold text-slate-800">
-                                        {{ titleText }}
-                                    </h2>
-                                    <p class="mt-1 text-sm text-slate-500">
-                                        Nhập thông tin thành tích, đơn vị tổ chức và minh chứng.
-                                    </p>
+                        <!-- RIGHT: FORM SECTION -->
+                        <div class="flex flex-col h-full overflow-hidden">
+                            <!-- Header -->
+                            <div class="relative shrink-0 px-8 pt-8 pb-4 text-center md:text-left">
+                                <div class="inline-flex items-center gap-1.5 mb-2 px-2.5 py-0.5 bg-amber-50 rounded-full border border-amber-100/50">
+                                    <Sparkles :size="12" class="text-amber-600" />
+                                    <span class="text-[9px] font-bold text-amber-700 uppercase tracking-widest">Bảng vàng vinh danh</span>
                                 </div>
+                                <h2 class="text-2xl font-black text-slate-900 tracking-tight">
+                                    {{ titleText }}
+                                </h2>
+                                <p class="mt-1 text-xs text-slate-500 font-medium leading-relaxed">
+                                    Lưu giữ những nỗ lực và đóng góp xuất sắc của con cháu vào truyền thống dòng họ.
+                                </p>
 
-                                <button type="button"
-                                    class="rounded-full px-3 py-1.5 text-xl text-slate-500 hover:bg-slate-100"
-                                    @click="handleClose">
-                                    ×
+                                <button @click="handleClose" 
+                                    class="absolute top-8 right-8 p-1.5 rounded-full hover:bg-amber-50 text-slate-400 hover:text-amber-600 transition-all active:scale-90">
+                                    <X :size="20" />
                                 </button>
                             </div>
 
-                            <form :key="mode + (achievement?.achievementId ?? 'new')" @submit.prevent="onSubmit">
-                                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <!-- Scrollable Form Body -->
+                            <div class="custom-scrollbar flex-1 overflow-y-auto px-8 pb-4">
+                                <form id="achievementForm" :key="mode + (achievement?.achievementId ?? 'new')" @submit.prevent="onSubmit" class="space-y-5 pt-2">
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                        
+                                        <!-- Tên người đạt -->
+                                        <div class="sm:col-span-2 space-y-1.5">
+                                            <label class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
+                                                <User :size="14" class="text-amber-600/70" />
+                                                Tên người đạt thành tích <span class="text-red-400">*</span>
+                                            </label>
+                                            <Field name="personName" type="text" placeholder="VD: Nguyễn Văn A"
+                                                validate-on-blur
+                                                class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-500/5 transition-all shadow-sm" />
+                                            <ErrorMessage name="personName" class="mt-1 ml-1 block text-[10px] font-bold text-red-500" />
+                                        </div>
 
-                                    <div class="sm:col-span-2">
-                                        <label class="mb-1 block text-sm font-medium text-slate-700">
-                                            Tên người đạt thành tích
-                                        </label>
-                                        <Field name="personName" type="text" placeholder="VD: Nguyễn Văn A"
-                                            validate-on-blur
-                                            class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" />
-                                        <ErrorMessage name="personName" class="mt-1 block text-sm text-red-500" />
+                                        <!-- Tên thành tích -->
+                                        <div class="sm:col-span-2 space-y-1.5">
+                                            <label class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
+                                                <BookmarkCheck :size="14" class="text-amber-600/70" />
+                                                Tên thành tích <span class="text-red-400">*</span>
+                                            </label>
+                                            <Field name="name" type="text" validate-on-blur
+                                                placeholder="VD: Giải nhất học sinh giỏi cấp tỉnh"
+                                                class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-500/5 transition-all shadow-sm" />
+                                            <ErrorMessage name="name" class="mt-1 ml-1 block text-[10px] font-bold text-red-500" />
+                                        </div>
+
+                                        <!-- Loại thành tích -->
+                                        <div class="space-y-1.5">
+                                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
+                                                Phân loại <span class="text-red-400">*</span>
+                                            </label>
+                                            <Field as="select" name="achievementType" validate-on-blur
+                                                class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-500/5 transition-all shadow-sm appearance-none cursor-pointer">
+                                                <option value="">Chọn loại thành tích</option>
+                                                <option v-for="item in achievementTypes" :key="item.value" :value="item.value">
+                                                    {{ item.label }}
+                                                </option>
+                                            </Field>
+                                            <ErrorMessage name="achievementType" class="mt-1 ml-1 block text-[10px] font-bold text-red-500" />
+                                        </div>
+
+                                        <!-- Thứ hạng -->
+                                        <div class="space-y-1.5">
+                                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
+                                                Thứ hạng / Danh hiệu
+                                            </label>
+                                            <Field name="rank" type="text" placeholder="VD: Giải nhất, Top 10..."
+                                                validate-on-blur
+                                                class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-500/5 transition-all shadow-sm" />
+                                        </div>
+
+                                        <!-- Tổ chức -->
+                                        <div class="space-y-1.5">
+                                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
+                                                Đơn vị tổ chức
+                                            </label>
+                                            <Field name="organization" type="text" placeholder="VD: Sở Giáo dục Hà Nam"
+                                                validate-on-blur
+                                                class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-500/5 transition-all shadow-sm" />
+                                        </div>
+
+                                        <!-- Ngày đạt được -->
+                                        <div class="space-y-1.5">
+                                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
+                                                Thời điểm đạt được <span class="text-red-400">*</span>
+                                            </label>
+                                            <Field name="achievedDate" type="date" validate-on-blur
+                                                class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-500/5 transition-all shadow-sm cursor-pointer" />
+                                            <ErrorMessage name="achievedDate" class="mt-1 ml-1 block text-[10px] font-bold text-red-500" />
+                                        </div>
+
+                                        <!-- Mô tả -->
+                                        <div class="sm:col-span-2 space-y-1.5">
+                                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
+                                                Ý nghĩa & Chi tiết
+                                            </label>
+                                            <Field as="textarea" name="description" rows="3" validate-on-blur
+                                                placeholder="Chia sẻ thêm về quá trình nỗ lực hoặc ý nghĩa của thành tích này..."
+                                                class="w-full resize-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-500/5 transition-all leading-relaxed shadow-sm" />
+                                        </div>
                                     </div>
 
-
-                                    <div class="sm:col-span-2">
-                                        <label class="mb-1 block text-sm font-medium text-slate-700">
-                                            Tên thành tích
-                                        </label>
-                                        <Field name="name" type="text" validate-on-blur
-                                            placeholder="VD: Giải nhất học sinh giỏi cấp tỉnh"
-                                            class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" />
-                                        <ErrorMessage name="name" class="mt-1 block text-sm text-red-500" />
+                                    <!-- Audit Info -->
+                                    <div v-if="achievement"
+                                        class="flex items-center justify-between p-4 bg-amber-50/40 rounded-2xl border border-amber-100/30">
+                                        <div class="flex items-center gap-3">
+                                            <div class="p-2 bg-white rounded-xl shadow-sm">
+                                                <History :size="16" class="text-amber-600" />
+                                            </div>
+                                            <div class="flex flex-col">
+                                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Lịch sử vinh danh</span>
+                                                <span class="text-[11px] font-bold text-slate-700">{{ formatDate(achievement.updatedAt || achievement.createdAt) }}</span>
+                                            </div>
+                                        </div>
+                                        <span class="text-[10px] font-bold text-amber-700/60 uppercase">Đã lưu hồ sơ</span>
                                     </div>
+                                </form>
+                            </div>
 
+                            <!-- Fixed Footer Actions -->
+                            <div class="shrink-0 flex items-center justify-end gap-3 px-8 py-5 border-t border-amber-100/30 bg-[#fefaf6]/80 backdrop-blur-sm">
+                                <button type="button" @click="handleClose"
+                                    class="px-8 py-2.5 rounded-xl text-xs font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-all">
+                                    Quay lại
+                                </button>
 
-                                    <div>
-                                        <label class="mb-1 block text-sm font-medium text-slate-700">
-                                            Loại thành tích
-                                        </label>
-                                        <Field as="select" name="achievementType" validate-on-blur
-                                            class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100">
-                                            <option value="">Chọn loại thành tích</option>
-
-                                            <option v-for="item in achievementTypes" :key="item.value"
-                                                :value="item.value">
-                                                {{ item.label }}
-                                            </option>
-                                        </Field>
-                                        <ErrorMessage name="achievementType" class="mt-1 block text-sm text-red-500" />
-                                    </div>
-
-
-                                    <div>
-                                        <label class="mb-1 block text-sm font-medium text-slate-700">
-                                            Thứ hạng
-                                        </label>
-                                        <Field name="rank" type="text" placeholder="VD: Giải nhất, Top 10..."
-                                            validate-on-blur
-                                            class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" />
-                                    </div>
-
-                                    <div>
-                                        <label class="mb-1 block text-sm font-medium text-slate-700">
-                                            Tổ chức / Đơn vị
-                                        </label>
-                                        <Field name="organization" type="text" placeholder="VD: Sở Giáo dục Hà Nam"
-                                            validate-on-blur
-                                            class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" />
-                                    </div>
-
-                                    <div>
-                                        <label class="mb-1 block text-sm font-medium text-slate-700">
-                                            Ngày đạt được
-                                        </label>
-                                        <Field name="achievedDate" type="date" validate-on-blur
-                                            class="cursor-pointer w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" />
-                                    </div>
-
-
-
-                                    <div class="sm:col-span-2">
-                                        <label class="mb-1 block text-sm font-medium text-slate-700">
-                                            Mô tả
-                                        </label>
-                                        <Field as="textarea" name="description" rows="4" validate-on-blur
-                                            placeholder="Nhập mô tả chi tiết về thành tích..."
-                                            class="w-full resize-none rounded-xl border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" />
-                                    </div>
-                                </div>
-
-                                <div v-if="achievement"
-                                    class="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-                                    <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                                        <p>
-                                            <span class="font-medium text-slate-700">Ngày tạo:</span>
-                                            {{ formatDate(achievement.createdAt) }}
-                                        </p>
-                                        <p>
-                                            <span class="font-medium text-slate-700">Cập nhật:</span>
-                                            {{ formatDate(achievement.updatedAt) ?? 'Chưa cập nhật' }}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div class="mt-6 flex justify-end gap-3 border-t border-slate-200 pt-5">
-                                    <button type="button" @click="handleClose"
-                                        class="rounded-xl border border-slate-300 px-5 py-2.5 text-sm font-medium cursor-pointer text-slate-700 hover:bg-slate-50">
-                                        Hủy
-                                    </button>
-
-                                    <button type="submit" :disabled="isLoading || !meta.valid"
-                                        class="rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white shadow cursor-pointer hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60">
-                                        {{ isLoading ? 'Đang lưu...' : mode === 'create' ? 'Thêm' : 'Cập nhật' }}
-                                    </button>
-                                </div>
-                            </form>
+                                <button type="submit" form="achievementForm" :disabled="isLoading || !meta.valid"
+                                    class="flex items-center gap-2 px-10 py-2.5 rounded-xl bg-slate-900 text-white font-bold text-xs shadow-lg shadow-slate-200 hover:bg-slate-800 transition-all active:scale-[0.98] disabled:opacity-40">
+                                    <Save :size="14" />
+                                    <span>{{ isLoading ? 'Đang lưu...' : mode === 'create' ? 'Tôn vinh ngay' : 'Cập nhật' }}</span>
+                                </button>
+                            </div>
                         </div>
-
                     </div>
+                    
+                    <!-- Decorative footer line -->
+                    <div class="h-1.5 w-full bg-[linear-gradient(90deg,transparent_0%,#d97706_50%,transparent_100%)] opacity-10"></div>
                 </div>
             </div>
-        </div>
+        </Transition>
     </Teleport>
 </template>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #3a3a2815;
+    border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #3a3a2830;
+}
+
+select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2392400e' stroke-width='2.5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19.5 8.25l-7.5 7.5-7.5-7.5' /%3E%3C/svg%3E");
+    background-position: right 1rem center;
+    background-repeat: no-repeat;
+    background-size: 0.85rem;
+}
+
+.rounded-\[2\.5rem\]::before {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    width: 40px;
+    height: 40px;
+    border-top: 2px solid rgba(217, 119, 6, 0.08);
+    border-left: 2px solid rgba(217, 119, 6, 0.08);
+    border-radius: 12px 0 0 0;
+    pointer-events: none;
+}
+</style>

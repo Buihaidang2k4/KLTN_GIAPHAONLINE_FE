@@ -2,7 +2,7 @@
 import type { AlbumMediaRes } from '@/types/family/album.types'
 import { formatByte } from '@/utils/format-byte'
 import { onBeforeUnmount, onMounted } from 'vue'
-import { Download, X } from 'lucide-vue-next'
+import { Download, X, PlayCircle, Sparkles } from 'lucide-vue-next'
 
 const props = defineProps<{
     show: boolean
@@ -34,47 +34,91 @@ onBeforeUnmount(() => {
 
 <template>
     <Teleport to="body">
-        <div v-if="show && media">
-            <div class="fixed inset-0 z-40 bg-slate-950/80 backdrop-blur-sm" @click="handleClose"></div>
+        <Transition name="fade">
+            <div v-if="show && media" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+                <!-- Backdrop -->
+                <div class="absolute inset-0 bg-slate-900/90 backdrop-blur-md" @click="handleClose"></div>
 
-            <div class="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8">
-                <div
-                    class="relative flex max-h-full w-full max-w-6xl flex-col overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950 shadow-[0_40px_100px_-45px_rgba(0,0,0,0.8)]">
-                    <div class="flex items-center justify-between border-b border-white/10 px-5 py-4 text-white">
-                        <div class="min-w-0">
-                            <h3 class="line-clamp-1 text-lg font-bold">{{ media.title || 'Video xem trước' }}</h3>
-                            <p class="mt-1 text-xs text-white/60">
-                                {{ media.mimeType }} • {{ formatByte(media.fileSizeBytes) }}
-                            </p>
+                <!-- Modal Container -->
+                <div class="relative w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden rounded-[2.5rem] bg-slate-900 shadow-[0_40px_100px_-45px_rgba(0,0,0,0.8)] border border-white/5 animate-in fade-in zoom-in duration-300">
+                    
+                    <!-- Header -->
+                    <div class="relative shrink-0 px-8 py-5 flex items-center justify-between border-b border-white/5">
+                        <div class="flex items-center gap-4">
+                            <div class="p-2.5 bg-white/5 rounded-xl border border-white/10 text-purple-500 shadow-inner">
+                                <PlayCircle :size="20" />
+                            </div>
+                            <div class="min-w-0">
+                                <div class="flex items-center gap-2 mb-0.5">
+                                    <Sparkles :size="10" class="text-amber-500/50" />
+                                    <span class="text-[9px] font-bold text-amber-500/70 uppercase tracking-widest">Xem thước phim gia đình</span>
+                                </div>
+                                <h3 class="line-clamp-1 text-lg font-black text-white leading-tight">{{ media.title || 'Phim kỷ niệm' }}</h3>
+                                <p class="text-[10px] font-bold text-white/40 uppercase tracking-tighter">
+                                    {{ media.mimeType.split('/')[1] }} • {{ formatByte(media.fileSizeBytes) }}
+                                </p>
+                            </div>
                         </div>
 
-                        <div class="ml-4 flex items-center gap-2">
+                        <div class="flex items-center gap-3">
                             <a :href="media.mediaUrl" target="_blank" rel="noopener noreferrer"
-                                class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/80 transition hover:bg-white/10 hover:text-white">
-                                <Download :size="18" />
+                                class="flex items-center gap-2 px-5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/80 hover:text-white border border-white/10 transition-all active:scale-95">
+                                <Download :size="16" />
+                                <span class="text-[10px] font-bold uppercase tracking-widest">Tải xuống</span>
                             </a>
                             <button type="button"
-                                class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/80 transition hover:bg-white/10 hover:text-white"
+                                class="p-2 rounded-full hover:bg-white/5 text-white/40 hover:text-white transition-all active:scale-90"
                                 @click="handleClose">
-                                <X :size="18" />
+                                <X :size="20" />
                             </button>
                         </div>
                     </div>
 
-                    <div
-                        class="flex min-h-0 flex-1 items-center justify-center bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08),transparent_55%)] p-4 md:p-6">
-                        <video :src="media.mediaUrl" :poster="media.thumbnailUrl || undefined" controls
-                            class="max-h-[75vh] w-auto max-w-full rounded-[1.5rem] object-contain" />
+                    <!-- Media Content -->
+                    <div class="flex-1 flex items-center justify-center bg-[radial-gradient(circle_at_center,rgba(251,191,36,0.03),transparent_70%)] p-4 md:p-8 overflow-hidden">
+                        <div class="relative group h-full w-full flex items-center justify-center">
+                            <video :src="media.mediaUrl" :poster="media.thumbnailUrl || undefined" controls
+                                class="max-h-full w-auto max-w-full rounded-2xl object-contain shadow-2xl transition duration-700 group-hover:scale-[1.01]" />
+                        </div>
                     </div>
 
-                    <div v-if="media.description"
-                        class="border-t border-white/10 px-5 py-4 text-sm leading-6 text-white/70">
-                        {{ media.description }}
+                    <!-- Footer Description -->
+                    <div v-if="media.description" class="shrink-0 px-8 py-5 bg-white/[0.02] border-t border-white/5">
+                        <p class="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-2">Ghi chú kỷ niệm</p>
+                        <p class="text-sm leading-relaxed text-white/70 font-medium">
+                            {{ media.description }}
+                        </p>
                     </div>
+
+                    <!-- Decorative footer line -->
+                    <div class="h-1 w-full bg-[linear-gradient(90deg,transparent_0%,#d97706_50%,transparent_100%)] opacity-20"></div>
                 </div>
             </div>
-        </div>
+        </Transition>
     </Teleport>
 </template>
 
-<style scoped></style>
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+}
+
+.rounded-\[2\.5rem\]::before {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    width: 40px;
+    height: 40px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    border-left: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px 0 0 0;
+    pointer-events: none;
+}
+</style>

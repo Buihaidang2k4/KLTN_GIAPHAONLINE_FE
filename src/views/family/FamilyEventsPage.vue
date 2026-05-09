@@ -216,7 +216,7 @@ const handleReload = () => {
 
 
 <template>
-  <div class="min-h-screen bg-slate-50/50 p-8">
+  <div class="min-h-screen bg-[#fbfaf5] p-8">
     <div class="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-center">
       <div>
         <h1 class="flex items-center gap-2 text-2xl font-black tracking-tight text-slate-800">
