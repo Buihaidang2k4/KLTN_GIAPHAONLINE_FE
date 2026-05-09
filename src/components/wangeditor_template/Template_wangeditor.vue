@@ -5,7 +5,7 @@ import { Editor, Toolbar } from '@wangeditor/editor-for-vue'
 import { i18nChangeLanguage } from '@wangeditor/editor'
 
 // Chuyển ngôn ngữ sang tiếng Việt cho thân thiện
-i18nChangeLanguage('en') // wangEditor hỗ trợ en/zh-CN, chúng ta dùng en làm base
+i18nChangeLanguage('en') 
 
 const props = defineProps({
     modelValue: {

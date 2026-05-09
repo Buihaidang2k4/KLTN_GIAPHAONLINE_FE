@@ -17,6 +17,8 @@ import {
   UserPen,
   ShieldCheck,
   History,
+  BadgeDollarSign,
+  Zap,
 } from "lucide-vue-next"
 
 import background from '@/assets/images/bg_familyTree.jpg'
@@ -60,8 +62,8 @@ const menuGroups: MenuGroup[] = [
     items: [
       { name: "Quản lí lời mời", path: "/family/quan-li-loi-moi", icon: Mail, badge: 2 },
       { name: "Quản lí thành viên", path: "/family/quan-li-thanh-vien", icon: ShieldCheck },
-      { name: "Quản lí gói dịch vụ", path: "/family/dich-vu", icon: ShieldCheck },
-
+      { name: "Quản lí gói dịch vụ", path: "/family/dich-vu", icon: Zap },
+      { name: "Lịch sử thanh toán", path: "/family/lich-su-thanh-toan", icon: BadgeDollarSign },
     ],
   },
   {

@@ -53,6 +53,12 @@ export default [
                 meta: { permissions: ["POST_MANAGE"] },
             },
             {
+                path: "bai-viet/soan-thao",
+                name: "FamilyPostEditor",
+                component: () => import("@/views/family/FamilyPostEditorPage.vue"),
+                meta: { permissions: ["POST_MANAGE"] },
+            },
+            {
                 path: "cau-hinh",
                 name: "FamilySetting",
                 component: () => import("@/views/family/FamilySettingPage.vue"),
@@ -92,6 +98,11 @@ export default [
                 path: "dich-vu",
                 name: "FamilyService",
                 component: () => import("@/views/family/FamilyServicePage.vue")
+            },
+            {
+                path: "lich-su-thanh-toan",
+                name: "FamilyPaymentHistory",
+                component: () => import("@/views/family/FamilyPaymentHistoryPage.vue")
             }
         ],
     },

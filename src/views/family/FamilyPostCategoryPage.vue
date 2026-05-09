@@ -137,7 +137,7 @@ const tableHeaders = [
 <template>
   <div class="min-h-screen bg-[#fbfaf5] p-4 md:p-8 font-sans">
     <div class="max-w-[1440px] mx-auto">
-      
+
       <!-- HEADER SECTION -->
       <header class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
         <div class="space-y-1">
@@ -163,7 +163,8 @@ const tableHeaders = [
       <!-- DASHBOARD STATS & SEARCH -->
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
         <!-- Search & Filter Area -->
-        <div class="lg:col-span-8 bg-white p-5 rounded-3xl border border-slate-200/60 shadow-sm flex flex-col md:flex-row items-center gap-4">
+        <div
+          class="lg:col-span-8 bg-white p-5 rounded-3xl border border-slate-200/60 shadow-sm flex flex-col md:flex-row items-center gap-4">
           <div class="relative flex-1 w-full">
             <Search class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" :size="18" />
             <input v-model="searchQuery" type="text" placeholder="Tìm kiếm tên danh mục, mô tả hoặc ID..."
@@ -172,21 +173,27 @@ const tableHeaders = [
           <div class="h-10 w-px bg-slate-100 mx-2 hidden md:block"></div>
           <div class="flex items-center gap-3 px-4 py-2 bg-slate-50 rounded-xl">
             <LayoutGrid :size="16" class="text-slate-400" />
-            <span class="text-xs font-bold text-slate-600 whitespace-nowrap">{{ categories.length || 0 }} Chuyên mục</span>
+            <span class="text-xs font-bold text-slate-600 whitespace-nowrap">{{ categories.length || 0 }} Chuyên
+              mục</span>
           </div>
         </div>
 
         <!-- Quick Stats Card -->
-        <div class="lg:col-span-4 bg-indigo-600 p-5 rounded-3xl shadow-xl shadow-indigo-100 flex items-center justify-between group overflow-hidden relative">
+        <div
+          class="lg:col-span-4 bg-indigo-600 p-5 rounded-3xl shadow-xl shadow-indigo-100 flex items-center justify-between group overflow-hidden relative">
           <div class="relative z-10">
             <p class="text-indigo-100 text-[10px] font-bold uppercase tracking-widest mb-1">Tổng số bài viết</p>
-            <h3 class="text-3xl font-black text-white">90 <span class="text-xs font-normal text-indigo-200 ml-1">nội dung</span></h3>
+            <h3 class="text-3xl font-black text-white">90 <span class="text-xs font-normal text-indigo-200 ml-1">nội
+                dung</span></h3>
           </div>
-          <div class="w-14 h-14 bg-white/15 rounded-2xl flex items-center justify-center relative z-10 backdrop-blur-md">
+          <div
+            class="w-14 h-14 bg-white/15 rounded-2xl flex items-center justify-center relative z-10 backdrop-blur-md">
             <Hash :size="24" class="text-white" />
           </div>
           <!-- Decorative Background Elements -->
-          <div class="absolute -right-4 -bottom-4 w-32 h-32 bg-white/5 rounded-full blur-3xl group-hover:scale-125 transition-transform duration-700"></div>
+          <div
+            class="absolute -right-4 -bottom-4 w-32 h-32 bg-white/5 rounded-full blur-3xl group-hover:scale-125 transition-transform duration-700">
+          </div>
         </div>
       </div>
 
@@ -205,10 +212,11 @@ const tableHeaders = [
             <tbody class="divide-y divide-slate-50">
               <tr v-for="(category, index) in categories" :key="category.categoryId"
                 class="hover:bg-indigo-50/30 transition-all duration-300 group">
-                
+
                 <!-- STT -->
                 <td class="px-8 py-6">
-                  <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100 text-slate-500 text-xs font-bold font-mono">
+                  <span
+                    class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100 text-slate-500 text-xs font-bold font-mono">
                     {{ (pagination.page * pagination.size) + index + 1 }}
                   </span>
                 </td>
@@ -216,9 +224,12 @@ const tableHeaders = [
                 <!-- TÊN DANH MỤC -->
                 <td class="px-8 py-6">
                   <div class="flex flex-col">
-                    <span class="font-bold text-slate-800 text-[15px] group-hover:text-indigo-600 transition-colors">{{ category.name }}</span>
+                    <span
+                      class="font-bold text-slate-800 text-[15px] group-hover:text-indigo-600 transition-colors">{{ category.name }}</span>
                     <div class="flex items-center gap-1.5 mt-1.5">
-                       <span class="px-1.5 py-0.5 bg-slate-100 text-[9px] font-bold text-slate-500 rounded uppercase tracking-wider">ID: {{ category.categoryId }}</span>
+                      <span
+                        class="px-1.5 py-0.5 bg-slate-100 text-[9px] font-bold text-slate-500 rounded uppercase tracking-wider">ID:
+                        {{ category.categoryId }}</span>
                     </div>
                   </div>
                 </td>
@@ -232,7 +243,8 @@ const tableHeaders = [
 
                 <!-- TRẠNG THÁI -->
                 <td class="px-8 py-6">
-                  <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-full text-[11px] font-bold border border-emerald-100">
+                  <span
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-full text-[11px] font-bold border border-emerald-100">
                     <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
                     Hoạt động
                   </span>
@@ -248,7 +260,7 @@ const tableHeaders = [
 
                 <!-- CẬP NHẬT -->
                 <td class="px-8 py-6">
-                   <div v-if="category.updatedAt" class="flex flex-col">
+                  <div v-if="category.updatedAt" class="flex flex-col">
                     <span class="text-sm font-semibold text-slate-700">{{ formatDate(category.updatedAt) }}</span>
                     <span class="text-[10px] text-slate-400 font-medium uppercase mt-0.5">Lần cuối</span>
                   </div>
@@ -271,7 +283,7 @@ const tableHeaders = [
                   </div>
                 </td>
               </tr>
-              
+
               <!-- EMPTY STATE -->
               <tr v-if="categories.length === 0">
                 <td colspan="7" class="px-8 py-24 text-center">
@@ -280,7 +292,8 @@ const tableHeaders = [
                       <Search :size="32" class="text-slate-300" />
                     </div>
                     <h4 class="text-slate-900 font-bold text-lg">Không có dữ liệu</h4>
-                    <p class="text-slate-500 text-sm mt-2 font-medium">Chúng tôi không tìm thấy danh mục nào phù hợp với yêu cầu của bạn.</p>
+                    <p class="text-slate-500 text-sm mt-2 font-medium">Chúng tôi không tìm thấy danh mục nào phù hợp với
+                      yêu cầu của bạn.</p>
                   </div>
                 </td>
               </tr>
@@ -291,26 +304,14 @@ const tableHeaders = [
 
       <!-- PAGINATION SECTION -->
       <div class="mt-10">
-        <AppPagination 
-          :page="currentPage" 
-          :total-pages="pagination.totalPages" 
-          :has-next="hasNextPage"
-          :has-prev="hasPrevPage" 
-          @next="nextPage" 
-          @prev="prevPage" 
-        />
+        <AppPagination :page="currentPage" :total-pages="pagination.totalPages" :has-next="hasNextPage"
+          :has-prev="hasPrevPage" @next="nextPage" @prev="prevPage" />
       </div>
     </div>
 
     <!-- MODAL FORM -->
-    <CreateUpdateFamilyPostCategoryForm 
-      :is-open="isShowAddOrUpdatePostForm" 
-      :mode="currentMode"
-      :data="selectedPostCategory" 
-      :is-loading="isLoading" 
-      @close="closePostForm" 
-      @submit="handleFormSubmit" 
-    />
+    <CreateUpdateFamilyPostCategoryForm :is-open="isShowAddOrUpdatePostForm" :mode="currentMode"
+      :data="selectedPostCategory" :is-loading="isLoading" @close="closePostForm" @submit="handleFormSubmit" />
   </div>
 </template>
 
@@ -349,8 +350,17 @@ const tableHeaders = [
 
 /* Animations */
 @keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.7; transform: scale(1.2); }
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.7;
+    transform: scale(1.2);
+  }
 }
 
 .animate-pulse {
