@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { BookOpen, ShieldCheck, Sparkles, ArrowRight } from 'lucide-vue-next';
-import { SubscriptionPlan, PlanName } from '@/types/family/subscription.types';
+import { PlanName, type SubscriptionPlanRes } from '@/types/family/subscription.types';
 import PackageCard from '@/components/family_service/PackageCard.vue';
 
-const MOCK_PLANS: SubscriptionPlan[] = [
+const MOCK_PLANS: SubscriptionPlanRes[] = [
     {
         subscriptionPlanId: 1,
         namePlan: PlanName.FREE,
@@ -63,9 +63,9 @@ const MOCK_PLANS: SubscriptionPlan[] = [
     }
 ];
 
-const plans = ref<SubscriptionPlan[]>(MOCK_PLANS);
+const plans = ref<SubscriptionPlanRes[]>(MOCK_PLANS);
 
-const handleSelectPlan = (plan: SubscriptionPlan) => {
+const handleSelectPlan = (plan: SubscriptionPlanRes) => {
     console.log('Selected plan:', plan.namePlan);
     alert(`Cảm ơn bạn đã quan tâm đến gói ${plan.namePlan}!`);
 };

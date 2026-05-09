@@ -12,9 +12,7 @@ export const familyEventService = {
         familyId: number,
         data: FamilyEventReq
     ): Promise<ApiResponse<FamilyEventRes>> => {
-        const res = await api.post<ApiResponse<FamilyEventRes>>("/family-events", data, {
-            params: { familyId }
-        })
+        const res = await api.post<ApiResponse<FamilyEventRes>>(`/family-events/family/${familyId}`, data)
         return res.data
     },
 

@@ -10,7 +10,8 @@ import {
   Bell,
   CalendarDays,
   Filter,
-  Plus
+  Plus,
+  RefreshCcw
 } from 'lucide-vue-next'
 import { refDebounced } from '@vueuse/core'
 import type { FamilyEventReq, FamilyEventRes, UpdateFamilyEventReq } from '@/types/family/family-event.types'
@@ -197,12 +198,18 @@ const handleUpdateEvent = (payload: UpdateFamilyEventReq) => {
 const handleDeleteEvent = (eventId: number) => {
   if (!familyId.value) return
 
+  const confirmed = confirm('Bạn có chắc chắn muốn xóa sự kiện này?')
+  if (!confirmed) return
+
   deleteEventMutation({
     familyId: familyId.value,
     eventId
   })
 }
 
+const handleReload = () => {
+  keyword.value = ''
+}
 
 </script>
 
@@ -255,9 +262,9 @@ const handleDeleteEvent = (eventId: number) => {
               class="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-4 text-sm transition-all focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
           </div>
 
-          <button type="button"
+          <button type="button" @click="handleReload"
             class="rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-slate-500 hover:bg-slate-100">
-            <Filter :size="18" />
+            <RefreshCcw :size="18" />
           </button>
 
           <button type="button" @click="openCreateForm"
@@ -452,8 +459,8 @@ const handleDeleteEvent = (eventId: number) => {
       @submit="currentMode === mode.create ? handleCreateEvent($event) : handleUpdateEvent($event)" />
 
     <!-- panagtion -->
-    <AppPagination :page="currentPage" :total-pages="pagination.totalPages" :has-next="hasNextPage" :has-prev="hasPrevPage"
-      @next="nextPage" @prev="prevPage" />
+    <AppPagination :page="currentPage" :total-pages="pagination.totalPages" :has-next="hasNextPage"
+      :has-prev="hasPrevPage" @next="nextPage" @prev="prevPage" />
   </div>
 </template>
 

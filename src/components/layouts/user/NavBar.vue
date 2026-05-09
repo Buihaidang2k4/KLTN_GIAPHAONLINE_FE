@@ -21,6 +21,8 @@ import {
   History,
 } from "lucide-vue-next"
 
+import logo from '@/assets/images/Logo_GiaPha.png'
+
 const route = useRoute()
 const open = ref(true)
 

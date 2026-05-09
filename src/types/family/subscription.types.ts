@@ -3,11 +3,11 @@ export const PlanName = {
     BASIC: 'BASIC',
     PREMIUM: 'PREMIUM',
     ENTERPRISE: 'ENTERPRISE'
-} as any
+} as const
 
-export interface SubscriptionPlan {
+export interface SubscriptionPlanRes {
     subscriptionPlanId: number;
-    namePlan: PlanName;
+    namePlan: string;
     code: string;
     description: string;
     price: number;
@@ -17,5 +17,17 @@ export interface SubscriptionPlan {
     durationMonth: number;
     isActive: boolean;
     createdAt: string;
-    updatedAt: string;
+    updatedAt: string | null;
+}
+
+export interface SubscriptionPlanReq {
+    namePlan: string;
+    code: string;
+    description?: string;
+    price: number;
+    currency: string;
+    maxPerson: number;
+    maxStorageMb: number;
+    durationMonth: number;
+    isActive?: boolean;
 }
