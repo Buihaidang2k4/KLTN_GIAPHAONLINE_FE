@@ -155,7 +155,7 @@ const handleOpenEditer = () => {
               <tr
                 class="bg-slate-50/50 border-b border-slate-200 text-slate-500 uppercase text-[11px] font-bold tracking-wider">
                 <th class="px-6 py-4 w-12 text-center">ID</th>
-                <th class="px-6 py-4 min-w-[300px]">
+                <th class="px-6 py-4 min-w-75">
                   <div class="flex items-center gap-1 cursor-pointer hover:text-indigo-600 transition-colors">
                     Tiêu đề bài viết
                     <ArrowUpDown :size="12" />

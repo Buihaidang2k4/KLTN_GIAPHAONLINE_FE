@@ -1,17 +1,25 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 import { BookOpen, ShieldCheck, Sparkles, ArrowRight, History, Scroll, Landmark } from 'lucide-vue-next';
-import { PlanName, type SubscriptionPlanRes } from '@/types/family/subscription.types';
+import { type SubscriptionPlanRes } from '@/types/family/subscription.types';
 import PackageCard from '@/components/family_service/PackageCard.vue';
 import { useSubscriptionPlansQuery } from '@/hooks/queries/subscription_plan/useSubscriptionPlan';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
 
 const { data: plansData } = useSubscriptionPlansQuery();
 
 const safePlan = computed(() => plansData.value?.data || []);
 
 const handleSelectPlan = (plan: SubscriptionPlanRes) => {
-    console.log('Selected plan:', plan.namePlan);
-};
+    router.push({
+        name: 'FamilyPaymentDetails',
+        query: {
+            planSubscription: JSON.stringify(plan)
+        }
+    })
+}
 </script>
 
 <template>

@@ -5,6 +5,7 @@ export interface AccountDetailsRes {
     accountId: number;
     email: string;
     fullName: string;
+    phoneNumber: string;
     avatarPath: string | null;
     avatarUrl: string | null;
     accountStatus: string;

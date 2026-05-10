@@ -13,6 +13,7 @@ export interface SubscriptionPlanRes {
     price: number;
     currency: string;
     maxPerson: number;
+    maxAdmin: number;
     maxStorageMb: number;
     durationMonth: number;
     isActive: boolean;
@@ -27,6 +28,7 @@ export interface SubscriptionPlanReq {
     price: number;
     currency: string;
     maxPerson: number;
+    maxAdmin: number;
     maxStorageMb: number;
     durationMonth: number;
     isActive?: boolean;

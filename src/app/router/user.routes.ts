@@ -100,10 +100,16 @@ export default [
                 component: () => import("@/views/family/FamilyServicePage.vue")
             },
             {
+                path: "thanh-toan",
+                name: "FamilyPaymentDetails",
+                component: () => import("@/views/family/FamilyServiceDetails.vue")
+            },
+            {
                 path: "lich-su-thanh-toan",
                 name: "FamilyPaymentHistory",
                 component: () => import("@/views/family/FamilyPaymentHistoryPage.vue")
             }
+
         ],
     },
 ]
