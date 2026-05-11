@@ -9,15 +9,13 @@ export const vnpayService = {
         subscriptionPlanId: number,
         bankCode: string
     ): Promise<ApiResponse<PaymentCreateRes>> => {
-        const res = await api.post("/payments",
-            {
-                params: {
-                    familyId: familyId,
-                    subscriptionPlanId: subscriptionPlanId,
-                    bankCode: bankCode
-                }
+        const res = await api.post("/payments/vnpay", null, {
+            params: {
+                familyId: familyId,
+                subscriptionPlanId: subscriptionPlanId,
+                bankCode: bankCode
             }
-        )
+        })
         return res.data;
     }
 

@@ -1,81 +1,85 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { 
-  Search, Filter, Download, ExternalLink, 
+import { computed, ref, watch } from 'vue'
+import {
+  Search, Filter, Download, ExternalLink,
   CheckCircle2, Clock, ArrowUpRight,
   CreditCard, Calendar, RefreshCcw, Eye
 } from 'lucide-vue-next'
-
-interface Transaction {
-  id: string;
-  txnRef: string;
-  amount: number;
-  bankCode: string;
-  content: string;
-  status: 'success' | 'failed' | 'pending' | 'refunded';
-  createdAt: string;
-  customer: string;
-}
-
-const transactions = ref<Transaction[]>([
-  {
-    id: '1',
-    txnRef: 'VNP12345678',
-    amount: 199000,
-    bankCode: 'NCB',
-    content: 'Thanh toan Goi Chuyen Nghiep - User: dung_phan',
-    status: 'success',
-    createdAt: '2024-03-20 14:30:22',
-    customer: 'Phan Văn Dũng'
-  },
-  {
-    id: '2',
-    txnRef: 'VNP12345679',
-    amount: 499000,
-    bankCode: 'VNPAYQR',
-    content: 'Nâng cấp tài khoản - User: hoang_nguyen',
-    status: 'pending',
-    createdAt: '2024-03-20 15:10:05',
-    customer: 'Nguyễn Văn Hoàng'
-  },
-  {
-    id: '3',
-    txnRef: 'VNP12345680',
-    amount: 199000,
-    bankCode: 'VISA',
-    content: 'Thanh toan Goi Chuyen Nghiep - User: minh_tran',
-    status: 'failed',
-    createdAt: '2024-03-19 09:20:15',
-    customer: 'Trần Bình Minh'
-  },
-  {
-    id: '4',
-    txnRef: 'VNP12345681',
-    amount: 1500000,
-    bankCode: 'MBBANK',
-    content: 'Mua Credit hệ thống - User: gia_toc_le',
-    status: 'refunded',
-    createdAt: '2024-03-18 11:45:30',
-    customer: 'Lê Gia Tộc'
-  }
-])
+import AppPagination from '@/components/forms/common/AppPagination.vue'
+import { usePagination } from '@/composables/common/usePagination'
+import { usePaymentsQuery } from '@/hooks/queries/payments/usePayments'
 
 const searchQuery = ref('')
 const selectedStatus = ref('all')
 
-const stats = [
-  { label: 'Tổng doanh thu (Tháng)', value: '15,420,000đ', icon: ArrowUpRight, color: 'text-green-600', bg: 'bg-green-50' },
-  { label: 'Giao dịch thành công', value: '142', icon: CheckCircle2, color: 'text-blue-600', bg: 'bg-blue-50' },
-  { label: 'Đang chờ xử lý', value: '12', icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50' },
-  { label: 'Yêu cầu hoàn tiền', value: '3', icon: RefreshCcw, color: 'text-red-600', bg: 'bg-red-50' },
-]
+const {
+  pagination,
+  currentPage,
+  hasNextPage,
+  hasPrevPage,
+  nextPage,
+  prevPage,
+  setTotalPages
+} = usePagination(10, 0)
+
+const paymentParams = computed(() => ({
+  page: pagination.page,
+  size: pagination.size,
+  sort: 'createdAt,desc'
+}))
+
+const { data: paymentsData, isLoading } = usePaymentsQuery(paymentParams)
+
+const pageData = computed(() => paymentsData.value?.data)
+const payments = computed(() => pageData.value?.items ?? [])
+
+const filteredPayments = computed(() => {
+  const keyword = searchQuery.value.trim().toLowerCase()
+  const status = selectedStatus.value
+
+  return payments.value.filter(payment => {
+    const matchesKeyword = !keyword
+      || payment.merchantTransactionId.toLowerCase().includes(keyword)
+      || payment.bankCode?.toLowerCase().includes(keyword)
+      || payment.status.toLowerCase().includes(keyword)
+      || payment.planName?.toLowerCase().includes(keyword)
+
+    const matchesStatus = status === 'all' || payment.status === status
+
+    return matchesKeyword && matchesStatus
+  })
+})
+
+watch(
+  () => pageData.value?.totalPages,
+  totalPages => setTotalPages(totalPages ?? 1),
+  { immediate: true }
+)
+
+const totalAmount = computed(() =>
+  payments.value
+    .filter(payment => payment.status === 'SUCCESS')
+    .reduce((sum, payment) => sum + payment.amount, 0)
+)
+
+const stats = computed(() => [
+  { label: 'Tổng doanh thu', value: formatCurrency(totalAmount.value), icon: ArrowUpRight, color: 'text-green-600', bg: 'bg-green-50' },
+  { label: 'Tổng giao dịch', value: String(pageData.value?.totalElements ?? 0), icon: CheckCircle2, color: 'text-blue-600', bg: 'bg-blue-50' },
+  { label: 'Đang chờ xử lý', value: String(payments.value.filter(payment => payment.status === 'PENDING').length), icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50' },
+  { label: 'Hoàn tiền', value: String(payments.value.filter(payment => payment.status === 'REFUNDED').length), icon: RefreshCcw, color: 'text-red-600', bg: 'bg-red-50' },
+])
 
 const getStatusStyle = (status: string) => {
   switch (status) {
     case 'success': return 'bg-green-50 text-green-700 border-green-200'
+    case 'SUCCESS': return 'bg-green-50 text-green-700 border-green-200'
     case 'failed': return 'bg-red-50 text-red-700 border-red-200'
+    case 'FAILED': return 'bg-red-50 text-red-700 border-red-200'
     case 'pending': return 'bg-amber-50 text-amber-700 border-amber-200'
+    case 'PENDING': return 'bg-amber-50 text-amber-700 border-amber-200'
+    case 'EXPIRED': return 'bg-slate-50 text-slate-700 border-slate-200'
     case 'refunded': return 'bg-slate-50 text-slate-700 border-slate-200'
+    case 'REFUNDED': return 'bg-slate-50 text-slate-700 border-slate-200'
     default: return 'bg-gray-50 text-gray-700 border-gray-200'
   }
 }
@@ -83,9 +87,14 @@ const getStatusStyle = (status: string) => {
 const getStatusLabel = (status: string) => {
   switch (status) {
     case 'success': return 'Thành công'
+    case 'SUCCESS': return 'Thành công'
     case 'failed': return 'Thất bại'
+    case 'FAILED': return 'Thất bại'
     case 'pending': return 'Chờ xử lý'
+    case 'PENDING': return 'Chờ xử lý'
+    case 'EXPIRED': return 'Hết hạn'
     case 'refunded': return 'Đã hoàn tiền'
+    case 'REFUNDED': return 'Đã hoàn tiền'
     default: return status
   }
 }
@@ -93,12 +102,25 @@ const getStatusLabel = (status: string) => {
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount)
 }
+
+const formatDateTime = (value: string) => {
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) {
+    return { date: value, time: '' }
+  }
+
+  return {
+    date: date.toLocaleDateString('vi-VN'),
+    time: date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+  }
+}
 </script>
 
 <template>
   <div class="min-h-screen bg-[#F1F5F9] p-4 md:p-8 font-sans">
     <div class="max-w-7xl mx-auto">
-      
+
       <!-- Header Area -->
       <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
@@ -108,14 +130,17 @@ const formatCurrency = (amount: number) => {
             </div>
             Lịch sử giao dịch VNPay
           </h1>
-          <p class="text-slate-500 text-sm mt-1 font-medium">Theo dõi và đối soát các dòng tiền thanh toán qua cổng VNPay.</p>
+          <p class="text-slate-500 text-sm mt-1 font-medium">Theo dõi và đối soát các dòng tiền thanh toán qua cổng
+            VNPay.</p>
         </div>
-        
+
         <div class="flex items-center gap-3">
-          <button class="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all shadow-sm">
+          <button
+            class="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all shadow-sm">
             <Calendar :size="18" /> Chọn khoảng ngày
           </button>
-          <button class="flex items-center gap-2 px-4 py-2.5 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-slate-800 transition-all shadow-lg shadow-slate-200">
+          <button
+            class="flex items-center gap-2 px-4 py-2.5 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-slate-800 transition-all shadow-lg shadow-slate-200">
             <Download :size="18" /> Xuất Excel
           </button>
         </div>
@@ -138,25 +163,25 @@ const formatCurrency = (amount: number) => {
 
       <!-- Main Table Card -->
       <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        
+
         <!-- Filter Header -->
-        <div class="p-4 border-b border-slate-100 flex flex-col md:flex-row gap-4 items-center justify-between bg-white">
+        <div
+          class="p-4 border-b border-slate-100 flex flex-col md:flex-row gap-4 items-center justify-between bg-white">
           <div class="relative w-full md:w-96">
             <Search class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" :size="18" />
-            <input 
-              v-model="searchQuery"
-              type="text" 
-              placeholder="Tìm theo mã TxnRef hoặc tên khách hàng..." 
-              class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-            />
+            <input v-model="searchQuery" type="text" placeholder="Tìm theo mã giao dịch, phương thức hoặc gói..."
+              class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all" />
           </div>
-          
+
           <div class="flex items-center gap-3 w-full md:w-auto">
-            <select v-model="selectedStatus" class="flex-1 md:w-40 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 outline-none">
+            <select v-model="selectedStatus"
+              class="flex-1 md:w-40 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 outline-none">
               <option value="all">Tất cả trạng thái</option>
-              <option value="success">Thành công</option>
-              <option value="pending">Đang chờ</option>
-              <option value="failed">Thất bại</option>
+              <option value="SUCCESS">Thành công</option>
+              <option value="PENDING">Đang chờ</option>
+              <option value="FAILED">Thất bại</option>
+              <option value="EXPIRED">Hết hạn</option>
+              <option value="REFUNDED">Đã hoàn tiền</option>
             </select>
             <button class="p-2 border border-slate-200 rounded-xl hover:bg-slate-50 text-slate-400">
               <Filter :size="18" />
@@ -170,71 +195,86 @@ const formatCurrency = (amount: number) => {
             <thead>
               <tr class="bg-slate-50/50">
                 <th class="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">Thời gian</th>
-                <th class="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">Mã TxnRef</th>
-                <th class="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">Khách hàng</th>
+                <th class="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">Giao dịch</th>
+                <th class="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">Gói dịch vụ</th>
                 <th class="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">Số tiền</th>
-                <th class="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">Ngân hàng</th>
+                <th class="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">Phương
+                  thức</th>
                 <th class="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">Trạng thái</th>
-                <th class="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest text-right">Hành động</th>
+                <th class="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest text-right">Hành
+                  động</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
-              <tr v-for="txn in transactions" :key="txn.id" class="hover:bg-slate-50/50 transition-colors">
-                <td class="px-6 py-4">
-                  <div class="text-sm font-medium text-slate-700">{{ txn.createdAt.split(' ')[0] }}</div>
-                  <div class="text-[11px] text-slate-400 font-bold">{{ txn.createdAt.split(' ')[1] }}</div>
-                </td>
-                <td class="px-6 py-4">
-                  <span class="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded">{{ txn.txnRef }}</span>
-                </td>
-                <td class="px-6 py-4">
-                  <div class="text-sm font-bold text-slate-800">{{ txn.customer }}</div>
-                  <div class="text-xs text-slate-400 truncate max-w-45">{{ txn.content }}</div>
-                </td>
-                <td class="px-6 py-4">
-                  <div class="text-sm font-black text-slate-800">{{ formatCurrency(txn.amount) }}</div>
-                </td>
-                <td class="px-6 py-4 text-center">
-                  <span class="inline-block px-2 py-1 bg-slate-100 text-slate-600 text-[10px] font-black rounded uppercase border border-slate-200">
-                    {{ txn.bankCode }}
-                  </span>
-                </td>
-                <td class="px-6 py-4">
-                  <div :class="['px-2.5 py-1 rounded-full text-[11px] font-bold border inline-flex items-center gap-1.5', getStatusStyle(txn.status)]">
-                    <span class="w-1.5 h-1.5 rounded-full bg-current"></span>
-                    {{ getStatusLabel(txn.status) }}
-                  </div>
-                </td>
-                <td class="px-6 py-4 text-right">
-                  <div class="flex items-center justify-end gap-2">
-                    <button class="p-2 hover:bg-slate-100 text-slate-400 hover:text-slate-600 rounded-lg transition-all" title="Xem chi tiết Log">
-                      <Eye :size="18" />
-                    </button>
-                    <button class="p-2 hover:bg-slate-100 text-slate-400 hover:text-slate-600 rounded-lg transition-all" title="Mở cổng VNPay">
-                      <ExternalLink :size="18" />
-                    </button>
-                    <button v-if="txn.status === 'success'" class="p-2 hover:bg-red-50 text-slate-300 hover:text-red-500 rounded-lg transition-all" title="Hoàn tiền">
-                      <RefreshCcw :size="18" />
-                    </button>
-                  </div>
+              <tr v-if="isLoading">
+                <td colspan="7" class="px-6 py-10 text-center text-sm font-bold text-slate-400">Đang tải giao dịch...
                 </td>
               </tr>
+              <tr v-else-if="filteredPayments.length === 0">
+                <td colspan="7" class="px-6 py-10 text-center text-sm font-bold text-slate-400">Không tìm thấy giao dịch
+                </td>
+              </tr>
+              <template v-else>
+                <tr v-for="payment in filteredPayments" :key="payment.paymentId"
+                  class="hover:bg-slate-50/50 transition-colors">
+                  <td class="px-6 py-4">
+                    <div class="text-sm font-medium text-slate-700">{{ formatDateTime(payment.createdAt).date }}</div>
+                    <div class="text-[11px] text-slate-400 font-bold">{{ formatDateTime(payment.createdAt).time }}</div>
+                  </td>
+                  <td class="px-6 py-4">
+                    <span
+                      class="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded">{{ payment.merchantTransactionId }}</span>
+                  </td>
+                  <td class="px-6 py-4">
+                    <div class="text-sm font-bold text-slate-800">{{ payment.planName }}</div>
+                    <div class="text-xs text-slate-400 truncate max-w-45">Family #{{ payment.familyId }} · Account #{{
+                      payment.accountId }}</div>
+                  </td>
+                  <td class="px-6 py-4">
+                    <div class="text-sm font-black text-slate-800">{{ formatCurrency(payment.amount) }}</div>
+                  </td>
+                  <td class="px-6 py-4 text-center">
+                    <span
+                      class="inline-block px-2 py-1 bg-slate-100 text-slate-600 text-[10px] font-black rounded uppercase border border-slate-200">
+                      {{ payment.bankCode || '---' }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4">
+                    <div
+                      :class="['px-2.5 py-1 rounded-full text-[11px] font-bold border inline-flex items-center gap-1.5', getStatusStyle(payment.status)]">
+                      <span class="w-1.5 h-1.5 rounded-full bg-current"></span>
+                      {{ getStatusLabel(payment.status) }}
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 text-right">
+                    <div class="flex items-center justify-end gap-2">
+                      <button
+                        class="p-2 hover:bg-slate-100 text-slate-400 hover:text-slate-600 rounded-lg transition-all"
+                        title="Xem chi tiết Log">
+                        <Eye :size="18" />
+                      </button>
+                      <button
+                        class="p-2 hover:bg-slate-100 text-slate-400 hover:text-slate-600 rounded-lg transition-all"
+                        title="Mở cổng VNPay">
+                        <ExternalLink :size="18" />
+                      </button>
+                      <button v-if="payment.status === 'SUCCESS'"
+                        class="p-2 hover:bg-red-50 text-slate-300 hover:text-red-500 rounded-lg transition-all"
+                        title="Hoàn tiền">
+                        <RefreshCcw :size="18" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </template>
             </tbody>
           </table>
         </div>
 
-        <!-- Footer / Pagination -->
-        <div class="p-4 bg-slate-50/50 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p class="text-xs font-bold text-slate-400">Hiển thị 1 - 4 trên 142 giao dịch</p>
-          <div class="flex items-center gap-1">
-            <button class="px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-bold text-slate-400 hover:bg-white disabled:opacity-50">Trước</button>
-            <button class="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-bold shadow-sm">1</button>
-            <button class="px-3 py-1.5 bg-white border border-slate-200 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-50 transition-all">2</button>
-            <button class="px-3 py-1.5 bg-white border border-slate-200 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-50 transition-all">3</button>
-            <button class="px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-white">Sau</button>
-          </div>
-        </div>
       </div>
+
+      <AppPagination :page="currentPage" :total-pages="pagination.totalPages" :has-next="hasNextPage"
+        :has-prev="hasPrevPage" @next="nextPage" @prev="prevPage" />
 
     </div>
   </div>
@@ -252,13 +292,16 @@ const formatCurrency = (amount: number) => {
   width: 6px;
   height: 6px;
 }
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border-radius: 10px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }

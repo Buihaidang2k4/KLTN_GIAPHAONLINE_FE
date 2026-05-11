@@ -1,6 +1,13 @@
 import { useMutation, useQueryClient } from '@tanstack/vue-query'
 import { vnpayService } from '@/services/vnpay.service'
-import { paymentKeys } from '@/hooks/payments/usePayments'
+
+export const vnpayPaymentKeys = {
+    all: ['payments'] as const,
+
+    lists: () => [...vnpayPaymentKeys.all, 'list'] as const,
+
+    familyLists: () => [...vnpayPaymentKeys.all, 'family'] as const
+}
 
 /**
  * Tạo URL thanh toán VNPay
@@ -21,11 +28,11 @@ export const useCreateVnpayPaymentMutation = () => {
 
         onSuccess: () => {
             queryClient.invalidateQueries({
-                queryKey: paymentKeys.lists()
+                queryKey: vnpayPaymentKeys.lists()
             })
 
             queryClient.invalidateQueries({
-                queryKey: [...paymentKeys.all, 'family']
+                queryKey: vnpayPaymentKeys.familyLists()
             })
         }
     })

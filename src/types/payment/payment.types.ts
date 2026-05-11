@@ -8,12 +8,12 @@ export interface PaymentRes {
     amount: number;
     currency: string;
     provider: string;
-    providerTransactionId: number;
-    merchantTransactionId: number;
+    providerTransactionId: string | null;
+    merchantTransactionId: string;
     status: 'PENDING' | 'SUCCESS' | 'FAILED' | 'EXPIRED' | 'REFUNDED';
     bankCode: string;
-    bankTransactionNo: string;
-    failureReason: string;
+    bankTransactionNo: string | null;
+    failureReason: string | null;
     paidAt: string | null;
     createdAt: string;
     updatedAt: string | null;

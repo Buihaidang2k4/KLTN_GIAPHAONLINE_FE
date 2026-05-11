@@ -1,17 +1,30 @@
 <script setup lang="ts">
 import { Zap, Users, HardDrive, Calendar, Sparkles, ShieldCheck, Crown, Landmark, Check } from 'lucide-vue-next';
 import { PlanName, type SubscriptionPlanRes } from '@/types/family/subscription.types';
+import type { FamilySubscriptionRes } from '@/types/family/familySubscription';
 import { formatMbToGb } from '@/utils/format-byte';
+import { computed } from 'vue';
 
 interface Props {
     plan: SubscriptionPlanRes;
-    isPopular?: boolean;
+    currentFamilySub?: FamilySubscriptionRes | null;
+    isCurrentPlan?: boolean;
 }
 
 const props = defineProps<Props>();
-defineEmits(['select']);
+const emit = defineEmits<{
+    (e: 'select', plan: SubscriptionPlanRes): void
+}>();
 
-const getPlanConfig = (name: PlanName) => {
+const isCurrentPlan = computed(() =>
+    props.isCurrentPlan
+    || String(props.currentFamilySub?.planCode ?? '') === String(props.plan.code)
+);
+
+const isFreePlan = computed(() => props.plan.code === PlanName.FREE);
+const isDisabledPlan = computed(() => isCurrentPlan.value || isFreePlan.value);
+
+const getPlanConfig = (name: any) => {
     switch (name) {
         case PlanName.FREE:
             return {
@@ -61,11 +74,19 @@ const config = getPlanConfig(props.plan.namePlan);
 const formatPrice = (price: number) => {
     return new Intl.NumberFormat('vi-VN').format(price);
 };
+
+const handleSelect = () => {
+    if (isDisabledPlan.value) {
+        return;
+    }
+
+    emit('select', props.plan);
+};
 </script>
 
 <template>
     <div class="group relative flex flex-col h-full bg-white rounded-2xl border transition-all duration-300 hover:shadow-xl hover:border-transparent"
-        :class="[config.border, isPopular ? 'ring-2 ring-amber-500/20 shadow-lg' : 'shadow-sm']">
+        :class="[config.border, isCurrentPlan ? 'ring-2 ring-amber-500/20 shadow-lg' : 'shadow-sm']">
 
         <!-- Subtle Pattern -->
         <div class="absolute top-0 right-0 p-4 opacity-[0.03] text-slate-900 pointer-events-none">
@@ -86,7 +107,7 @@ const formatPrice = (price: number) => {
                         {{ plan.namePlan }}
                     </h3>
                 </div>
-                <div v-if="isPopular"
+                <div v-if="isCurrentPlan"
                     class="bg-amber-600 text-white text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded-lg shadow-sm">
                     Hot
                 </div>
@@ -139,12 +160,12 @@ const formatPrice = (price: number) => {
             </div>
 
             <!-- CTA -->
-            <button @click="$emit('select', plan)"
-                class="w-full py-3 rounded-xl font-black text-[10px] cursor-pointer uppercase tracking-[0.15em] transition-all duration-300 active:scale-[0.98]"
-                :class="isPopular
-                    ? 'bg-slate-900 text-white hover:bg-amber-600 shadow-md shadow-slate-200'
-                    : 'bg-slate-50 text-slate-700 hover:bg-slate-900 hover:text-white'">
-                {{ plan.price === 0 ? 'Gói mặc định' : 'Nâng cấp gói' }}
+            <button @click="handleSelect" :disabled="isDisabledPlan"
+                class="w-full py-3 rounded-xl font-black text-[10px] uppercase tracking-[0.15em] transition-all duration-300 active:scale-[0.98]"
+                :class="isDisabledPlan
+                    ? 'cursor-not-allowed bg-slate-100 text-slate-500 border border-slate-200'
+                    : 'cursor-pointer bg-slate-900 text-white hover:bg-amber-600 shadow-md shadow-slate-200'">
+                {{ isFreePlan ? 'Đã nâng cấp' : isCurrentPlan ? 'Đang sử dụng' : 'Nâng cấp gói' }}
             </button>
         </div>
     </div>

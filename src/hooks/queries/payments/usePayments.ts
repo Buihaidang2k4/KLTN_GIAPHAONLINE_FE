@@ -32,6 +32,15 @@ export const paymentKeys = {
             toValue(params)?.page ?? 0,
             toValue(params)?.size ?? 10,
             toValue(params)?.sort ?? ''
+        ] as const,
+
+    byTransactionId: (
+        transactionId: MaybeRefOrGetter<string | null | undefined>
+    ) =>
+        [
+            ...paymentKeys.all,
+            'transaction',
+            toValue(transactionId) ?? 'unknown'
         ] as const
 }
 
@@ -51,9 +60,6 @@ function normalizeParams(params?: MaybeRefOrGetter<PageParams>) {
 
 
 
-/**
- * Lấy danh sách tất cả giao dịch thanh toán (có phân trang)
- */
 export const usePaymentsQuery = (
     params?: MaybeRefOrGetter<PageParams>
 ) => {
@@ -67,9 +73,6 @@ export const usePaymentsQuery = (
     })
 }
 
-/**
- * Lấy danh sách giao dịch thanh toán theo familyId (có phân trang)
- */
 export const usePaymentsByFamilyQuery = (
     familyId: MaybeRefOrGetter<number | null | undefined>,
     params?: MaybeRefOrGetter<PageParams>
@@ -91,9 +94,19 @@ export const usePaymentsByFamilyQuery = (
     })
 }
 
-/**
- * Xóa giao dịch thanh toán
- */
+export const usePaymentByTransactionIdQuery = (
+    transactionId: MaybeRefOrGetter<string | null | undefined>
+) => {
+    const resolvedTransactionId = computed(() => toValue(transactionId))
+
+    return useQuery({
+        queryKey: computed(() => paymentKeys.byTransactionId(resolvedTransactionId)),
+        queryFn: () => paymentService.getByTransactionId(resolvedTransactionId.value!),
+        enabled: computed(() => !!resolvedTransactionId.value),
+        staleTime: 30_000
+    })
+}
+
 export const useDeletePaymentMutation = () => {
     const queryClient = useQueryClient()
 

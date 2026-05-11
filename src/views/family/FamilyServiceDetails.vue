@@ -13,22 +13,32 @@ import {
 } from 'lucide-vue-next'
 import { useMyInfoQuery } from '@/hooks/queries/account/useAccount'
 import type { AccountDetailsRes } from '@/types/account/account.types'
-import type { SubscriptionPlanRes } from '@/types/family/subscription.types'
 import { formatDate } from '@/utils/format-date'
 import { formatMoney } from '@/utils/format-money'
+import { useSubscriptionPlanQuery } from '@/hooks/queries/subscription_plan/useSubscriptionPlan'
+import { useCreateVnpayPaymentMutation } from '@/hooks/queries/vnpay/useVnpay'
+import { useFamilyStore } from '@/store/family/useFamilyStore'
+import { notify } from '@/utils/notify'
 
+// get param
 const route = useRoute()
-
-const planSubscription = computed<SubscriptionPlanRes>(() =>
-    JSON.parse(route.query.planSubscription as string)
-)
-
+// redirect
 const router = useRouter()
+
+const familyStore = useFamilyStore();
+const planId = computed(() => Number(route.params.planId));
+const { data: subscriptionPlanData } = useSubscriptionPlanQuery(planId.value);
 const { data: accountData } = useMyInfoQuery();
+const { mutateAsync: createPaymentVnpayUrl } = useCreateVnpayPaymentMutation();
+
+
+
+// handle
+const familyId = computed(() => familyStore.currentFamilyId);
+const safeSubscriptionPlan = computed(() => subscriptionPlanData.value?.data);
 const safeAccount = computed<AccountDetailsRes>(() => {
     return accountData.value?.data ?? {} as AccountDetailsRes;
 });
-
 
 const invoice = computed(() => ({
     companyName: 'Gia Phả Online',
@@ -41,25 +51,49 @@ const invoice = computed(() => ({
     customerEmail: safeAccount.value.email,
     customerPhone: safeAccount.value.phoneNumber,
 
-    planName: planSubscription.value.namePlan,
-    planCode: planSubscription.value.code,
-    maxPerson: planSubscription.value.maxPerson,
-    maxAdmin: planSubscription.value.maxAdmin,
-    maxStorageMb: planSubscription.value.maxStorageMb,
-    durationMonth: planSubscription.value.durationMonth,
+    planName: safeSubscriptionPlan.value?.namePlan,
+    planCode: safeSubscriptionPlan.value?.code,
+    maxPerson: safeSubscriptionPlan.value?.maxPerson,
+    maxAdmin: safeSubscriptionPlan.value?.maxAdmin,
+    maxStorageMb: safeSubscriptionPlan.value?.maxStorageMb,
+    durationMonth: safeSubscriptionPlan.value?.durationMonth,
     startDate: formatDate(new Date()),
     endDate: formatDate(new Date()),
 
-    amount: formatMoney(planSubscription.value.price),
+    amount: formatMoney(safeSubscriptionPlan.value?.price),
     discount: 0,
-    total: formatMoney(planSubscription.value.price),
-    currency: planSubscription.value.currency
+    total: formatMoney(safeSubscriptionPlan.value?.price),
+    currency: safeSubscriptionPlan.value?.currency
 }))
 
 
 const handleBack = () => {
     router.push({ name: 'FamilyService' })
 }
+
+
+const hanldePayment = async () => {
+    if (!familyId.value) {
+        notify.error('Thông báo', 'Không tìm thấy gia đình hiện tại')
+        return
+    }
+
+    if (!planId.value) {
+        notify.error('Thông báo', 'Không tìm thấy gói thanh toán')
+        return
+    }
+
+    const res = await createPaymentVnpayUrl({
+        familyId: familyId.value,
+        subscriptionPlanId: planId.value,
+        bankCode: "NCB"
+    });
+
+    if (res.data?.paymentUrl) {
+        window.location.href = res.data.paymentUrl;
+    }
+}
+
 </script>
 
 <template>
@@ -69,7 +103,7 @@ const handleBack = () => {
             <!-- Title -->
             <div class="mb-10">
                 <button @click="handleBack"
-                    class="flex items-center gap-1.5 text-[#50453c] hover:text-[#775a19] transition-colors text-sm font-medium mb-4 group">
+                    class="flex items-center gap-1.5 cursor-pointer text-[#50453c] hover:text-[#775a19] transition-colors text-sm font-medium mb-4 group">
                     <ChevronLeft :size="16" class="group-hover:-translate-x-0.5 transition-transform" />
                     Quay lại dịch vụ
                 </button>
@@ -223,7 +257,7 @@ const handleBack = () => {
                         <span class="font-bold text-[#432406] not-italic">Lưu ý:</span>
                         Quý khách vui lòng liên hệ Gia Phả Đại Việt để nhận hóa đơn. Xin cảm ơn quý khách!
                     </p>
-                    <button
+                    <button @click="hanldePayment"
                         class="flex items-center gap-2 px-10 py-4 bg-[#432406] cursor-pointer text-[#e9c176] font-bold uppercase tracking-[0.05em] text-sm hover:bg-[#432406]/90 transition-all active:scale-95 shadow-md">
                         <Wallet :size="20" />
                         Tiến hành thanh toán

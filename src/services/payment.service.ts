@@ -15,7 +15,6 @@ export const paymentService = {
         return response.data;
     },
 
-
     getPaymentsByFamilyId: async (
         familyId: MaybeRefOrGetter<number>,
         params?: MaybeRefOrGetter<PageParams>
@@ -23,6 +22,15 @@ export const paymentService = {
         const response = await api.get<ApiResponse<PageResponse<PaymentRes>>>(`${BASE_URL}/family/${toValue(familyId)}`, {
             params: toValue(params)
         });
+        return response.data;
+    },
+
+    getByTransactionId: async (
+        transactionId: MaybeRefOrGetter<string>
+    ): Promise<ApiResponse<PaymentRes>> => {
+        const response = await api.get<ApiResponse<PaymentRes>>(
+            `${BASE_URL}/transaction/${toValue(transactionId)}`
+        );
         return response.data;
     },
 

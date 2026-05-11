@@ -1,25 +1,33 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { BookOpen, ShieldCheck, Sparkles, ArrowRight, History, Scroll, Landmark } from 'lucide-vue-next';
+import { ShieldCheck, Sparkles, ArrowRight, History, Scroll, Landmark } from 'lucide-vue-next';
 import { type SubscriptionPlanRes } from '@/types/family/subscription.types';
 import PackageCard from '@/components/family_service/PackageCard.vue';
 import { useSubscriptionPlansQuery } from '@/hooks/queries/subscription_plan/useSubscriptionPlan';
 import { useRouter } from 'vue-router';
+import { useFamilyStore } from '@/store/family/useFamilyStore';
+import { useFamilySubscriptionByFamilyQuery } from '@/hooks/queries/family/family_subscription/useFamilySubscription';
 
 const router = useRouter();
+const familyStore = useFamilyStore();
+const familyId = computed(() => familyStore.currentFamilyId);
 
+const { data: familySubData } = useFamilySubscriptionByFamilyQuery(familyId);
 const { data: plansData } = useSubscriptionPlansQuery();
 
 const safePlan = computed(() => plansData.value?.data || []);
+const safeFamilySub = computed(() => familySubData.value?.data || null);
 
 const handleSelectPlan = (plan: SubscriptionPlanRes) => {
     router.push({
         name: 'FamilyPaymentDetails',
-        query: {
-            planSubscription: JSON.stringify(plan)
+        params: {
+            planId: plan.subscriptionPlanId
         }
     })
 }
+console.log(safeFamilySub.value);
+
 </script>
 
 <template>
@@ -68,7 +76,7 @@ const handleSelectPlan = (plan: SubscriptionPlanRes) => {
         <!-- Plans Grid (Optimized for multiple items) -->
         <main class="relative max-w-6xl mx-auto px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <PackageCard v-for="plan in safePlan" :key="plan.subscriptionPlanId" :plan="plan"
-                :isPopular="plan.code === 'PREMIUM'" @select="handleSelectPlan" />
+                :current-family-sub="safeFamilySub" @select="handleSelectPlan" />
         </main>
 
         <!-- Footer Promo (More compact) -->
