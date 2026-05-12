@@ -8,15 +8,17 @@ import {
   CheckCircle2,
   ArrowUpCircle,
   Clock,
-  TrendingUp,
   ShieldCheck,
-  Zap,
-  Star,
+  MapPin,
+  ExternalLink,
 } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
+import { useFamilyStore } from '@/store/family/useFamilyStore';
+import { useFamilyEventsByFamilyQuery } from '@/hooks/queries/family/family_event/useFamilyEvent';
+import { formatDate } from '@/utils/format-date';
+import type { FamilyEventRes } from '@/types/family/family-event.types';
 const router = useRouter();
 
-// --- THÔNG TIN GIA PHẢ & QUẢN TRỊ ---
 const familyInfo = ref({
   name: "Gia Tộc Nguyễn Tộc - Từ Liêm",
   admin: {
@@ -40,39 +42,72 @@ const stats = ref([
   { label: 'Sự kiện', value: 24, icon: Calendar, color: 'bg-amber-500', trend: '3 sự kiện sắp tới' }
 ])
 
-// --- SỰ KIỆN SẮP DIỄN RA ---
-const upcomingEvents = ref([
-  { id: 1, title: 'Giỗ Tổ Dòng Họ', date: '2024-04-15', location: 'Nhà Thờ Tổ, Hà Nội', priority: 'High' },
-  { id: 2, title: 'Họp Mặt Thường Niên', date: '2024-05-01', location: 'Online Zoom', priority: 'Medium' },
-  { id: 3, title: 'Mừng Thọ Cụ Cố', date: '2024-06-20', location: 'Nhà riêng', priority: 'High' }
-])
+// hook
+const familyStore = useFamilyStore()
+const familyId = computed(() => familyStore.currentFamilyId)
 
-// --- DANH SÁCH GÓI DỊCH VỤ ---
+const params = ref({
+  page: 0,
+  size: 5,
+  keyword: '',
+  option: "UPCOMING"
+})
+
+const { data: familyEventsData } =
+  useFamilyEventsByFamilyQuery(familyId, params);
+const safeEvents = computed<FamilyEventRes[]>(() => familyEventsData.value?.data?.items ?? []);
+
+const getEventDateLabel = (event: FamilyEventRes) => {
+  if (event.nextOccurrenceDate) return formatDate(event.nextOccurrenceDate)
+  if (event.day && event.month) return `${event.day}/${event.month}/${event.year || 'Hằng năm'}`
+  return 'Chưa có ngày'
+}
+
+const getCalendarTypeLabel = (event: FamilyEventRes) =>
+  event.calendarType === 'LUNAR' ? 'Âm lịch' : 'Dương lịch'
+
+const serviceInfo = ref({
+  website: 'bui13.giaphadaiviet.vn',
+  views: 32,
+  planName: 'Khởi đầu',
+  price: 'Miễn phí',
+  startDate: '01/01/2026',
+  endDate: 'Vĩnh viễn',
+  limits: {
+    members: 50,
+    admins: 1,
+    storage: '1 GB'
+  },
+  current: {
+    members: 28,
+    admins: 1,
+    storage: '0,11 GB'
+  }
+})
+
 const servicePlans = ref([
   {
-    name: 'Cơ bản',
-    price: '0đ',
-    features: ['50 thành viên', '5GB Lưu trữ', 'Gia phả 3 đời'],
-    isCurrent: false
+    name: 'Gói Cơ bản',
+    price: 500000,
+    features: ['200 thành viên', '1 người quản lý', '2 GB dung lượng lưu trữ', 'Website gia phả trực tuyến']
   },
   {
-    name: 'Nâng cao',
-    price: '199k/tháng',
-    features: ['200 thành viên', '100GB Lưu trữ', 'Gia phả không giới hạn', 'Ưu tiên hỗ trợ'],
-    isCurrent: true
+    name: 'Gói Đoàn viên',
+    price: 1000000,
+    features: ['500 thành viên', '2 người quản lý', '3 GB dung lượng lưu trữ', 'Website gia phả trực tuyến']
   },
   {
-    name: 'Chuyên nghiệp',
-    price: '499k/tháng',
-    features: ['Thành viên vô hạn', '1TB Lưu trữ', 'Tên miền riêng gia tộc', 'Số hóa tài liệu cổ'],
-    isCurrent: false
+    name: 'Gói Đồng tâm',
+    price: 2000000,
+    features: ['2.000 thành viên', '5 người quản lý', '10 GB dung lượng lưu trữ', 'Website gia phả trực tuyến']
   }
 ])
 
-// Giả lập dữ liệu biểu đồ đóng góp (7 tháng gần nhất)
-const chartData = [40, 65, 55, 85, 70, 95, 110]
-const maxVal = Math.max(...chartData)
+const formatPrice = (price: number) =>
+  new Intl.NumberFormat('vi-VN').format(price)
+
 const handleViewDetailEvents = () => router.push("/family/su-kien");
+const handleViewServices = () => router.push("/family/dich-vu");
 </script>
 
 <template>
@@ -130,120 +165,10 @@ const handleViewDetailEvents = () => router.push("/family/su-kien");
         </div>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <!-- BIỂU ĐỒ HOẠT ĐỘNG (BÊN TRÁI) -->
-        <div class="lg:col-span-2 bg-white p-8 rounded-[3rem] shadow-sm border border-slate-100">
-          <div class="flex items-center justify-between mb-8">
-            <div>
-              <h3 class="text-xl font-black text-slate-900">Hoạt động Gia tộc</h3>
-              <p class="text-sm text-slate-400 font-medium">Thống kê bài viết & đóng góp 7 tháng qua</p>
-            </div>
-            <button class="flex items-center gap-2 text-xs font-bold text-indigo-600 bg-indigo-50 px-4 py-2 rounded-xl">
-              <TrendingUp :size="16" /> Chi tiết
-            </button>
-          </div>
-
-          <!-- GIẢ LẬP BIỂU ĐỒ CỘT -->
-          <div class="flex items-end justify-between h-48 gap-3 px-2">
-            <div v-for="(val, idx) in chartData" :key="idx" class="flex-1 flex flex-col items-center group">
-              <div
-                class="w-full bg-slate-100 rounded-t-xl transition-all duration-500 group-hover:bg-indigo-500 relative"
-                :style="{ height: `${(val / maxVal) * 100}%` }">
-                <div
-                  class="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                  {{ val }}
-                </div>
-              </div>
-              <span class="text-[10px] font-bold text-slate-400 mt-3">Tháng {{ idx + 1 }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- SỰ KIỆN SẮP DIỄN RA (BÊN PHẢI) -->
-        <div class="bg-indigo-900 text-white p-8 rounded-[3rem] shadow-xl shadow-indigo-100 relative overflow-hidden">
-          <div class="absolute top-0 right-0 p-8 opacity-10">
-            <Calendar :size="120" />
-          </div>
-
-          <h3 class="text-xl font-black mb-6 flex items-center gap-2">
-            <Clock :size="20" class="text-indigo-300" /> Sự kiện sắp tới
-          </h3>
-
-          <div class="space-y-4 relative z-10">
-            <div v-for="event in upcomingEvents" :key="event.id"
-              class="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/10 hover:bg-white/20 transition-all cursor-pointer group">
-              <div class="flex justify-between items-start mb-2">
-                <span :class="[
-                  'text-[9px] font-black px-2 py-0.5 rounded-full uppercase',
-                  event.priority === 'High' ? 'bg-rose-500 text-white' : 'bg-indigo-400 text-indigo-900'
-                ]">
-                  {{ event.priority }}
-                </span>
-                <span class="text-[11px] font-bold text-indigo-200">{{ event.date }}</span>
-              </div>
-              <h4 class="font-bold text-sm mb-1 group-hover:translate-x-1 transition-transform">{{ event.title }}</h4>
-              <p class="text-[11px] text-indigo-200 line-clamp-1 opacity-80">{{ event.location }}</p>
-            </div>
-          </div>
-
-          <button @click="() => handleViewDetailEvents()"
-            class="w-full mt-6 py-4 bg-white cursor-pointer text-indigo-900 rounded-2xl font-black text-sm hover:bg-indigo-50 transition-colors shadow-lg">
-            Xem Lịch Toàn Gia Tộc
-          </button>
-        </div>
-      </div>
-
-      <!-- QUẢN LÝ GÓI DỊCH VỤ -->
       <section>
-        <div class="flex items-center gap-3 mb-8 px-2">
-          <div class="w-1.5 h-8 bg-indigo-600 rounded-full"></div>
-          <div>
-            <h3 class="text-2xl font-black text-slate-900">Dịch vụ & Lưu trữ</h3>
-            <p class="text-slate-500 text-sm font-medium">Nâng cấp để bảo vệ di sản gia đình tốt hơn</p>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div v-for="plan in servicePlans" :key="plan.name" :class="[
-            'p-8 rounded-[3rem] border-2 transition-all relative overflow-hidden',
-            plan.isCurrent
-              ? 'bg-white border-indigo-600 shadow-xl shadow-indigo-100 ring-4 ring-indigo-50'
-              : 'bg-white border-slate-100 hover:border-slate-200 shadow-sm'
-          ]">
-            <!-- Badge Current -->
-            <div v-if="plan.isCurrent"
-              class="absolute top-6 right-6 flex items-center gap-1 text-[10px] font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full uppercase tracking-widest">
-              <Star :size="12" /> Gói hiện tại
-            </div>
-
-            <h4 class="text-lg font-black text-slate-900 mb-2">{{ plan.name }}</h4>
-            <div class="flex items-baseline gap-1 mb-8">
-              <span class="text-3xl font-black text-slate-900">{{ plan.price }}</span>
-            </div>
-
-            <ul class="space-y-4 mb-10">
-              <li v-for="feature in plan.features" :key="feature"
-                class="flex items-center gap-3 text-sm font-medium text-slate-600">
-                <CheckCircle2 :size="18" class="text-indigo-500 shrink-0" />
-                {{ feature }}
-              </li>
-            </ul>
-
-            <button :disabled="plan.isCurrent" :class="[
-              'w-full py-4 rounded-2xl font-black text-sm transition-all flex items-center justify-center gap-2',
-              plan.isCurrent
-                ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-100 active:scale-95'
-            ]">
-              <Zap v-if="!plan.isCurrent" :size="18" />
-              {{ plan.isCurrent ? 'Đang sử dụng' : 'Nâng cấp ngay' }}
-            </button>
-          </div>
-        </div>
-
         <!-- Lưu trữ info -->
         <div
-          class="mt-8 bg-slate-900 rounded-[2.5rem] p-8 text-white flex flex-col md:flex-row items-center justify-between gap-8">
+          class="bg-slate-900 rounded-[2.5rem] p-8 text-white flex flex-col md:flex-row items-center justify-between gap-8">
           <div class="space-y-2">
             <h4 class="text-xl font-bold">Trạng thái lưu trữ dữ liệu</h4>
             <p class="text-slate-400 text-sm">Gia tộc đã sử dụng {{ familyInfo.currentPlan.storageUsed }} trên tổng số
@@ -260,12 +185,152 @@ const handleViewDetailEvents = () => router.push("/family/su-kien");
               <span>100 GB</span>
             </div>
           </div>
-          <button
+          <button @click="handleViewServices"
             class="px-8 py-4 bg-white text-slate-900 rounded-2xl font-black text-sm hover:bg-slate-100 transition-all flex items-center gap-2">
             <ArrowUpCircle :size="18" /> Mua thêm dung lượng
           </button>
         </div>
       </section>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- CHI TIẾT DỊCH VỤ (BÊN TRÁI) -->
+        <div class="lg:col-span-2 overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm">
+          <div class="border-b border-slate-200 bg-slate-50 px-6 py-4">
+            <h3 class="text-sm font-black text-slate-700">Chi tiết dịch vụ</h3>
+          </div>
+
+          <div class="p-6">
+            <div class="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_1.2fr]">
+              <div class="space-y-2 text-sm">
+                <p><span class="font-bold text-slate-900">Website:</span>
+                  <span class="ml-2 font-medium text-teal-700">{{ serviceInfo.website }}</span>
+                </p>
+                <p><span class="font-bold text-slate-900">Lượt xem:</span>
+                  <span class="ml-2 font-medium text-teal-700">{{ serviceInfo.views }}</span>
+                </p>
+                <p>
+                  <span class="font-bold text-slate-900">Gói dịch vụ:</span>
+                  <span class="ml-2 font-bold text-teal-700">{{ serviceInfo.planName }}</span>
+                  <span
+                    class="ml-2 rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-black uppercase text-white">
+                    Free
+                  </span>
+                </p>
+                <p><span class="font-bold text-slate-900">Giá:</span>
+                  <span class="ml-2 text-slate-600">{{ serviceInfo.price }}</span>
+                </p>
+                <p><span class="font-bold text-slate-900">Ngày bắt đầu:</span>
+                  <span class="ml-2 text-slate-600">{{ serviceInfo.startDate }}</span>
+                </p>
+                <p><span class="font-bold text-slate-900">Ngày kết thúc:</span>
+                  <span class="ml-2 text-slate-600">{{ serviceInfo.endDate }}</span>
+                </p>
+              </div>
+
+              <div class="overflow-hidden rounded-sm border border-slate-200">
+                <table class="w-full border-collapse text-sm">
+                  <thead>
+                    <tr class="bg-slate-100">
+                      <th class="border-r border-slate-200 px-4 py-3 text-left font-bold text-slate-700"></th>
+                      <th class="border-r border-slate-200 px-4 py-3 text-center font-black text-slate-900">Cho phép</th>
+                      <th class="px-4 py-3 text-center font-black text-slate-900">Hiện có</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="border-t border-slate-200">
+                      <td class="border-r border-slate-200 px-4 py-3">Số thành viên</td>
+                      <td class="border-r border-slate-200 px-4 py-3 text-center">{{ serviceInfo.limits.members }}</td>
+                      <td class="px-4 py-3 text-center">{{ serviceInfo.current.members }}</td>
+                    </tr>
+                    <tr class="border-t border-slate-200">
+                      <td class="border-r border-slate-200 px-4 py-3">Số quản trị viên</td>
+                      <td class="border-r border-slate-200 px-4 py-3 text-center">{{ serviceInfo.limits.admins }}</td>
+                      <td class="px-4 py-3 text-center">{{ serviceInfo.current.admins }}</td>
+                    </tr>
+                    <tr class="border-t border-slate-200">
+                      <td class="border-r border-slate-200 px-4 py-3">Dung lượng lưu trữ</td>
+                      <td class="border-r border-slate-200 px-4 py-3 text-center">{{ serviceInfo.limits.storage }}</td>
+                      <td class="px-4 py-3 text-center">{{ serviceInfo.current.storage }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <p class="my-6 text-center text-sm font-black text-slate-600">
+              Bạn muốn nâng cấp gói dịch vụ ?
+              <button @click="handleViewServices" class="text-teal-700 hover:underline">Ấn dịch vụ</button>
+            </p>
+
+            <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
+              <div v-for="plan in servicePlans" :key="plan.name"
+                class="rounded-lg border border-amber-100 bg-[#fff7e8] p-5 shadow-sm">
+                <div class="mb-5">
+                  <span class="text-2xl font-black text-amber-700">{{ formatPrice(plan.price) }} VND</span>
+                  <span class="ml-1 text-xs font-bold text-slate-500">/1 năm</span>
+                </div>
+                <h4 class="mb-3 text-base font-bold text-amber-700">{{ plan.name }}</h4>
+                <ul class="mb-5 space-y-2">
+                  <li v-for="feature in plan.features" :key="feature"
+                    class="flex items-center gap-3 text-xs font-medium text-slate-700">
+                    <CheckCircle2 :size="16" class="shrink-0 text-amber-700" />
+                    {{ feature }}
+                  </li>
+                </ul>
+                <button @click="handleViewServices"
+                  class="flex w-full items-center justify-center gap-2 rounded-md border border-amber-300 bg-amber-100/70 px-4 py-2 text-sm font-bold text-amber-800 hover:bg-amber-200">
+                  <ExternalLink :size="15" /> Nâng cấp ngay
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SỰ KIỆN SẮP DIỄN RA (BÊN PHẢI) -->
+        <div class="bg-indigo-900 text-white p-8 rounded-[3rem] shadow-xl shadow-indigo-100 relative overflow-hidden">
+          <div class="absolute top-0 right-0 p-8 opacity-10">
+            <Calendar :size="120" />
+          </div>
+
+          <h3 class="text-xl font-black mb-6 flex items-center gap-2">
+            <Clock :size="20" class="text-indigo-300" /> Sự kiện sắp tới
+          </h3>
+
+          <div v-if="safeEvents.length > 0"
+            class="event-scroll relative z-10 max-h-[360px] space-y-4 overflow-y-auto pr-1">
+            <div v-for="event in safeEvents" :key="event.familyEventId"
+              class="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/10 hover:bg-white/20 transition-all cursor-pointer group">
+              <div class="flex justify-between items-start mb-2">
+                <span
+                  class="text-[9px] font-black px-2 py-0.5 rounded-full uppercase bg-indigo-400 text-indigo-950">
+                  {{ getCalendarTypeLabel(event) }}
+                </span>
+                <span class="text-[11px] font-bold text-indigo-200">{{ getEventDateLabel(event) }}</span>
+              </div>
+              <h4 class="font-bold text-sm mb-1 group-hover:translate-x-1 transition-transform">
+                {{ event.eventName }}
+              </h4>
+              <div class="flex items-center gap-2 text-[11px] text-indigo-200 opacity-80">
+                <Clock v-if="event.eventTime" :size="13" class="shrink-0" />
+                <span v-if="event.eventTime" class="shrink-0">{{ event.eventTime }}</span>
+                <MapPin v-if="event.location" :size="13" class="shrink-0" />
+                <span class="line-clamp-1">{{ event.location || event.note || 'Chưa có địa điểm' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div v-else class="relative z-10 rounded-2xl border border-white/10 bg-white/10 p-6 text-center">
+            <Calendar :size="36" class="mx-auto mb-3 text-indigo-300" />
+            <p class="text-sm font-bold">Chưa có sự kiện sắp tới</p>
+            <p class="mt-1 text-xs text-indigo-200">Các sự kiện mới sẽ hiển thị tại đây.</p>
+          </div>
+
+          <button @click="() => handleViewDetailEvents()"
+            class="w-full mt-6 py-4 bg-white cursor-pointer text-indigo-900 rounded-2xl font-black text-sm hover:bg-indigo-50 transition-colors shadow-lg">
+            Xem Lịch Sự kiện Toàn Gia Tộc
+          </button>
+        </div>
+      </div>
 
     </div>
   </div>
@@ -295,5 +360,13 @@ const handleViewDetailEvents = () => router.push("/family/su-kien");
 ::-webkit-scrollbar-thumb {
   background: #e2e8f0;
   border-radius: 10px;
+}
+
+.event-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.event-scroll::-webkit-scrollbar-thumb {
+  background: rgba(199, 210, 254, 0.5);
 }
 </style>

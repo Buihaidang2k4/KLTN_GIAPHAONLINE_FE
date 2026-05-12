@@ -1,229 +1,267 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import { Users, GitBranch, BookOpen, Pencil, Trash2, Plus, X } from 'lucide-vue-next';
+import { ref, computed, watch } from 'vue';
+import { Users, GitBranch, BookOpen, Pencil, Trash2, Plus, Database, Archive } from 'lucide-vue-next';
 import TreeBanner from '@/assets/images/TreeBanner.png';
 import router from '@/app/router';
+import { useFamilyStore } from '@/store/family/useFamilyStore';
+import { usePagination } from '@/composables/common/usePagination';
+import AppPagination from '@/components/forms/common/AppPagination.vue';
+import CreateUpdateFamilyCategoryForm from '@/components/forms/family_category/CreateUpdateFamilyCategoryForm.vue';
+import {
+    useCreateFamilyCategoryMutation,
+    useDeleteFamilyCategoryMutation,
+    useFamilyCategoriesQuery,
+    useUpdateFamilyCategoryMutation
+} from '@/hooks/queries/family/family_category/useFamilyCategory';
+import type { FamilyCategoryReq, FamilyCategoryRes } from '@/types/family/family-category.types';
 
-interface Family {
-    id: number;
-    name: string;
-    members: number;
-    generations: number;
-    capacity: number;
-    image: string;
-}
 
-const families = ref<Family[]>([
-    { id: 1, name: "Nguyễn Tộc - Nhà Thờ Tổ", members: 342, generations: 14, capacity: 1204, image: TreeBanner },
-    { id: 2, name: "Lê Văn Chi Họ Cầu Giấy", members: 89, generations: 6, capacity: 450, image: TreeBanner },
-    { id: 3, name: "Gia Đình Phạm Minh", members: 12, generations: 3, capacity: 120, image: TreeBanner }
-]);
+const familyStore = useFamilyStore()
+const familyId = computed(() => familyStore.currentFamilyId)
+
+const {
+    pagination,
+    currentPage,
+    hasNextPage,
+    hasPrevPage,
+    nextPage,
+    prevPage,
+    setTotalPages
+} = usePagination(10, 0)
+
+const params = computed(() => ({
+    page: pagination.page,
+    size: pagination.size,
+}))
+const { data: familyCategoryData } = useFamilyCategoriesQuery(familyId, params);
+const safeFamilyCategory = computed(() => familyCategoryData.value?.data?.items ?? []);
+
+watch(
+    () => familyCategoryData.value?.data?.totalPages,
+    (total) => setTotalPages(total || 0),
+    { immediate: true }
+)
 
 const isModalOpen = ref(false);
 const modalType = ref<'add' | 'edit'>('add');
-const formData = ref<Partial<Family>>({ id: undefined, name: '', members: 0, generations: 0, image: '' });
+const editingCategoryId = ref<number | null>(null);
 const toast = ref({ show: false, message: '' });
 
-const totalMembers = computed(() => families.value.reduce((sum, f) => sum + f.members, 0));
-const totalCapacityUsed = computed(() => families.value.reduce((sum, f) => sum + f.capacity, 0));
+const { mutate: createFamilyCategory, isPending: isCreatingCategory } = useCreateFamilyCategoryMutation();
+const { mutate: updateFamilyCategory, isPending: isUpdatingCategory } = useUpdateFamilyCategoryMutation();
+const { mutate: deleteFamilyCategory } = useDeleteFamilyCategoryMutation();
 
-const openModal = (type: 'add' | 'edit', data: Partial<Family> | null = null) => {
+const totalCategory = computed(() => safeFamilyCategory.value.length);
+const publicCategory = computed(() => safeFamilyCategory.value.filter(item => item.isPublic).length);
+const selectedCategory = computed(() =>
+    safeFamilyCategory.value.find(item => Number(item.familyCategoryId) === editingCategoryId.value) ?? null
+);
+const isSavingCategory = computed(() => isCreatingCategory.value || isUpdatingCategory.value);
+
+const openModal = (type: 'add' | 'edit', data: FamilyCategoryRes | null = null) => {
     modalType.value = type;
-    formData.value = type === 'edit' && data ? { ...data } : { id: undefined, name: '', members: 0, generations: 0, image: '' };
+    editingCategoryId.value = type === 'edit' && data ? Number(data.familyCategoryId) : null;
     isModalOpen.value = true;
 };
 
-const closeModal = () => { isModalOpen.value = false; };
+const closeModal = () => {
+    isModalOpen.value = false;
+    editingCategoryId.value = null;
+};
 
 const showToast = (msg: string) => {
     toast.value = { show: true, message: msg };
     setTimeout(() => toast.value.show = false, 3000);
 };
 
-const saveFamily = () => {
-    if (!formData.value.name) return;
+const saveFamily = (payload: FamilyCategoryReq) => {
+    if (!payload.familyName || !familyId.value) return;
 
     if (modalType.value === 'edit') {
-        const index = families.value.findIndex(f => f.id === formData.value.id);
-        if (index !== -1) {
-            families.value[index] = { ...(families.value[index]), ...formData.value } as Family;
-        }
-        showToast("Đã cập nhật gia phả");
+        if (!editingCategoryId.value) return;
+
+        updateFamilyCategory(
+            { categoryId: editingCategoryId.value, data: payload },
+            {
+                onSuccess: () => {
+                    showToast("Đã cập nhật danh mục");
+                    closeModal();
+                }
+            }
+        );
     } else {
-        families.value.push({
-            id: Date.now(),
-            name: formData.value.name,
-            members: formData.value.members || 0,
-            generations: formData.value.generations || 0,
-            capacity: Math.floor(Math.random() * 300) + 100,
-            image: formData.value.image || TreeBanner
-        });
-        showToast("Thêm gia phả thành công");
+        createFamilyCategory(
+            { familyId: familyId.value, data: payload },
+            {
+                onSuccess: () => {
+                    showToast("Thêm danh mục thành công");
+                    closeModal();
+                }
+            }
+        );
     }
-    closeModal();
 };
 
 const deleteFamily = (id: number) => {
-    families.value = families.value.filter(f => f.id !== id);
-    showToast("Đã xóa dữ liệu");
+    const confirm = window.confirm("Bạn có muốn xóa gia phả này không !");
+
+    if (confirm) {
+        deleteFamilyCategory(id, {
+            onSuccess: () => showToast("Đã xóa danh mục")
+        });
+    }
+    return
 };
 
-const viewDetail = (f: Family) => {
-    showToast(`Đang mở: ${f.name}`);
-    // router.push(`/family/chart/${f.id}`);
-    router.push({ name: "FamilyChart" });
+const viewDetail = (category: FamilyCategoryRes) => {
+    const categoryId = Number(category.familyCategoryId);
+
+    if (!categoryId) return;
+
+    showToast(`Đang mở: ${category.familyName}`);
+
+    router.push({
+        name: "FamilyChart",
+        query: {
+            categoryId
+        }
+    });
 };
+
 
 </script>
 
 <template>
-    <div id="app" class="min-h-screen bg-[#fbfaf5] p-6 md:p-8">
-        <main class="max-w-7xl mx-auto">
+    <div id="app" class="min-h-screen bg-[#f7f3ea] px-4 py-6 md:px-8 md:py-8">
+        <main class="mx-auto max-w-7xl">
             <!-- Header -->
-            <div class="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
-                <div>
-                    <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Thư viện Gia Phả</h1>
-                    <p class="text-sm text-slate-500 font-medium">Hệ thống lưu trữ và số hóa phả hệ dòng tộc</p>
-                </div>
-                <div class="bg-white px-3 py-1.5 rounded-xl border border-slate-200 flex items-center gap-3 shadow-sm">
-                    <div class="flex flex-col border-r border-slate-100 pr-3">
-                        <span class="text-[9px] font-bold text-slate-400 uppercase">Dung lượng đã dùng</span>
-                        <span class="text-xs font-bold text-slate-700">{{ totalCapacityUsed }} MB / 5120 MB</span>
+            <div
+                class="mb-7 flex flex-col gap-5 rounded-[28px] border border-white/70 bg-white/80 p-5 shadow-[0_20px_60px_rgba(35,31,24,0.08)] backdrop-blur md:flex-row md:items-center md:justify-between md:p-6">
+                <div class="flex items-start gap-4">
+                    <div
+                        class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-red-50 text-red-700 ring-1 ring-red-100">
+                        <Archive class="h-6 w-6" />
                     </div>
-                    <div class="flex flex-col">
-                        <span class="text-[9px] font-bold text-slate-400 uppercase">Tổng nhân khẩu</span>
-                        <span class="text-xs font-bold text-slate-700">{{ totalMembers }} người</span>
+                    <div>
+                        <p class="text-[11px] font-bold uppercase tracking-[0.22em] text-red-700">Gia phả online</p>
+                        <h1 class="mt-1 text-3xl font-black tracking-tight text-slate-950">Thư viện Gia Phả</h1>
+                        <p class="mt-1 text-sm font-medium text-slate-500">Quản lý, lưu trữ và mở nhanh các cây phả hệ
+                            dòng tộc</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3 sm:min-w-[360px]">
+                    <div class="rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-3">
+                        <div class="mb-2 flex items-center gap-2 text-slate-400">
+                            <Database class="h-4 w-4" />
+                            <span class="text-[10px] font-bold uppercase">Danh mục</span>
+                        </div>
+                        <p class="text-lg font-black text-slate-900">{{ totalCategory }}</p>
+                        <p class="text-[11px] font-semibold text-slate-400">danh mục gia phả</p>
+                    </div>
+                    <div class="rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-3">
+                        <div class="mb-2 flex items-center gap-2 text-slate-400">
+                            <Users class="h-4 w-4" />
+                            <span class="text-[10px] font-bold uppercase">Công khai</span>
+                        </div>
+                        <p class="text-lg font-black text-slate-900">{{ publicCategory }}</p>
+                        <p class="text-[11px] font-semibold text-slate-400">danh mục đang hiển thị</p>
                     </div>
                 </div>
             </div>
 
             <!-- Grid of Family Cards -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pb-16">
-                <div v-for="family in families" :key="family.id"
-                    class="bg-white rounded-xl overflow-hidden border border-slate-100 shadow-sm card-hover flex flex-col group">
+            <div class="grid grid-cols-1 gap-5 pb-20 sm:grid-cols-2 xl:grid-cols-3">
+                <div v-for="family in safeFamilyCategory" :key="family.familyCategoryId"
+                    class="group flex min-h-[368px] flex-col overflow-hidden rounded-[26px] border border-white/80 bg-white shadow-[0_16px_45px_rgba(35,31,24,0.09)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_65px_rgba(35,31,24,0.14)]">
                     <!-- Family Image -->
-                    <div class="relative h-36 overflow-hidden">
-                        <img :src="family.image" :alt="family.name"
+                    <div class="relative h-48 overflow-hidden">
+                        <img :src="TreeBanner" :alt="family.familyName"
                             class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
                         <div
-                            class="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/20 to-transparent">
+                            class="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent">
                         </div>
-                        <div class="absolute bottom-3 left-4 right-4">
+                        <div class="absolute left-4 top-4">
                             <span
-                                class="bg-red-600/90 backdrop-blur-md text-[8px] font-bold text-white px-1.5 py-0.5 rounded uppercase tracking-wider mb-1 inline-block">
-                                {{ family.capacity }} MB
+                                class="inline-flex items-center rounded-full bg-red-600 px-3 py-1 text-[11px] font-black uppercase tracking-wide text-white shadow-lg shadow-red-950/20">
+                                {{ family.isPublic ? 'Công khai' : 'Riêng tư' }}
                             </span>
-                            <h3 class="text-base font-bold text-white leading-tight drop-shadow-md">{{ family.name }}
+                        </div>
+                        <div class="absolute bottom-4 left-4 right-4">
+                            <h3 class="text-base font-bold text-white leading-tight drop-shadow-md">
+                                {{ family.familyName }}
                             </h3>
+                            <p class="mt-1 text-xs font-semibold text-white/70">Mã danh mục #{{ family.familyCategoryId
+                            }}</p>
                         </div>
                     </div>
 
                     <!-- Family Info -->
-                    <div class="p-4 flex-grow flex flex-col">
-                        <div class="flex justify-between items-center mb-4">
-                            <div class="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded-full">
-                                <Users class="w-3 h-3 text-slate-400" />
-                                <span class="text-[10px] font-bold text-slate-600">{{ family.members }} thành
-                                    viên</span>
+                    <div class="flex grow flex-col p-5">
+                        <div class="mb-5 grid grid-cols-2 gap-3">
+                            <div class="rounded-2xl bg-[#f8fafc] px-3 py-3">
+                                <div class="mb-1 flex items-center gap-1.5 text-slate-400">
+                                    <Users class="h-3.5 w-3.5" />
+                                    <span class="text-[10px] font-bold uppercase">Nguồn gốc</span>
+                                </div>
+                                <p class="line-clamp-1 text-sm font-black text-slate-900">
+                                    {{ family.origin || 'Chưa có' }}
+                                </p>
                             </div>
-                            <div class="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded-full">
-                                <GitBranch class="w-3 h-3 text-slate-400" />
-                                <span class="text-[10px] font-bold text-slate-600">{{ family.generations }} đời</span>
+                            <div class="rounded-2xl bg-[#f8fafc] px-3 py-3">
+                                <div class="mb-1 flex items-center gap-1.5 text-slate-400">
+                                    <GitBranch class="h-3.5 w-3.5" />
+                                    <span class="text-[10px] font-bold uppercase">Trạng thái</span>
+                                </div>
+                                <p class="text-sm font-black text-slate-900">
+                                    {{ family.isPublic ? 'Công khai' : 'Riêng tư' }}
+                                </p>
                             </div>
                         </div>
 
                         <!-- Storage Bar -->
-                        <div class="mb-4">
-                            <div class="flex justify-between text-[9px] font-bold text-slate-400 uppercase mb-1.5">
-                                <span>Tỷ lệ lưu trữ</span>
-                                <span>{{ ((family.capacity / 1024) * 100).toFixed(1) }}%</span>
+                        <div class="mb-5">
+                            <div class="mb-2 flex justify-between text-[10px] font-bold uppercase text-slate-400">
+                                <span>Mô tả</span>
                             </div>
-                            <div class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                <div class="h-full bg-red-500 transition-all duration-1000 ease-out"
-                                    :style="{ width: (family.capacity / 1024) * 100 + '%' }"></div>
-                            </div>
+                            <p class="line-clamp-2 min-h-10 text-sm font-medium text-slate-600">
+                                {{ family.description || 'Chưa có mô tả' }}
+                            </p>
                         </div>
 
                         <!-- Action Buttons -->
                         <div class="mt-auto flex items-center gap-2">
                             <button @click="viewDetail(family)"
-                                class="flex-grow bg-slate-900 hover:bg-red-700 text-white py-2 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-1.5 active:scale-95 shadow-md shadow-slate-200">
-                                <BookOpen class="w-3 h-3" />
+                                class="flex min-h-11 grow items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-slate-200 transition-all hover:bg-red-700 active:scale-95">
+                                <BookOpen class="h-4 w-4" />
                                 Mở Gia Phả
                             </button>
                             <button @click="openModal('edit', family)"
-                                class="bg-white text-slate-600 hover:text-amber-600 p-2 rounded-xl border border-slate-200 transition-all active:scale-90 shadow-sm">
-                                <Pencil class="w-4 h-4" />
+                                class="flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-500 shadow-sm transition-all hover:border-amber-200 hover:bg-amber-50 hover:text-amber-600 active:scale-90">
+                                <Pencil class="h-4 w-4" />
                             </button>
-                            <button @click="deleteFamily(family.id)"
-                                class="bg-white text-slate-600 hover:text-red-600 p-2 rounded-xl border border-slate-200 transition-all active:scale-90 shadow-sm">
-                                <Trash2 class="w-4 h-4" />
+                            <button @click="deleteFamily(Number(family.familyCategoryId))"
+                                class="flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-500 shadow-sm transition-all hover:border-red-200 hover:bg-red-50 hover:text-red-600 active:scale-90">
+                                <Trash2 class="h-4 w-4" />
                             </button>
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <div class="-mt-12 flex justify-center pb-16">
+                <AppPagination :page="currentPage" :total-pages="pagination.totalPages" :has-next="hasNextPage"
+                    :has-prev="hasPrevPage" @next="nextPage" @prev="prevPage" />
             </div>
         </main>
 
         <!-- Floating Action Button -->
         <button @click="openModal('add')"
-            class="fab-button fixed bottom-6 right-6 w-12 h-12 bg-red-600 text-white rounded-full flex items-center justify-center z-40 hover:bg-red-700 active:scale-90 shadow-lg">
+            class="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-red-600 text-white shadow-2xl shadow-red-950/20 transition-all hover:bg-red-700 active:scale-90">
             <Plus class="w-6 h-6" />
         </button>
 
-        <!-- Modal -->
-        <transition name="modal">
-            <div v-if="isModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-                <div class="absolute inset-0 bg-slate-950/60 backdrop-blur-md" @click="closeModal"></div>
-                <div class="bg-white w-full max-w-sm rounded-2xl p-6 shadow-2xl relative z-10 border border-white/20">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-xl font-black text-slate-900">
-                            {{ modalType === 'add' ? 'Thêm Gia Phả' : 'Sửa Thông Tin' }}
-                        </h2>
-                        <button @click="closeModal"
-                            class="p-1.5 bg-slate-100 rounded-full text-slate-500 hover:bg-red-100 hover:text-red-600 transition-colors">
-                            <X class="w-4 h-4" />
-                        </button>
-                    </div>
-
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1.5 ml-1">Tên Dòng
-                                Họ</label>
-                            <input v-model="formData.name" type="text" placeholder="Ví dụ: Nguyễn Tộc"
-                                class="w-full px-4 py-2.5 rounded-xl text-sm bg-slate-50 border border-transparent focus:bg-white focus:border-red-500 focus:ring-4 focus:ring-red-50 outline-none transition-all font-semibold">
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1.5 ml-1">Nhân
-                                    Khẩu</label>
-                                <input v-model.number="formData.members" type="number"
-                                    class="w-full px-4 py-2.5 rounded-xl text-sm bg-slate-50 border border-transparent focus:bg-white focus:border-red-500 outline-none transition-all font-semibold">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1.5 ml-1">Số Thế
-                                    Hệ</label>
-                                <input v-model.number="formData.generations" type="number"
-                                    class="w-full px-4 py-2.5 rounded-xl text-sm bg-slate-50 border border-transparent focus:bg-white focus:border-red-500 outline-none transition-all font-semibold">
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1.5 ml-1">URL Ảnh
-                                Bìa</label>
-                            <input v-model="Tr" type="text" placeholder="https://..."
-                                class="w-full px-4 py-2.5 rounded-xl text-sm bg-slate-50 border border-transparent focus:bg-white focus:border-red-500 outline-none transition-all font-semibold">
-                        </div>
-                    </div>
-
-                    <button @click="saveFamily"
-                        class="w-full mt-6 px-4 py-3 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 shadow-xl shadow-red-200 transition-all active:scale-95 text-sm">
-                        {{ modalType === 'add' ? 'Khởi Tạo Ngay' : 'Cập Nhật' }}
-                    </button>
-                </div>
-            </div>
-        </transition>
+        <CreateUpdateFamilyCategoryForm :is-open="isModalOpen" :mode="modalType" :data="selectedCategory"
+            :is-loading="isSavingCategory" @close="closeModal" @submit="saveFamily" />
 
         <!-- Toast Notification -->
         <transition name="modal">

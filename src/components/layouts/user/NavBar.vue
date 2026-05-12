@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue"
+import { onBeforeUnmount, onMounted, ref } from "vue"
 import { RouterLink, useRoute } from "vue-router"
 import {
   LayoutDashboard,
@@ -25,6 +25,8 @@ import background from '@/assets/images/bg_familyTree.jpg'
 
 const route = useRoute()
 const open = ref(true)
+const userCollapsed = ref(false)
+const collapseBreakpoint = 1024
 
 type MenuItem = {
   name: string
@@ -78,9 +80,41 @@ const menuGroups: MenuGroup[] = [
 
 const isActive = (path: string) =>
   route.path === path || route.path.startsWith(path + "/")
+
+const syncNavbarByScreen = () => {
+  const shouldCollapse = window.innerWidth < collapseBreakpoint
+
+  if (shouldCollapse) {
+    open.value = false
+    return
+  }
+
+  if (!userCollapsed.value) {
+    open.value = true
+  }
+}
+
+const collapseNavbar = () => {
+  userCollapsed.value = true
+  open.value = false
+}
+
+const expandNavbar = () => {
+  userCollapsed.value = false
+  open.value = true
+}
+
+onMounted(() => {
+  syncNavbarByScreen()
+  window.addEventListener("resize", syncNavbarByScreen)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener("resize", syncNavbarByScreen)
+})
 </script>
 <template>
-  <aside :class="open ? 'w-68' : 'w-21'"
+  <aside :class="open ? 'w-68' : 'w-16 lg:w-21'"
     class="navbar-vintage relative h-screen sticky top-0 flex flex-col transition-all duration-300 ease-out overflow-hidden">
 
     <!-- Background image layer -->
@@ -113,13 +147,13 @@ const isActive = (path: string) =>
           </Transition>
         </RouterLink>
 
-        <button v-if="open" @click="open = false"
+        <button v-if="open" @click="collapseNavbar"
           class="w-8 h-8 rounded-xl flex items-center justify-center text-amber-800/50 hover:text-amber-900 hover:bg-amber-900/10 transition">
           <PanelLeftClose :size="18" />
         </button>
       </div>
 
-      <button v-if="!open" @click="open = true"
+      <button v-if="!open" @click="expandNavbar"
         class="absolute -right-3 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full border border-amber-300 bg-amber-50 shadow-md flex items-center justify-center text-amber-700 hover:text-amber-900 hover:border-amber-500 transition z-10">
         <ChevronRight :size="15" />
       </button>
@@ -154,7 +188,7 @@ const isActive = (path: string) =>
         <nav class="space-y-1.5">
           <RouterLink v-for="m in group.items" :key="m.path" :to="m.path" :class="[
             'group relative flex items-center rounded-2xl transition-all duration-200',
-            open ? 'px-3 py-2.5 gap-3' : 'px-0 py-2.5 justify-center',
+            open ? 'px-3 py-2.5 gap-3' : 'px-0 py-2 justify-center lg:py-2.5',
             isActive(m.path)
               ? 'navbar-item-active'
               : 'navbar-item-default'
@@ -163,7 +197,8 @@ const isActive = (path: string) =>
               class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-r-full bg-amber-700" />
 
             <div :class="[
-              'shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition',
+              'shrink-0 rounded-xl flex items-center justify-center transition',
+              open ? 'w-10 h-10' : 'w-9 h-9 lg:w-10 lg:h-10',
               isActive(m.path)
                 ? 'bg-white/80 text-amber-800 shadow-sm border border-amber-300/50'
                 : 'bg-amber-900/10 text-amber-800 group-hover:bg-white/60 group-hover:text-amber-900 group-hover:border group-hover:border-amber-300/30'
