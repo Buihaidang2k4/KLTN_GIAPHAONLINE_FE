@@ -129,7 +129,7 @@ onBeforeUnmount(() => {
     <!-- Header -->
     <div class="relative z-10 h-19 px-4 flex items-center navbar-header-border">
       <div class="flex items-center w-full" :class="open ? 'justify-between' : 'justify-center'">
-        <RouterLink to="/" class="flex items-center gap-3 min-w-0 group">
+        <RouterLink to="/family/tong-quan" class="flex items-center gap-3 min-w-0 group">
           <div
             class="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-700 to-yellow-600 text-amber-50 flex items-center justify-center font-black shadow-lg ring-2 ring-amber-900/20">
             GP

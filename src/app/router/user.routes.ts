@@ -2,6 +2,12 @@ import UserLayout from "@/components/layouts/user/UserLayout.vue";
 
 export default [
     {
+        path: "/family/so-do-cay",
+        name: "FamilyChart",
+        component: () => import("@/views/family/FamilyChartViewer.vue"),
+        meta: { requiresAuth: true, requiresActiveAccount: true },
+    },
+    {
         path: "/family",
         component: UserLayout,
         redirect: "/family/tong-quan",
@@ -16,11 +22,6 @@ export default [
                 path: "danh-sach",
                 name: "FamilyList",
                 component: () => import("@/views/family/FamilyTreeContainerPage.vue"),
-            },
-            {
-                path: "so-do-cay",
-                name: "FamilyChart",
-                component: () => import("@/views/family/FamilyChartViewer.vue"),
             },
             {
                 path: "xuat-file",

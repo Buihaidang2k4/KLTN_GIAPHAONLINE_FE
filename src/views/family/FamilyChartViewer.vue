@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, watch } from "vue";
 import FamilyTree from "@balkangraph/familytree.js";
 import bg_familytree from "@/assets/images/bg_familyTree.jpg";
 import { notify } from "@/utils/notify";
@@ -9,51 +9,13 @@ import { useFamilyStore } from "@/store/family/useFamilyStore";
 import AddMemberModal from "@/components/forms/family_tree/AddChildrenModal.vue";
 import EditMemberModal from "@/components/forms/family_tree/EditChildrenModal.vue";
 import AddSiblingsModal from "@/components/forms/family_tree/AddSiblingsModal.vue";
+import { useRoute } from "vue-router";
+import { useFamilyTreeQuery } from "@/hooks/queries/family/family_tree/useFamilyTree";
+import male_default from "@/assets/tree/male_default.jpg";
+import female_default from "@/assets/tree/female_default.jpg";
+import { formatDate } from "@/utils/format-date";
+import type { FamilyTreeNodeRes } from "@/types/family/family_tree.types";
 
-const bgImageStyle = computed(() => `url(${bg_familytree})`);
-
-const treeRef = ref<HTMLDivElement | null>(null);
-const isModalUpdateChildrenOpen = ref<boolean>(false);
-const isModalAddChildrenOpen = ref<boolean>(false);
-const isModalAddSiblingOpen = ref<boolean>(false);
-
-const selectedMember = ref<any>(null);
-let family: any = null;
-const isMiniMap = ref<boolean>(false);
-
-
-const myData: any[] = [
-  { id: "1", pids: ["2"], generation: "1", name: "Nguyễn Văn Tâm", title: "1940", gender: "male", photo: "https://cdn.balkan.app/shared/m60/1.jpg", birthDate: "hehe" },
-  { id: "2", pids: ["1"], generation: "1", name: "Lê Thị Thanh", title: "1945", gender: "female", photo: "https://cdn.balkan.app/shared/w60/1.jpg" },
-  { id: "3", fid: "1", mid: "2", pids: ["4"], generation: "2", name: "Nguyễn Quang", title: "1965", gender: "male", photo: "https://cdn.balkan.app/shared/m60/2.jpg" },
-  { id: "4", pids: ["3"], generation: "2", name: "Hoàng Mỹ", title: "1968", gender: "female", photo: "https://cdn.balkan.app/shared/w60/2.jpg" },
-  { id: "5", fid: "1", mid: "2", pids: ["6"], generation: "2", name: "Nguyễn Hùng", title: "1970", gender: "male", photo: "https://cdn.balkan.app/shared/m60/3.jpg" },
-  { id: "6", pids: ["5"], generation: "2", name: "Phan Lan", title: "1972", gender: "female", photo: "https://cdn.balkan.app/shared/w60/3.jpg" },
-  { id: "7", fid: "1", mid: "2", pids: ["8"], generation: "2", name: "Nguyễn Mai", title: "1975", gender: "female", photo: "https://cdn.balkan.app/shared/w30/1.jpg" },
-  { id: "8", pids: ["7"], generation: "2", name: "Trần Thế", title: "1973", gender: "male", photo: "https://cdn.balkan.app/shared/m30/1.jpg" },
-  { id: "9", fid: "1", mid: "2", generation: "2", name: "Nguyễn Tuấn", title: "1978", gender: "male", photo: "https://cdn.balkan.app/shared/m30/2.jpg" },
-  { id: "10", fid: "1", mid: "2", generation: "2", name: "Nguyễn Thu", title: "1982", gender: "female", photo: "https://cdn.balkan.app/shared/w30/2.jpg" },
-  { id: "11", fid: "3", mid: "4", pids: ["12"], generation: "3", name: "Nguyễn Anh", title: "1990", gender: "male", photo: "https://cdn.balkan.app/shared/m30/5.jpg" },
-  { id: "12", pids: ["11"], generation: "3", name: "Lê Ngọc", title: "1992", gender: "female", photo: "https://cdn.balkan.app/shared/w30/5.jpg" },
-  { id: "13", fid: "3", mid: "4", generation: "3", name: "Nguyễn Bảo", title: "1995", gender: "male", photo: "https://cdn.balkan.app/shared/m30/6.jpg" },
-  { id: "14", fid: "5", mid: "6", pids: ["15"], generation: "3", name: "Nguyễn Cường", title: "1993", gender: "male", photo: "https://cdn.balkan.app/shared/m30/7.jpg" },
-  { id: "15", pids: ["14"], generation: "3", name: "Đỗ Quyên", title: "1995", gender: "female", photo: "https://cdn.balkan.app/shared/w30/7.jpg" },
-  { id: "16", fid: "5", mid: "6", generation: "3", name: "Nguyễn Diệu", title: "1998", gender: "female", photo: "https://cdn.balkan.app/shared/w30/8.jpg" },
-  { id: "17", fid: "8", mid: "7", pids: ["18"], generation: "3", name: "Trần Long", title: "1996", gender: "male", photo: "https://cdn.balkan.app/shared/m30/8.jpg" },
-  { id: "18", pids: ["17"], generation: "3", name: "Vũ Hạ", title: "1998", gender: "female", photo: "https://cdn.balkan.app/shared/w30/9.jpg" },
-  { id: "19", fid: "8", mid: "7", generation: "3", name: "Trần Yến", title: "2000", gender: "female", photo: "https://cdn.balkan.app/shared/w10/1.jpg" },
-  { id: "20", pids: ["21"], generation: "3", name: "Nguyễn Tuấn", title: "1978", gender: "male", photo: "https://cdn.balkan.app/shared/m30/2.jpg" },
-  { id: "21", pids: ["20"], generation: "3", name: "Bùi Kim", title: "1985", gender: "female", photo: "https://cdn.balkan.app/shared/w30/10.jpg" },
-  { id: "22", fid: "20", mid: "21", generation: "3", name: "Nguyễn Khôi", title: "2010", gender: "male", photo: "https://cdn.balkan.app/shared/m10/1.jpg" },
-  { id: "23", fid: "11", mid: "12", generation: "4", name: "Nguyễn Minh", title: "2015", gender: "male", photo: "https://cdn.balkan.app/shared/m10/2.jpg" },
-  { id: "24", fid: "11", mid: "12", generation: "4", name: "Nguyễn An", title: "2018", gender: "female", photo: "https://cdn.balkan.app/shared/w10/2.jpg" },
-  { id: "25", fid: "14", mid: "15", generation: "4", name: "Nguyễn Bình", title: "2020", gender: "male", photo: "https://cdn.balkan.app/shared/m10/3.jpg" },
-  { id: "26", fid: "14", mid: "15", generation: "4", name: "Nguyễn Ca", title: "2022", gender: "female", photo: "https://cdn.balkan.app/shared/w10/3.jpg" },
-  { id: "27", fid: "17", mid: "18", generation: "4", name: "Trần Đăng", title: "2019", gender: "male", photo: "https://cdn.balkan.app/shared/m10/4.jpg" },
-  { id: "28", fid: "17", mid: "18", generation: "4", name: "Trần Giao", title: "2021", gender: "female", photo: "https://cdn.balkan.app/shared/w10/4.jpg" },
-  { id: "29", fid: "23", generation: "5", name: "Nguyễn GenZ", title: "2038", gender: "male", photo: "https://cdn.balkan.app/shared/m10/5.jpg" },
-  { id: "30", fid: "23", generation: "5", name: "Nguyễn Alpha", title: "2040", gender: "female", photo: "https://cdn.balkan.app/shared/w10/5.jpg" }
-];
 
 
 const iconMenu = {
@@ -66,213 +28,398 @@ const iconMenu = {
   remove: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>'
 }
 
-onMounted(() => {
-  if (treeRef.value) {
-    FamilyTree.templates.john = Object.assign({}, FamilyTree.templates.base);
-    FamilyTree.templates.john.size = [160, 170];
-    // node nam  
-    FamilyTree.templates.john.node =
-      '<rect x="0" y="0" height="170" width="160" fill="#F2F6FB" stroke-width="1.5" stroke="#4A6FA5" rx="5" ry="5"></rect>' +
-      '<g class="menu-button" style="cursor:pointer; pointer-events: all;" transform="translate(128, 10)">' +
-      '<circle cx="12" cy="12" r="12" fill="#B07A6A" opacity="0.1"></circle>' +
-      '<path fill="#64748B" d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5s3.5 1.57 3.5 3.5s-1.57 3.5-3.5 3.5z" transform="scale(0.8) translate(3, 3)"></path>' +
-      '</g>';
-
-    // Định nghĩa trường hiển thị số đời (Dùng field_gen)
-    FamilyTree.templates.john.field_gen =
-      '<g transform="translate(10, 10)">' +
-      '<circle cx="12" cy="12" r="10" fill="#4A6FA5" opacity="0.1"></circle>' +
-      '<text fill="#4A6FA5" x="12" y="16" text-anchor="middle" style="font-size: 12px; font-weight: bold;">{val}</text>' +
-      '</g>';
-
-    FamilyTree.templates.john.clip_0 =
-      '<clipPath id="johnClip"><circle cx="80" cy="45" r="35"></circle></clipPath>';
-    FamilyTree.templates.john.circle_0 =
-      '<circle cx="80" cy="45" r="40" fill="none" stroke="#B71C1C" stroke-width="3"></circle>';
-    FamilyTree.templates.john.img_0 =
-      '<image preserveAspectRatio="xMidYMid slice" clip-path="url(#johnClip)" x="45" y="10" width="70" height="70" xlink:href="{val}"></image>';
-    FamilyTree.templates.john.field_0 =
-      '<text style="font-size: 17px; font-weight: 900; font-family: serif;" fill="Black" x="80" y="120" text-anchor="middle" pointer-events="none">{val}</text>';
-    FamilyTree.templates.john.field_1 =
-      '<text style="font-size: 14px; font-style: italic; font-family: serif;" fill="Black" x="80" y="145" text-anchor="middle" pointer-events="none">{val}</text>';
-
-    // menu tùy chỉnh vị trí và hình dạng
-    FamilyTree.templates.john.nodeMenuButton =
-      `<g style="cursor:pointer;" transform="matrix(1,0,0,1,135,17)" data-ctrl-n-menu-id="{id}">
-        <rect x="-4" y="-4" fill="#000000" fill-opacity="0" width="18" height="18"></rect>
-      </g>`;
-
-    // Con trỏ chuột cao cấp với hiệu ứng mạch đập (Premium Pulsing Pointer)
-    FamilyTree.templates.john.pointer =
-      `<g data-pointer="pointer" transform="matrix(0,0,0,0,100,100)">
-        <circle cx="0" cy="0" r="22" fill="rgba(183, 28, 28, 0.15)">
-            <animate attributeName="r" values="20;25;20" dur="2s" repeatCount="indefinite" />
-            <animate attributeName="fill-opacity" values="0.2;0.5;0.2" dur="2s" repeatCount="indefinite" />
-        </circle>
-        <circle cx="0" cy="0" r="6" fill="#B71C1C" />
-        <circle cx="0" cy="0" r="12" fill="none" stroke="#B71C1C" stroke-width="0.5" stroke-dasharray="2 2" opacity="0.6">
-            <animateTransform attributeName="transform" type="rotate" from="0 0 0" to="360 0 0" dur="10s" repeatCount="indefinite" />
-        </circle>
-    </g>`;
-
-    // Nút khi nhánh đang đóng (Hiện dấu + để mở)
-    FamilyTree.templates.john.plus =
-      '<circle cx="80" cy="0" r="15" fill="#ffffff" stroke="#B71C1C" stroke-width="1"></circle>' +
-      '<line x1="75" y1="0" x2="85" y2="0" stroke-width="1" stroke="#B71C1C"></line>' +
-      '<line x1="80" y1="-5" x2="80" y2="5" stroke-width="1" stroke="#B71C1C"></line>';
 
 
-    // node màu nữ
-    FamilyTree.templates.jane = Object.assign({}, FamilyTree.templates.john);
-    FamilyTree.templates.jane.node =
-      '<rect x="0" y="0" height="170" width="160" fill="#FAF3F1" stroke-width="1.5" stroke="#B07A6A" rx="5" ry="5"></rect>' +
-      '<g class="menu-button" style="cursor:pointer; pointer-events: all;" transform="translate(128, 10)">' +
-      '<circle cx="12" cy="12" r="12" fill="#B07A6A" opacity="0.1"></circle>' +
-      '<path fill="#64748B" d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5s3.5 1.57 3.5 3.5s-1.57 3.5-3.5 3.5z" transform="scale(0.8) translate(3, 3)"></path>' +
-      '</g>';
-    FamilyTree.templates.jane.circle_0 =
-      '<circle cx="80" cy="45" r="40" fill="none" stroke="#F472B6" stroke-width="3"></circle>';
+const route = useRoute();
+const bgImageStyle = computed(() => `url(${bg_familytree})`);
+
+const treeRef = ref<HTMLDivElement | null>(null);
+const isModalUpdateChildrenOpen = ref<boolean>(false);
+const isModalAddChildrenOpen = ref<boolean>(false);
+const isModalAddSiblingOpen = ref<boolean>(false);
+
+const selectedMember = ref<any>(null);
+let family: any = null;
+const isMiniMap = ref<boolean>(false);
+const categoryId = computed(() => Number(route.query.categoryId))
+
+// data
+const { data: familyTreeData } = useFamilyTreeQuery(categoryId);
+const safeFamilyTrees = computed(() => familyTreeData.value?.data || [])
 
 
-    family = new FamilyTree(treeRef.value, {
-      template: "john",
-      siblingSeparation: 80,
-      nodeBinding: {
-        field_0: "name",
-        field_1: "title",
-        field_gen: "generation", // Thay 'val' bằng 'field_gen'
-        img_0: "photo",
-      },
-      tags: {
-        NAM: {
-          template: "john",
-        },
-        NU: {
-          template: "jane", // Sử dụng template màu hồng cho Nữ
-        }
-      },
+// Chuẩn hóa dữ liệu từ API về format FamilyTree
+const processedFamilyData = computed(() => {
+  return safeFamilyTrees.value.map((node: any) => {
 
-      nodeMenu: {
-        // ========== NHÓM THÊM ==========
-        addSiblings: {
-          text: "Thêm đời đầu",
-          icon: iconMenu.addSiblings,
-          onClick: hanldeAddSiblings
-        },
-        addPartner: {
-          text: "Thêm hôn thê",
-          icon: iconMenu.addPartner,
-          onClick: handleAddPatner
-        },
-        addChildren: {
-          text: "Thêm con",
-          icon: iconMenu.addChildren,
-          onClick: hanldeClickAddChilren
-        },
+    // Ảnh mặc định nếu không có avatarUrl
+    const defaultAvatar = node.gender === "male"
+      ? male_default
+      : female_default
 
-        // ========== NHÓM XEM ==========
-        viewChildren: {
-          text: "Xem đời sau",
-          icon: iconMenu.viewChildren,
-          onClick: handleViewChildren
-        },
-        rootFocus: {
-          text: "Trở về gốc",
-          icon: iconMenu.rootFocus,
-          onClick: hanldeRootFocus
-        },
-
-        // ========== NHÓM CHỈNH SỬA & XÓA ==========
-        editNode: {
-          text: "Chỉnh sửa",
-          icon: iconMenu.edit,
-          onClick: handleEditNode
-        },
-        remove: {
-          text: "Xóa thành viên",
-          icon: iconMenu.remove,
-          onClick: hanldeRemoveNode
-        }
-      },
-
-      nodeMenuTrigger: (FamilyTree as any).action.nodeMenu,
-      nodeMenuButton: '.menu-button',
-      editForm: false,
-      mouseScrool: (FamilyTree as any).action.zoom,
-
-      roots: [1],  // xác định thủy tổ
-      layout: "mixed",
-
-      // Tăng khoảng cách giữa các đời
-      levelSeparation: 150,
-      enableSearch: true,
-      showLevelLines: true,
-
-      // chỉ định tìm kiếm theo fill
-      searchFields: ["name"],
-      // hiển thị tên gợi ý khi tìm kiếm 
-      searchDisplayField: "name",
-      // tô màu khi tìm kiếm 
-      searchFieldsHighlight: {
-        stroke: "red",
-        strokeWidth: 5
-      },
-
-      // trọng số tìm kiếm cao nhất theo 
-      searchFieldsWeight: {
-        "Name": 100,
-      },
-
-      align: FamilyTree.align.center,
-
-      // định hướng 
-      orientation: FamilyTree.orientation.top,
-      padding: 100,
-
-      // khoảng cách vợ chồng
-      partnerChildrenSplitSeparation: 80,
-
-      // hiển thị zoom mặc định 
-      scaleInitial: 1,
-      // zoom in out , max min
-      scaleMax: 10,
-      // scaleMin: 0.5,
-
-      subtreeSeparation: 100, // Tăng lên 100 để các chi/nhánh tách biệt rõ ràng hơn
-      zoom: {
-        speed: 130,
-        smooth: 10
-      },
-
-      expandAll: true,
-      // Không mở hết tất cả
-      // collapse: {
-      //   level: 1, // Tự động thu gọn từ đời thứ 2 trở đi
-      //   allChildren: true
-      // },
-      nodeCircleMenu: true,
-      miniMap: isMiniMap.value,
-    } as any);
-
-
-
-    myData.forEach(node => {
-      if (!node.tags) {
-        if (node.gender === "male") {
-          node.tags = ["NAM"];
-        } else if (node.gender === "female") {
-          node.tags = ["NU"];
-        }
-      }
-    });
-
-    // Nạp dữ liệu vào cây
-    family.load(myData);
-
-    family.draw();
-
-  }
+    return {
+      id: node.id,
+      fid: node.fid || null,
+      mid: node.mid || null,
+      pids: node.pids || [],
+      generation: node.generation,
+      personName: node.personName,
+      phoneNumber: node.phoneNumber,
+      biography: node.biography,
+      lifeStatus: node.lifeStatus,
+      originPlace: node.originPlace,
+      placeOfResidence: node.placeOfResidence,
+      isInFamily: node.isInFamily,
+      deathDate: formatDate(node.deathDate),
+      birthDate: formatDate(node.birthDate),
+      avatar: node.avatarUrl || defaultAvatar,
+      gender: node.gender,
+      tags: node.gender === "male" ? ["NAM"] : ["NU"],
+    };
+  });
 });
+
+
+const rootId = ref<string[]>(["6"]);
+
+
+
+onMounted(() => {
+
+  setTimeout(() => {
+    if (treeRef.value) {
+      // ================= TEMPLATE NAM =================
+      FamilyTree.templates.john = Object.assign({}, FamilyTree.templates.base);
+      FamilyTree.templates.john.size = [172, 182];
+
+      FamilyTree.templates.john.defs = `
+      <filter id="nodeShadow" x="-12%" y="-12%" width="135%" height="135%">
+        <feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#3E2723" flood-opacity="0.13"/>
+      </filter>
+
+      <filter id="avatarSoftShadow" x="-15%" y="-15%" width="130%" height="130%">
+        <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000000" flood-opacity="0.10"/>
+      </filter>
+
+      <linearGradient id="maleGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stop-color="#FFFDF7"/>
+        <stop offset="100%" stop-color="#F5EEDC"/>
+      </linearGradient>
+
+      <linearGradient id="femaleGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stop-color="#FFF9F2"/>
+        <stop offset="100%" stop-color="#F4E6D8"/>
+      </linearGradient>
+
+      <clipPath id="johnAvatarClip" clipPathUnits="userSpaceOnUse">
+        <rect x="46" y="25" width="80" height="80" rx="16" ry="16"></rect>
+      </clipPath>
+
+      <clipPath id="janeAvatarClip" clipPathUnits="userSpaceOnUse">
+        <rect x="46" y="25" width="80" height="80" rx="16" ry="16"></rect>
+      </clipPath>
+
+      <style>
+        .menu-button:hover .menu-bg {
+          opacity: 0.2;
+        }
+      </style>
+    `;
+
+      // Node nam
+      FamilyTree.templates.john.node =
+        '<rect x="0" y="0" height="182" width="172" fill="url(#maleGrad)" stroke-width="1.8" stroke="#B89554" rx="8" ry="8" filter="url(#nodeShadow)"></rect>' +
+
+        '<g class="menu-button" style="cursor:pointer; pointer-events:all;" transform="translate(136, 13)" data-ctrl-n-menu-id="{id}">' +
+        '<circle class="menu-bg" cx="12" cy="12" r="12" fill="#B89554" opacity="0.14"/>' +
+        '<path fill="#6B5A3A" d="M12 7.6c.32 0 .63.03.93.1l.42-1.08c.07-.18.27-.28.45-.2l1.05.44c.18.08.27.28.2.46l-.46 1.05c.48.33.9.75 1.23 1.23l1.05-.46c.18-.08.39 0 .46.2l.44 1.05c.08.18-.02.39-.2.45l-1.08.42c.06.3.1.61.1.93s-.04.63-.1.93l1.08.42c.18.07.28.27.2.45l-.44 1.05c-.07.18-.28.27-.46.2l-1.05-.46c-.33.48-.75.9-1.23 1.23l.46 1.05c.08.18 0 .39-.2.46l-1.05.44c-.18.08-.39-.02-.45-.2l-.42-1.08c-.3.06-.61.1-.93.1s-.63-.04-.93-.1l-.42 1.08c-.07.18-.27.28-.45.2l-1.05-.44c-.18-.07-.27-.28-.2-.46l.46-1.05c-.48-.33-.9-.75-1.23-1.23l-1.05.46c-.18.08-.39 0-.46-.2l-.44-1.05c-.08-.18.02-.39.2-.45l1.08-.42c-.06-.3-.1-.61-.1-.93s.04-.63.1-.93l-1.08-.42c-.18-.07-.28-.27-.2-.45l.44-1.05c.07-.18.28-.27.46-.2l1.05.46c.33-.48.75-.9 1.23-1.23l-.46-1.05c-.08-.18 0-.39.2-.46l1.05-.44c.18-.08.39.02.45.2l.42 1.08c.3-.07.61-.1.93-.1Zm0 2.7a1.9 1.9 0 1 0 0 3.8 1.9 1.9 0 0 0 0-3.8Z"/>' +
+        '</g>';
+
+      // Không cần clip_0 nữa vì đã khai báo trong defs
+      FamilyTree.templates.john.clip_0 = '';
+
+      FamilyTree.templates.john.img_0 =
+        '<g filter="url(#avatarSoftShadow)">' +
+        '<rect x="41" y="20" width="90" height="90" rx="20" ry="20" fill="#FFFDF8" stroke="#E4D6BC" stroke-width="1.2"></rect>' +
+        '<g clip-path="url(#johnAvatarClip)">' +
+        '<image preserveAspectRatio="xMidYMid slice" x="46" y="25" width="80" height="80" xlink:href="{val}"></image>' +
+        '</g>' +
+        '</g>';
+
+      FamilyTree.templates.john.circle_0 =
+        '<rect x="45.5" y="24.5" width="81" height="81" rx="16" ry="16" fill="none" stroke="#CDBB98" stroke-width="1.5"></rect>';
+
+      FamilyTree.templates.john.field_0 =
+        '<text style="font-size:16px; font-weight:700; font-family:Georgia, serif;" fill="#3A2A20" x="86" y="141" text-anchor="middle" pointer-events="none">{val}</text>';
+
+      FamilyTree.templates.john.field_1 =
+        '<text style="font-size:13px; font-style:italic; font-family:Georgia, serif;" fill="#6E5A47" x="86" y="164" text-anchor="middle" pointer-events="none">{val}</text>';
+
+      FamilyTree.templates.john.field_gen =
+        '<g transform="translate(13, 13)">' +
+        '<circle cx="12" cy="12" r="11" fill="#B89554" opacity="0.18"/>' +
+        '<text fill="#6B5A3A" x="12" y="16" text-anchor="middle" style="font-size:11px; font-weight:bold;">{val}</text>' +
+        '</g>';
+
+      FamilyTree.templates.john.nodeMenuButton =
+        '<g style="cursor:pointer;" transform="matrix(1,0,0,1,136,13)" data-ctrl-n-menu-id="{id}">' +
+        '<rect x="0" y="0" fill="transparent" width="24" height="24"></rect>' +
+        '</g>';
+
+
+      // ================= TEMPLATE NỮ =================
+      FamilyTree.templates.jane = Object.assign({}, FamilyTree.templates.john);
+
+      FamilyTree.templates.jane.node =
+        '<rect x="0" y="0" height="182" width="172" fill="url(#femaleGrad)" stroke-width="1.8" stroke="#B97854" rx="8" ry="8" filter="url(#nodeShadow)"></rect>' +
+
+        '<g class="menu-button" style="cursor:pointer; pointer-events:all;" transform="translate(136, 13)" data-ctrl-n-menu-id="{id}">' +
+        '<circle class="menu-bg" cx="12" cy="12" r="12" fill="#B97854" opacity="0.14"/>' +
+        '<path fill="#74513E" d="M12 7.6c.32 0 .63.03.93.1l.42-1.08c.07-.18.27-.28.45-.2l1.05.44c.18.08.27.28.2.46l-.46 1.05c.48.33.9.75 1.23 1.23l1.05-.46c.18-.08.39 0 .46.2l.44 1.05c.08.18-.02.39-.2.45l-1.08.42c.06.3.1.61.1.93s-.04.63-.1.93l1.08.42c.18.07.28.27.2.45l-.44 1.05c-.07.18-.28.27-.46.2l-1.05-.46c-.33.48-.75.9-1.23 1.23l.46 1.05c.08.18 0 .39-.2.46l-1.05.44c-.18.08-.39-.02-.45-.2l-.42-1.08c-.3.06-.61.1-.93.1s-.63-.04-.93-.1l-.42 1.08c-.07.18-.27.28-.45.2l-1.05-.44c-.18-.07-.27-.28-.2-.46l.46-1.05c-.48-.33-.9-.75-1.23-1.23l-1.05.46c-.18.08-.39 0-.46-.2l-.44-1.05c-.08-.18.02-.39.2-.45l1.08-.42c-.06-.3-.1-.61-.1-.93s.04-.63.1-.93l-1.08-.42c-.18-.07-.28-.27-.2-.45l.44-1.05c.07-.18.28-.27.46-.2l1.05.46c.33-.48.75-.9 1.23-1.23l-.46-1.05c-.08-.18 0-.39.2-.46l1.05-.44c.18-.08.39.02.45.2l.42 1.08c.3-.07.61-.1.93-.1Zm0 2.7a1.9 1.9 0 1 0 0 3.8 1.9 1.9 0 0 0 0-3.8Z"/>' +
+        '</g>';
+
+      FamilyTree.templates.jane.clip_0 = '';
+
+      FamilyTree.templates.jane.img_0 =
+        '<g filter="url(#avatarSoftShadow)">' +
+        '<rect x="41" y="20" width="90" height="90" rx="20" ry="20" fill="#FFF9F2" stroke="#E3CBB9" stroke-width="1.2"></rect>' +
+        '<g clip-path="url(#janeAvatarClip)">' +
+        '<image preserveAspectRatio="xMidYMid slice" x="46" y="25" width="80" height="80" xlink:href="{val}"></image>' +
+        '</g>' +
+        '</g>';
+
+      FamilyTree.templates.jane.circle_0 =
+        '<rect x="45.5" y="24.5" width="81" height="81" rx="16" ry="16" fill="none" stroke="#D1AD94" stroke-width="1.5"></rect>';
+
+      FamilyTree.templates.jane.field_0 =
+        '<text style="font-size:16px; font-weight:700; font-family:Georgia, serif;" fill="#3A2A20" x="86" y="141" text-anchor="middle" pointer-events="none">{val}</text>';
+
+      FamilyTree.templates.jane.field_1 =
+        '<text style="font-size:13px; font-style:italic; font-family:Georgia, serif;" fill="#715342" x="86" y="164" text-anchor="middle" pointer-events="none">{val}</text>';
+
+      FamilyTree.templates.jane.field_gen =
+        '<g transform="translate(13, 13)">' +
+        '<circle cx="12" cy="12" r="11" fill="#B97854" opacity="0.18"/>' +
+        '<text fill="#74513E" x="12" y="16" text-anchor="middle" style="font-size:11px; font-weight:bold;">{val}</text>' +
+        '</g>';
+
+
+
+      family = new FamilyTree(treeRef.value, {
+        template: "john",
+        nodeBinding: {
+          field_0: "personName",
+          field_1: "birthDate",
+          field_gen: "generation",
+          img_0: "avatar",
+        },
+        tags: {
+          NAM: {
+            template: "john",
+          },
+          NU: {
+            template: "jane",
+          }
+        },
+
+        nodeMenu: getNodeMenu,
+        // {
+        //   // ========== NHÓM THÊM ==========
+        //   addSiblings: {
+        //     text: "Thêm đời đầu",
+        //     icon: iconMenu.addSiblings,
+        //     onClick: hanldeAddSiblings
+        //   },
+        //   addPartner: {
+        //     text: "Thêm hôn thê",
+        //     icon: iconMenu.addPartner,
+        //     onClick: handleAddPatner
+        //   },
+        //   addChildren: {
+        //     text: "Thêm con",
+        //     icon: iconMenu.addChildren,
+        //     onClick: hanldeClickAddChilren
+        //   },
+
+        //   // ========== NHÓM XEM ==========
+        //   viewChildren: {
+        //     text: "Xem đời sau",
+        //     icon: iconMenu.viewChildren,
+        //     onClick: handleViewChildren
+        //   },
+        //   rootFocus: {
+        //     text: "Trở về gốc",
+        //     icon: iconMenu.rootFocus,
+        //     onClick: hanldeRootFocus
+        //   },
+
+        //   // ========== NHÓM CHỈNH SỬA & XÓA ==========
+        //   editNode: {
+        //     text: "Chỉnh sửa",
+        //     icon: iconMenu.edit,
+        //     onClick: handleEditNode
+        //   },
+        //   remove: {
+        //     text: "Xóa thành viên",
+        //     icon: iconMenu.remove,
+        //     onClick: hanldeRemoveNode
+        //   }
+        // },
+
+        nodeMenuTrigger: (FamilyTree as any).action.nodeMenu,
+        nodeMenuButton: '.menu-button',
+        editForm: false,
+        mouseScrool: (FamilyTree as any).action.zoom,
+
+        // roots: [100],  // xác định thủy tổ
+        roots: rootId.value,
+        layout: "mixed",
+        // layout: FamilyTree.layout.treeRight,
+
+
+        // Tăng khoảng cách giữa các đời
+        siblingSeparation: 100,
+        levelSeparation: 200,
+        partnerNodeSeparation: 50,
+        enableSearch: true,
+        showLevelLines: true,
+
+        // chỉ định tìm kiếm theo fill
+        searchFields: ["name"],
+        // hiển thị tên gợi ý khi tìm kiếm 
+        searchDisplayField: "name",
+        // tô màu khi tìm kiếm 
+        searchFieldsHighlight: {
+          stroke: "red",
+          strokeWidth: 5
+        },
+
+        // trọng số tìm kiếm cao nhất theo 
+        searchFieldsWeight: {
+          "Name": 100,
+        },
+
+        align: FamilyTree.align.center,
+
+        // định hướng 
+        orientation: FamilyTree.orientation.top,
+        padding: 100,
+
+        // khoảng cách vợ chồng
+        partnerChildrenSplitSeparation: 180,
+
+        // hiển thị zoom mặc định 
+        scaleInitial: 1,
+        // zoom in out , max min
+        scaleMax: 10,
+        // scaleMin: 0.5,
+
+        subtreeSeparation: 150, // Tăng lên 100 để các chi/nhánh tách biệt rõ ràng hơn
+        zoom: {
+          speed: 130,
+          smooth: 10
+        },
+
+        expandAll: true,
+        // Không mở hết tất cả
+        // collapse: {
+        //   level: 1, // Tự động thu gọn từ đời thứ 2 trở đi
+        //   allChildren: true
+        // },
+        nodeCircleMenu: true,
+        miniMap: isMiniMap.value,
+      } as any);
+
+
+      // Nạp dữ liệu vào cây
+      family.load(processedFamilyData.value);
+      family.draw();
+    }
+  }, 0);
+});
+
+watch(processedFamilyData, (newData) => {
+  if (family && newData.length) {
+    family.load(newData);
+    family.draw();
+  }
+}, { immediate: true });
+
+// node menu
+const getNodeMenu = (node: any) => {
+  console.log("get nodeeee",node)
+    return {
+      addSiblings: {
+        text: "Thêm đời đầu",
+        icon: iconMenu.addSiblings,
+        onClick: hanldeAddSiblings
+      },
+      addPartner: {
+        text: node.gender === 'male' ? "Thêm hôn thê" : "Thêm hôn phu",
+        icon: iconMenu.addPartner,
+        onClick: handleAddPatner
+      },
+      addChildren: {
+        text: "Thêm con",
+        icon: iconMenu.addChildren,
+        onClick: hanldeClickAddChilren
+      },
+      viewChildren: {
+        text: "Xem đời sau",
+        icon: iconMenu.viewChildren,
+        onClick: handleViewChildren
+      },
+      rootFocus: {
+        text: "Trở về gốc",
+        icon: iconMenu.rootFocus,
+        onClick: hanldeRootFocus
+      },
+      editNode: {
+        text: "Chỉnh sửa",
+        icon: iconMenu.edit,
+        onClick: handleEditNode
+      },
+      remove: {
+        text: "Xóa thành viên",
+        icon: iconMenu.remove,
+        onClick: hanldeRemoveNode
+      }
+  } 
+
+// else {
+//     // Nữ
+//     return {
+//       addPartner: {
+//         text: "Thêm hôn phu",
+//         icon: iconMenu.addPartner,
+//         onClick: handleAddPatner
+//       },
+//       addChildren: {
+//         text: "Thêm con",
+//         icon: iconMenu.addChildren,
+//         onClick: hanldeClickAddChilren
+//       },
+//       viewChildren: {
+//         text: "Xem đời sau",
+//         icon: iconMenu.viewChildren,
+//         onClick: handleViewChildren
+//       },
+//       editNode: {
+//         text: "Chỉnh sửa",
+//         icon: iconMenu.edit,
+//         onClick: handleEditNode
+//       },
+//       remove: {
+//         text: "Xóa thành viên",
+//         icon: iconMenu.remove,
+//         onClick: hanldeRemoveNode
+//       }
+//     };
+//   }
+};
+
+
+
 
 
 
@@ -281,7 +428,7 @@ const familyStore = useFamilyStore();
 const familyId = computed(() => familyStore.currentFamilyId);
 
 const { data: myInfoAccount } = useMyInfoQuery();
-console.log(myInfoAccount.value);
+
 const checkRoleAccount = () => {
 
 }
@@ -301,9 +448,9 @@ const checkRoleDisable = ref(false);
 
 const hanldeAddSiblings = (nodeId: any) => {
   const rawData = family.get(nodeId);
-  if (rawData && !checkRoleDisable) {
+  if (rawData && checkRoleDisable) {
     isModalAddSiblingOpen.value = true
-    console.log('heheheheheh', selectedMember.value)
+    console.log('heheheheheh', rawData);
   } else {
     window.alert("Bạn không có quyền chỉnh sửa")
   }
@@ -352,11 +499,6 @@ const hanldeRemoveNode = (nodeId: any) => {
 
 
 
-
-
-
-
-
 // save member
 const onSaveMember = (updatedData: any) => {
   if (family && updatedData) {
@@ -370,97 +512,64 @@ const onSaveMember = (updatedData: any) => {
 };
 
 
-// =========== ACTION TOPBAR ==================
-// handle search 
+// ------------------- Tìm kiếm -------------------
 const searchQuery = ref("");
 const searchInputRef = ref<HTMLInputElement | null>(null);
 
-
-// tìm kiếm thành viên
 const handleSearch = () => {
   const term = searchQuery.value?.trim().toLowerCase();
   if (!term || !family) return;
-
   const allNodesData = family.config.nodes;
-
-  if (!allNodesData) {
-    console.warn("No nodes data found in family config");
-    return;
-  }
-
-  const foundMember = allNodesData.find((node: any) => {
-    return node.name && node.name.toLowerCase().includes(term);
-  });
-
+  const foundMember = allNodesData?.find((node: any) =>
+    node.name?.toLowerCase().includes(term)
+  );
   if (foundMember) {
     const nodeId = foundMember.id;
-
     try {
-      // 1. Zoom và di chuyển đến node
-      family.center(nodeId, {
-        ripple: true,
-        slow: true,
-        zoomState: 0.5,
-      });
-
+      family.center(nodeId, { ripple: true, slow: true, zoomState: 0.5 });
       family.search(term);
-
       const nodeElement = treeRef.value?.querySelector(`[data-n-id="${nodeId}"]`);
       if (nodeElement) {
-        nodeElement.classList.add('found-node-highlight');
-        treeRef.value?.classList.add('is-searching');
+        nodeElement.classList.add("found-node-highlight");
+        treeRef.value?.classList.add("is-searching");
         setTimeout(() => {
-          nodeElement.classList.remove('found-node-highlight');
-          treeRef.value?.classList.remove('is-searching');
+          nodeElement.classList.remove("found-node-highlight");
+          treeRef.value?.classList.remove("is-searching");
         }, 5000);
       }
-
     } catch (e) {
-      console.error("Error navigating to node:", e);
+      console.error(e);
       family.fit(nodeId);
     }
   } else {
-    console.warn("❌ No member found for term:", term);
-    // alert("Không tìm thấy thành viên: " + searchQuery.value);
-    notify.error("không tin thay")
+    notify.error("Không tìm thấy thành viên");
   }
 };
 
-// hiển thị gợi ý 
 const searchSuggestions = computed(() => {
   const query = searchQuery.value?.trim().toLowerCase();
-  if (!query || query.length < 1 || !family) return [];
-
-  // Lấy dữ liệu từ nodes trong config
-  const allNodesData = family.config.nodes;
-
-  return allNodesData.filter((node: any) =>
-    node.name && node.name.toLowerCase().includes(query)
-  ).slice(0, 6);
+  if (!query || !family) return [];
+  return family.config.nodes?.filter((node: any) =>
+    node.name?.toLowerCase().includes(query)
+  ).slice(0, 6) || [];
 });
 
-// Hàm để khi nhấn vào một gợi ý thì thực hiện search luôn
 const selectSuggestion = (member: any) => {
   searchQuery.value = member.name;
   handleSearch();
 };
 
-// Hàm xóa tìm kiếm - Hiển thị lại tất cả các thẻ
 const clearSearch = () => {
-  searchQuery.value = '';
-
-  treeRef.value?.classList.remove('is-searching');
-
-  treeRef.value?.querySelectorAll('.found-node-highlight').forEach(el => {
-    el.classList.remove('found-node-highlight');
-  });
-
-  family.fit();
-
+  searchQuery.value = "";
+  treeRef.value?.classList.remove("is-searching");
+  treeRef.value?.querySelectorAll(".found-node-highlight").forEach(el =>
+    el.classList.remove("found-node-highlight")
+  );
+  family?.fit();
   searchInputRef.value?.focus();
 };
 
-// bật mini map
+// ------------------- Mini map, reset view, go back -------------------
 const toggleMiniMap = () => {
   isMiniMap.value = !isMiniMap.value;
   if (family) {
@@ -471,74 +580,108 @@ const toggleMiniMap = () => {
 
 const resetView = () => {
   if (family) {
-    // Đặt lại tỉ lệ zoom về 1, nhưng fit sẽ tự động tính toán tỉ lệ phù hợp để hiển thị hết cây
     family.fit({ slow: true, ripple: true });
   }
 };
 
-// quay lại danh sách gia phả
 const goBack = () => {
   router.go(-1);
 };
+
 </script>
+
 
 <template>
   <div class="flex h-screen flex-col bg-slate-50 font-sans">
     <header
-      class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 bg-white px-5 py-2 shadow-sm">
-      <!-- Bên trái: tiêu đề + nút quay lại -->
-      <div class="flex items-center gap-4">
+      class="flex items-center justify-between border-b border-amber-200 bg-gradient-to-r from-amber-50 via-white to-amber-50 px-5 py-2.5 shadow-sm">
+      <!-- Bên trái: nút quay lại + tên trang -->
+      <div class="flex items-center gap-3">
         <button @click="goBack"
-          class="rounded-md border border-slate-200 bg-slate-50 px-3 py-1 text-sm text-slate-500 transition hover:border-slate-300 hover:bg-slate-100">
-          ← Quay lại
+          class="flex items-center gap-1.5 rounded-lg border border-amber-200 bg-white px-3 py-1.5 text-sm font-medium text-amber-800 shadow-sm transition cursor-pointer hover:bg-amber-50 hover:border-amber-300">
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 5l-7 7 7 7" />
+          </svg>
+          Quay lại
         </button>
+        <div class="hidden h-6 w-px bg-amber-200 sm:block"></div>
+        <div class="hidden items-center gap-2 sm:flex">
+          <svg class="h-5 w-5 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+          </svg>
+          <span class="text-sm font-semibold text-amber-900 tracking-wide">Gia Phả</span>
+        </div>
       </div>
 
       <!-- Bên phải: thanh công cụ + tìm kiếm -->
-      <div class="flex flex-wrap items-center gap-2">
-        <!-- Các nút chức năng -->
-        <div class="flex items-center gap-1 rounded-md bg-slate-50 p-0.5">
+      <div class="flex items-center gap-2">
+        <!-- Nhóm nút chức năng -->
+        <div class="flex items-center gap-1 rounded-lg  border border-amber-100 bg-white p-1 shadow-sm">
           <button @click="toggleMiniMap" :class="[
-            'rounded px-3 py-1 text-sm font-medium transition',
+            'flex items-center gap-1.5 rounded-md cursor-pointer px-3 py-1.5 text-xs font-medium transition',
             isMiniMap
-              ? 'bg-white text-amber-600 shadow-sm'
-              : 'text-slate-500 hover:bg-white hover:text-slate-700'
+              ? 'bg-amber-100 text-amber-700 shadow-inner'
+              : 'text-slate-500 hover:bg-amber-50 hover:text-amber-700'
           ]">
+            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <rect x="7" y="7" width="4" height="4" />
+            </svg>
             {{ isMiniMap ? 'Tắt map' : 'Bật map' }}
           </button>
+          <div class="h-4 w-px bg-slate-200"></div>
           <button @click="resetView"
-            class="rounded px-3 py-1 text-sm font-medium text-slate-500 transition hover:bg-white hover:text-slate-700">
-            Reset
+            class="flex items-center gap-1.5 cursor-pointer rounded-md px-3 py-1.5 text-xs font-medium text-slate-500 transition hover:bg-amber-50 hover:text-amber-700">
+            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+              <path d="M3 3v5h5" />
+            </svg>
+            Đặt lại
           </button>
+          <div class="h-4 w-px bg-slate-200"></div>
           <router-link to="/family/xuat-file"
-            class="rounded px-3 py-1 text-sm font-medium text-slate-500 transition hover:bg-white hover:text-slate-700">
+            class="flex items-center gap-1.5 rounded-md px-3 cursor-pointer py-1.5 text-xs font-medium text-slate-500 transition hover:bg-amber-50 hover:text-amber-700">
+            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
             Xuất ảnh
           </router-link>
         </div>
 
         <!-- Ô tìm kiếm -->
-        <div class="relative flex items-center gap-2 pl-2">
+        <div class="relative flex items-center gap-1.5">
           <div class="relative">
-            <input v-model="searchQuery" type="text" placeholder="Tìm tên..."
-              class="w-52 rounded-md border border-slate-200 bg-slate-50 px-3 py-1.5 pr-7 text-sm outline-none transition focus:border-amber-300 focus:bg-white"
+            <svg class="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.35-4.35" />
+            </svg>
+            <input v-model="searchQuery" ref="searchInputRef" type="text" placeholder="Tìm thành viên..."
+              class="w-52 rounded-lg border border-amber-200 bg-white py-1.5 pl-8 pr-7 text-sm outline-none shadow-sm transition focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
               @keyup.enter="handleSearch" />
             <button v-if="searchQuery" @click="clearSearch"
-              class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-              ✕
+              class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500 transition">
+              <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M18 6 6 18M6 6l12 12" />
+              </svg>
             </button>
           </div>
           <button @click="handleSearch"
-            class="rounded-md bg-amber-100 px-4 py-1.5 text-sm font-medium text-amber-800 transition hover:bg-amber-200">
+            class="rounded-lg bg-amber-500 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-amber-600 active:scale-95">
             Tìm
           </button>
 
           <!-- Dropdown gợi ý -->
           <div v-if="searchSuggestions.length"
-            class="absolute left-0 top-full z-10 mt-1 w-52 rounded-md border border-slate-100 bg-white shadow-md">
+            class="absolute left-0 top-full z-10 mt-1.5 w-52 overflow-hidden rounded-xl border border-amber-100 bg-white shadow-lg">
             <div v-for="member in searchSuggestions" :key="member.id" @click="selectSuggestion(member)"
-              class="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm hover:bg-amber-50">
-              <img :src="member.photo" class="h-6 w-6 rounded-full object-cover" />
-              <span>{{ member.name }}</span>
+              class="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-sm transition hover:bg-amber-50">
+              <img :src="member.photo" class="h-7 w-7 rounded-full object-cover ring-1 ring-amber-200" />
+              <span class="text-slate-700">{{ member.name }}</span>
             </div>
           </div>
         </div>
@@ -555,7 +698,9 @@ const goBack = () => {
     <AddMemberModal :isOpen="isModalAddChildrenOpen" :member="selectedMember" @close="isModalAddChildrenOpen = false"
       @save="onSaveMember" />
 
-    <AddSiblingsModal />
+    <AddSiblingsModal :isOpen="isModalAddSiblingOpen" :member="selectedMember" @close="isModalAddSiblingOpen = false"
+      @save="hanldeAddSiblings" />
+
     <EditMemberModal :isOpen="isModalUpdateChildrenOpen" :member="selectedMember"
       @close="isModalUpdateChildrenOpen = false" @save="onSaveMember" />
   </div>
