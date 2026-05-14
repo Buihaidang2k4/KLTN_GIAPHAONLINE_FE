@@ -3,6 +3,19 @@ import type { FamilyTreeNodeRes, PersonReq, PersonRes } from "@/types/family/fam
 import api from "./api.base";
 import { toValue, type MaybeRefOrGetter } from "vue";
 
+const toFormData = (data: PersonReq): FormData => {
+  const formData = new FormData();
+  Object.entries(data).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === '') return;
+    if (value instanceof File) {
+      formData.append(key, value);
+    } else {
+      formData.append(key, String(value));
+    }
+  });
+  return formData;
+};
+
 export const familyTreeService = {
 
   // ==================== Tree ====================
@@ -10,6 +23,13 @@ export const familyTreeService = {
   getTree: async (categoryId: MaybeRefOrGetter<number>): Promise<ApiResponse<FamilyTreeNodeRes[]>> => {
     const res = await api.get<ApiResponse<FamilyTreeNodeRes[]>>(
       `/family-tree/categories/${toValue(categoryId)}/tree`
+    );
+    return res.data;
+  },
+
+  getPartners: async (personId: MaybeRefOrGetter<number>): Promise<ApiResponse<PersonRes[]>> => {
+    const res = await api.get<ApiResponse<PersonRes[]>>(
+      `/family-tree/persons/${toValue(personId)}/partners`
     );
     return res.data;
   },
@@ -22,7 +42,7 @@ export const familyTreeService = {
   ): Promise<ApiResponse<PersonRes>> => {
     const res = await api.post<ApiResponse<PersonRes>>(
       `/family-tree/categories/${toValue(categoryId)}/persons`,
-      toValue(data)
+      toFormData(toValue(data))
     );
     return res.data;
   },
@@ -33,7 +53,7 @@ export const familyTreeService = {
   ): Promise<ApiResponse<PersonRes>> => {
     const res = await api.put<ApiResponse<PersonRes>>(
       `/family-tree/persons/${toValue(personId)}`,
-      toValue(data)
+      toFormData(toValue(data))
     );
     return res.data;
   },

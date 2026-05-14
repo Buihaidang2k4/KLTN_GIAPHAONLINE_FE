@@ -1,248 +1,340 @@
-<template>
-  <div v-if="isOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-    <!-- Lớp phủ mờ nền -->
-    <div class="absolute inset-0 bg-stone-900/60 backdrop-blur-md transition-opacity" @click="$emit('close')"></div>
+<script setup lang="ts">
+import { ref, watch } from "vue";
+import { X, Camera, Trash2, User, Phone, MapPin, BookOpen, Calendar, ChevronDown, AlertCircle } from 'lucide-vue-next';
+import type { PersonReq } from "@/types/family/family_tree.types";
+import { useForm } from "vee-validate";
+import { toTypedSchema } from "@vee-validate/zod";
+import * as zod from "zod";
 
-    <!-- Thân Modal -->
-    <div
-      class="relative w-full max-w-lg bg-stone-50 rounded-[2.5rem] shadow-2xl overflow-hidden border border-white/20 animate-modal-in">
+const props = defineProps<{ 
+    isOpen: boolean;
+    member: any; // The member being edited
+}>();
 
-      <!-- Đường viền trang trí phía trên -->
-      <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-red-800 via-amber-500 to-red-800"></div>
+const emit = defineEmits<{ close: []; save: [data: PersonReq] }>();
 
-      <!-- Nút đóng -->
-      <button @click="$emit('close')"
-        class="absolute top-6 right-6 p-2 rounded-full bg-stone-200/50 text-stone-600 hover:bg-red-100 hover:text-red-600 transition-colors z-20">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M18 6 6 18" />
-          <path d="m6 6 12 12" />
-        </svg>
-      </button>
+// Validation Schema
+const schema = toTypedSchema(
+    zod.object({
+        fullName: zod.string().min(1, "Họ và tên không được để trống"),
+        gender: zod.enum(["MALE", "FEMALE"]),
+        lifeStatus: zod.enum(["ALIVE", "DEAD"]),
+        birthDate: zod.string().optional(),
+        deathDate: zod.string().optional(),
+        phoneNumber: zod.string().optional(),
+        originPlace: zod.string().optional(),
+        placeOfResidence: zod.string().optional(),
+        biography: zod.string().optional(),
+        graveLocation: zod.string().optional(),
+        birthOrder: zod.number(),
+    })
+);
 
-      <div class="px-8 pt-12 pb-10">
-        <!-- Tiêu đề -->
-        <div class="text-center mb-10">
-          <h2 class="text-2xl font-bold text-stone-800 tracking-tight font-serif italic">Thông Tin Thành Viên</h2>
-          <div class="w-16 h-1 bg-red-800 mx-auto mt-2 rounded-full opacity-20"></div>
-        </div>
-
-        <!-- Khu vực ảnh đại diện -->
-        <div class="flex justify-center mb-10">
-          <div class="relative group">
-            <div
-              class="absolute inset-0 bg-red-200 rounded-full blur-2xl opacity-40 group-hover:opacity-60 transition-opacity">
-            </div>
-            <div class="relative">
-              <img :src="localMember.photo || 'https://cdn.balkan.app/shared/m30/5.jpg'" alt="Avatar"
-                class="h-28 w-28 rounded-full border-4 border-white object-cover shadow-2xl ring-1 ring-stone-200" />
-              <div
-                class="absolute bottom-0 right-0 bg-red-800 p-2 rounded-full shadow-lg border-2 border-white text-white">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path
-                    d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
-                  <circle cx="12" cy="13" r="3" />
-                </svg>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Các trường nhập liệu -->
-        <div class="space-y-6">
-          <!-- Họ và Tên -->
-          <div>
-            <label class="flex items-center gap-2 text-sm font-semibold text-stone-600 mb-1.5 ml-1">
-              <svg class="text-red-800" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-                <circle cx="12" cy="7" r="4" />
-              </svg>
-              Họ và Tên
-            </label>
-            <div class="relative">
-              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 z-10">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-                  <circle cx="12" cy="7" r="4" />
-                </svg>
-              </span>
-              <input v-model="localMember.name" type="text" placeholder="Nhập đầy đủ họ tên..."
-                class="w-full pl-10 pr-4 py-2.5 bg-white border border-stone-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all text-stone-800 placeholder:text-stone-400 shadow-sm" />
-            </div>
-          </div>
-
-          <div class="grid grid-cols-2 gap-6">
-            <!-- Giới tính -->
-            <div>
-              <label class="flex items-center gap-2 text-sm font-semibold text-stone-600 mb-1.5 ml-1">
-                <svg class="text-red-800" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                  fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                  <circle cx="9" cy="7" r="4" />
-                  <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                </svg>
-                Giới tính
-              </label>
-              <div class="relative">
-                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 z-10">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                    <circle cx="9" cy="7" r="4" />
-                    <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                  </svg>
-                </span>
-                <select v-model="localMember.gender"
-                  class="w-full pl-10 pr-4 py-2.5 bg-white border border-stone-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all text-stone-800 shadow-sm appearance-none">
-                  <option value="male">Nam (Thứ)</option>
-                  <option value="female">Nữ (Thị)</option>
-                </select>
-                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="m6 9 6 6 6-6" />
-                  </svg>
-                </span>
-              </div>
-            </div>
-
-            <!-- Năm sinh -->
-            <div>
-              <label class="flex items-center gap-2 text-sm font-semibold text-stone-600 mb-1.5 ml-1">
-                <svg class="text-red-800" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                  fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
-                  <line x1="16" x2="16" y1="2" y2="6" />
-                  <line x1="8" x2="8" y1="2" y2="6" />
-                  <line x1="3" x2="21" y1="10" y2="10" />
-                </svg>
-                Năm sinh
-              </label>
-              <div class="relative">
-                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 z-10">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
-                    <line x1="16" x2="16" y1="2" y2="6" />
-                    <line x1="8" x2="8" y1="2" y2="6" />
-                    <line x1="3" x2="21" y1="10" y2="10" />
-                  </svg>
-                </span>
-                <input v-model="localMember.title" type="text" placeholder="VD: 1990"
-                  class="w-full pl-10 pr-4 py-2.5 bg-white border border-stone-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all text-stone-800 placeholder:text-stone-400 shadow-sm" />
-              </div>
-            </div>
-          </div>
-
-          <!-- Link ảnh chân dung -->
-          <div>
-            <label class="flex items-center gap-2 text-sm font-semibold text-stone-600 mb-1.5 ml-1">
-              <svg class="text-red-800" xmlns="http://www.w3.org/2000/vue" width="16" height="16" viewBox="0 0 24 24"
-                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
-                <circle cx="9" cy="9" r="2" />
-                <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
-              </svg>
-              Link ảnh chân dung
-            </label>
-            <div class="relative">
-              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 z-10">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
-                  <circle cx="9" cy="9" r="2" />
-                  <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
-                </svg>
-              </span>
-              <input v-model="localMember.photo" type="text" placeholder="https://link-anh-cua-ban.jpg"
-                class="w-full pl-10 pr-4 py-2.5 bg-white border border-stone-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all text-stone-800 placeholder:text-stone-400 shadow-sm" />
-            </div>
-          </div>
-        </div>
-
-        <!-- Các nút hành động -->
-        <div class="mt-12 flex flex-col sm:flex-row gap-4">
-          <button @click="handleSave"
-            class="flex-1 bg-red-800 hover:bg-red-900 text-white font-bold py-4 px-6 rounded-2xl flex items-center justify-center gap-2 shadow-xl shadow-red-900/20 active:scale-[0.98] transition-all tracking-wide">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
-              <polyline points="17 21 17 13 7 13 7 21" />
-              <polyline points="7 3 7 8 15 8" />
-            </svg>
-            LƯU THÔNG TIN
-          </button>
-          <button @click="$emit('close')"
-            class="flex-1 bg-stone-200 hover:bg-stone-300 text-stone-700 font-bold py-4 px-6 rounded-2xl active:scale-[0.98] transition-all">
-            HỦY BỎ
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
-
-<script setup>
-import { ref, watch } from 'vue';
-
-const props = defineProps({
-  isOpen: Boolean,
-  member: Object
+const { values, errors, defineField, handleSubmit, resetForm, setValues } = useForm({
+    validationSchema: schema,
 });
 
-const emit = defineEmits(['close', 'save']);
+const [fullName] = defineField("fullName");
+const [gender] = defineField("gender");
+const [lifeStatus] = defineField("lifeStatus");
+const [birthDate] = defineField("birthDate");
+const [deathDate] = defineField("deathDate");
+const [phoneNumber] = defineField("phoneNumber");
+const [originPlace] = defineField("originPlace");
+const [placeOfResidence] = defineField("placeOfResidence");
+const [biography] = defineField("biography");
+const [graveLocation] = defineField("graveLocation");
+const [birthOrder] = defineField("birthOrder");
 
-const localMember = ref({});
+const avatarFile = ref<File | undefined>();
+const avatarPreview = ref<string | null>(null);
+const fileInputRef = ref<HTMLInputElement | null>(null);
 
-// Đồng bộ hóa dữ liệu khi prop member thay đổi
-watch(() => props.member, (newVal) => {
-  if (newVal) {
-    localMember.value = { ...newVal };
-  } else {
-    localMember.value = {
-      name: '',
-      gender: 'male',
-      title: '',
-      photo: ''
+const handleFileChange = (event: Event) => {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (file) {
+        avatarFile.value = file;
+        avatarPreview.value = URL.createObjectURL(file);
+    }
+};
+
+const removeAvatar = () => {
+    avatarFile.value = undefined;
+    avatarPreview.value = null;
+    if (fileInputRef.value) fileInputRef.value.value = "";
+};
+
+const triggerFileInput = () => {
+    fileInputRef.value?.click();
+};
+
+const onSave = handleSubmit((values) => {
+    const payload: PersonReq = {
+        ...values,
+        deathDate: values.lifeStatus === 'DEAD' ? values.deathDate || "" : "",
+        graveLocation: values.lifeStatus === 'DEAD' ? values.graveLocation || "" : "",
+        avatar: avatarFile.value,
+        partnerId: props.member?.id, // Keep the ID for update
     };
-  }
+    emit("save", payload);
+});
+
+const handleClose = () => {
+    emit("close");
+};
+
+watch(() => props.member, (newMember) => {
+    if (newMember && props.isOpen) {
+        setValues({
+            fullName: newMember.personName || newMember.name || "",
+            gender: newMember.gender === "female" ? "FEMALE" : "MALE",
+            lifeStatus: newMember.lifeStatus === "DEAD" ? "DEAD" : "ALIVE",
+            birthDate: newMember.birthDate || "",
+            deathDate: newMember.deathDate || "",
+            phoneNumber: newMember.phoneNumber || "",
+            originPlace: newMember.originPlace || "",
+            placeOfResidence: newMember.placeOfResidence || "",
+            biography: newMember.biography || "",
+            graveLocation: newMember.graveLocation || "",
+            birthOrder: newMember.birthOrder || 1,
+        });
+        avatarPreview.value = newMember.photo || null;
+    }
 }, { immediate: true });
 
-const handleSave = () => {
-  if (localMember.value.name) {
-    emit('save', { ...localMember.value });
-  } else {
-    // Thông báo lỗi đơn giản (nên thay bằng toast)
-    console.warn("Vui lòng nhập tên thành viên");
-  }
-};
+watch(() => props.isOpen, (open) => {
+    if (!open) {
+        resetForm();
+        avatarFile.value = undefined;
+        avatarPreview.value = null;
+    }
+});
 </script>
 
+<template>
+    <Transition name="fade">
+        <div v-if="isOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div class="absolute inset-0 bg-stone-900/60 backdrop-blur-sm" @click="handleClose"></div>
+
+            <div class="relative w-full max-w-4xl bg-white rounded-[2rem] shadow-2xl border border-stone-200 overflow-hidden animate-pop-in max-h-[90vh] flex flex-col font-sans">
+                <!-- Header trang trí -->
+                <div class="h-2 bg-gradient-to-r from-amber-800 via-amber-500 to-amber-800 flex-shrink-0"></div>
+
+                <!-- Nút đóng -->
+                <button @click="handleClose"
+                    class="absolute top-6 right-6 p-2 rounded-full bg-stone-100 text-stone-400 hover:bg-red-50 hover:text-red-600 transition-all z-20 shadow-sm">
+                    <X :size="18" />
+                </button>
+
+                <div class="overflow-y-auto custom-scrollbar flex-1">
+                    <div class="px-10 py-10">
+                        <!-- Tiêu đề -->
+                        <div class="text-center mb-12">
+                            <span class="text-[10px] font-bold text-amber-800 tracking-[0.5em] uppercase opacity-50 block mb-2">Thông tin chi tiết</span>
+                            <h2 class="text-3xl font-bold text-stone-800 font-serif italic">Chỉnh Sửa Thành Viên</h2>
+                            <div class="flex justify-center mt-4">
+                                <div class="h-0.5 w-20 bg-amber-100 rounded-full relative">
+                                    <div class="absolute inset-y-0 left-1/2 -translate-x-1/2 w-8 bg-amber-800 rounded-full"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col lg:flex-row gap-12">
+                            <!-- Cột trái: Ảnh đại diện -->
+                            <div class="flex flex-col items-center flex-shrink-0 lg:w-48 pt-2">
+                                <div class="relative group">
+                                    <div class="absolute inset-0 bg-amber-500 rounded-full blur-2xl opacity-10 group-hover:opacity-20 transition-opacity"></div>
+                                    <div @click="triggerFileInput"
+                                        class="relative h-40 w-40 rounded-full border-4 border-white shadow-2xl overflow-hidden ring-1 ring-stone-100 bg-stone-50 flex items-center justify-center cursor-pointer transition-transform hover:scale-[1.02]">
+                                        <img v-if="avatarPreview" :src="avatarPreview" class="h-full w-full object-cover" />
+                                        <div v-else class="flex flex-col items-center text-stone-300">
+                                            <User :size="48" stroke-width="1.5" />
+                                            <span class="text-[10px] font-bold mt-2 uppercase tracking-tighter">Thêm ảnh</span>
+                                        </div>
+
+                                        <div class="absolute inset-0 bg-stone-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white backdrop-blur-[2px]">
+                                            <Camera :size="24" />
+                                            <span class="text-[10px] font-bold mt-1 uppercase">Thay đổi</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <button v-if="avatarPreview" @click.stop="removeAvatar"
+                                        class="absolute top-0 right-0 p-2 bg-white text-red-500 rounded-full shadow-lg hover:bg-red-50 transition-colors border border-stone-100">
+                                        <Trash2 :size="14" />
+                                    </button>
+                                </div>
+                                <input ref="fileInputRef" type="file" accept="image/*" class="hidden" @change="handleFileChange" />
+                                <p class="text-[10px] text-stone-400 mt-4 uppercase tracking-widest font-bold">Ảnh chân dung</p>
+                            </div>
+
+                            <!-- Cột phải: Form nhập liệu -->
+                            <div class="flex-1 space-y-5">
+                                <div class="space-y-4">
+                                    <!-- Họ và Tên -->
+                                    <div class="grid grid-cols-[150px_1fr] gap-6 items-start">
+                                        <label class="text-[12px] font-bold text-stone-500 uppercase tracking-widest pt-3 flex items-center gap-2">
+                                            Họ và Tên <span class="text-red-500">*</span>
+                                        </label>
+                                        <div class="space-y-1">
+                                            <div class="relative">
+                                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-stone-300">
+                                                    <User :size="16" />
+                                                </span>
+                                                <input v-model="fullName" type="text" placeholder="Nhập tên thành viên..."
+                                                    :class="['w-full pl-11 pr-5 py-3 bg-stone-50 border rounded-2xl focus:ring-4 focus:ring-amber-900/5 focus:border-amber-800 outline-none transition-all text-sm font-medium', errors.fullName ? 'border-red-300 bg-red-50/30' : 'border-stone-100']" />
+                                            </div>
+                                            <div v-if="errors.fullName" class="flex items-center gap-1 text-[10px] text-red-500 font-bold ml-1">
+                                                <AlertCircle :size="12" />
+                                                {{ errors.fullName }}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Giới tính & Thứ tự -->
+                                    <div class="grid grid-cols-[150px_1fr] gap-6 items-center">
+                                        <label class="text-[12px] font-bold text-stone-500 uppercase tracking-widest">Giới tính</label>
+                                        <div class="relative">
+                                            <select v-model="gender"
+                                                class="w-full px-5 py-3 bg-stone-50 border border-stone-100 rounded-2xl focus:ring-4 focus:ring-amber-900/5 focus:border-amber-800 outline-none transition-all text-stone-800 text-sm font-medium appearance-none cursor-pointer">
+                                                <option value="MALE">Nam (Tộc)</option>
+                                                <option value="FEMALE">Nữ (Thị)</option>
+                                            </select>
+                                            <ChevronDown class="absolute right-4 top-1/2 -translate-y-1/2 text-stone-300 pointer-events-none" :size="16" />
+                                        </div>
+                                    </div>
+
+                                    <div class="grid grid-cols-[150px_1fr] gap-6 items-center">
+                                        <label class="text-[12px] font-bold text-stone-500 uppercase tracking-widest">Thứ tự (Con thứ)</label>
+                                        <input v-model.number="birthOrder" type="number" min="1"
+                                            class="w-full px-5 py-3 bg-stone-50 border border-stone-100 rounded-2xl focus:ring-4 focus:ring-amber-900/5 focus:border-amber-800 outline-none transition-all text-stone-800 text-sm font-medium" />
+                                    </div>
+
+                                    <!-- Ngày sinh & SĐT -->
+                                    <div class="grid grid-cols-[150px_1fr] gap-6 items-center">
+                                        <label class="text-[12px] font-bold text-stone-500 uppercase tracking-widest">Ngày sinh</label>
+                                        <div class="relative">
+                                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-stone-300">
+                                                <Calendar :size="16" />
+                                            </span>
+                                            <input v-model="birthDate" type="date"
+                                                class="w-full pl-11 pr-4 py-3 bg-stone-50 border border-stone-100 rounded-2xl focus:ring-4 focus:ring-amber-900/5 focus:border-amber-800 outline-none transition-all text-sm font-medium text-stone-800" />
+                                        </div>
+                                    </div>
+
+                                    <div class="grid grid-cols-[150px_1fr] gap-6 items-center">
+                                        <label class="text-[12px] font-bold text-stone-500 uppercase tracking-widest">Tình trạng</label>
+                                        <div class="relative">
+                                            <select v-model="lifeStatus"
+                                                class="w-full px-5 py-3 bg-stone-50 border border-stone-100 rounded-2xl focus:ring-4 focus:ring-amber-900/5 focus:border-amber-800 outline-none transition-all text-stone-800 text-sm font-medium appearance-none cursor-pointer">
+                                                <option value="ALIVE">Còn sống</option>
+                                                <option value="DEAD">Đã mất</option>
+                                            </select>
+                                            <ChevronDown class="absolute right-4 top-1/2 -translate-y-1/2 text-stone-300 pointer-events-none" :size="16" />
+                                        </div>
+                                    </div>
+
+                                    <!-- Thông tin khi Đã mất -->
+                                    <Transition name="expand">
+                                        <div v-if="values.lifeStatus === 'DEAD'" class="space-y-4 pt-4 border-t border-red-50 bg-red-50/10 p-5 rounded-2xl">
+                                            <div class="grid grid-cols-[130px_1fr] gap-6 items-center">
+                                                <label class="text-[11px] font-bold text-red-800 uppercase tracking-widest">Ngày mất</label>
+                                                <div class="relative">
+                                                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-red-200">
+                                                        <Calendar :size="16" />
+                                                    </span>
+                                                    <input v-model="deathDate" type="date"
+                                                        class="w-full pl-11 pr-4 py-3 bg-white border border-red-100 rounded-2xl focus:ring-4 focus:ring-red-900/5 focus:border-red-800 outline-none transition-all text-sm font-medium text-stone-800" />
+                                                </div>
+                                            </div>
+                                            <div class="grid grid-cols-[130px_1fr] gap-6 items-center">
+                                                <label class="text-[11px] font-bold text-red-800 uppercase tracking-widest">Nơi an táng</label>
+                                                <div class="relative">
+                                                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-red-200">
+                                                        <MapPin :size="16" />
+                                                    </span>
+                                                    <input v-model="graveLocation" type="text" placeholder="Nhập địa chỉ an táng..."
+                                                        class="w-full pl-11 pr-5 py-3 bg-white border border-red-100 rounded-2xl focus:ring-4 focus:ring-red-900/5 focus:border-red-800 outline-none transition-all text-sm font-medium text-stone-800 placeholder:text-red-100" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </Transition>
+
+                                    <!-- Địa chỉ & Liên hệ -->
+                                    <div class="grid grid-cols-[150px_1fr] gap-6 items-center pt-2">
+                                        <label class="text-[12px] font-bold text-stone-500 uppercase tracking-widest">Số điện thoại</label>
+                                        <div class="relative">
+                                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-stone-300">
+                                                <Phone :size="16" />
+                                            </span>
+                                            <input v-model="phoneNumber" type="tel" placeholder="0xxx..."
+                                                class="w-full pl-11 pr-5 py-3 bg-stone-50 border border-stone-100 rounded-2xl focus:ring-4 focus:ring-amber-900/5 focus:border-amber-800 outline-none transition-all text-sm font-medium text-stone-800" />
+                                        </div>
+                                    </div>
+
+                                    <div class="grid grid-cols-[150px_1fr] gap-6 items-center">
+                                        <label class="text-[12px] font-bold text-stone-500 uppercase tracking-widest">Nơi ở hiện tại</label>
+                                        <div class="relative">
+                                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-stone-300">
+                                                <MapPin :size="16" />
+                                            </span>
+                                            <input v-model="placeOfResidence" type="text" placeholder="Địa chỉ hiện tại..."
+                                                class="w-full pl-11 pr-5 py-3 bg-stone-50 border border-stone-100 rounded-2xl focus:ring-4 focus:ring-amber-900/5 focus:border-amber-800 outline-none transition-all text-sm font-medium text-stone-800" />
+                                        </div>
+                                    </div>
+
+                                    <!-- Tiểu sử -->
+                                    <div class="grid grid-cols-[150px_1fr] gap-6 items-start pt-4">
+                                        <label class="text-[12px] font-bold text-stone-500 uppercase tracking-widest pt-3">Tiểu sử</label>
+                                        <div class="relative">
+                                            <span class="absolute left-4 top-4 text-stone-300">
+                                                <BookOpen :size="16" />
+                                            </span>
+                                            <textarea v-model="biography" rows="3" placeholder="Ghi chú thêm về cuộc đời..."
+                                                class="w-full pl-11 pr-5 py-4 bg-stone-50 border border-stone-100 rounded-[1.5rem] focus:ring-4 focus:ring-amber-900/5 focus:border-amber-800 outline-none transition-all text-sm font-medium text-stone-800 resize-none"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Footer -->
+                        <div class="mt-12 flex items-center justify-end gap-4 pt-8 border-t border-stone-100">
+                            <button @click="handleClose"
+                                class="px-8 py-3.5 rounded-2xl font-bold text-stone-400 bg-stone-100 hover:bg-stone-200 transition-all uppercase text-[10px] tracking-[0.2em]">
+                                Hủy bỏ
+                            </button>
+                            <button @click="onSave"
+                                class="px-10 py-3.5 rounded-2xl font-bold text-white bg-amber-800 hover:bg-amber-700 shadow-xl shadow-amber-900/20 transition-all active:scale-[0.98] uppercase text-[10px] tracking-[0.2em] flex items-center gap-3 group">
+                                <span>Lưu thay đổi</span>
+                                <div class="w-1.5 h-1.5 bg-white rounded-full group-hover:animate-ping"></div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </Transition>
+</template>
+
 <style scoped>
-@keyframes modal-in {
-  from {
-    opacity: 0;
-    transform: scale(0.95) translateY(10px);
-  }
+.fade-enter-active, .fade-leave-active { transition: opacity 0.4s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
 
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
+@keyframes pop-in {
+    from { opacity: 0; transform: scale(0.96) translateY(20px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
 }
+.animate-pop-in { animation: pop-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 
-.animate-modal-in {
-  animation: modal-in 0.3s ease-out forwards;
-}
+.expand-enter-active, .expand-leave-active { transition: all 0.3s ease; max-height: 400px; opacity: 1; overflow: hidden; }
+.expand-enter-from, .expand-leave-to { max-height: 0; opacity: 0; transform: translateY(-10px); }
 
-/* Tùy chỉnh thanh cuộn cho modal nếu nội dung quá dài */
-.max-h-lg {
-  max-height: 90vh;
-  overflow-y: auto;
-}
+.custom-scrollbar::-webkit-scrollbar { width: 4px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #f1f1f1; border-radius: 10px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #e5e5e5; }
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,700&display=swap');
+.font-serif { font-family: 'Playfair Display', serif; }
 </style>

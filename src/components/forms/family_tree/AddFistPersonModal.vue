@@ -6,11 +6,7 @@ import { useForm } from "vee-validate";
 import { toTypedSchema } from "@vee-validate/zod";
 import * as zod from "zod";
 
-const props = defineProps<{
-    isOpen: boolean;
-    member: any; // Parent member
-}>();
-
+const props = defineProps<{ isOpen: boolean }>();
 const emit = defineEmits<{ close: []; save: [data: PersonReq] }>();
 
 // Validation Schema
@@ -57,7 +53,6 @@ const [originPlace] = defineField("originPlace");
 const [placeOfResidence] = defineField("placeOfResidence");
 const [biography] = defineField("biography");
 const [graveLocation] = defineField("graveLocation");
-const [birthOrder] = defineField("birthOrder");
 
 const avatarFile = ref<File | undefined>();
 const avatarPreview = ref<string | null>(null);
@@ -117,7 +112,7 @@ watch(() => props.isOpen, (open) => {
             <div
                 class="relative w-full max-w-4xl bg-white rounded-[2rem] shadow-2xl border border-stone-200 overflow-hidden animate-pop-in max-h-[90vh] flex flex-col font-sans">
                 <!-- Header trang trí -->
-                <div class="h-2 bg-gradient-to-r from-emerald-800 via-emerald-500 to-emerald-800 flex-shrink-0"></div>
+                <div class="h-2 bg-gradient-to-r from-red-800 via-amber-500 to-red-800 flex-shrink-0"></div>
 
                 <!-- Nút đóng -->
                 <button @click="handleClose"
@@ -130,15 +125,13 @@ watch(() => props.isOpen, (open) => {
                         <!-- Tiêu đề -->
                         <div class="text-center mb-12">
                             <span
-                                class="text-[10px] font-bold text-emerald-800 tracking-[0.5em] uppercase opacity-50 block mb-2">Thêm
-                                đời sau</span>
-                            <h2 class="text-3xl font-bold text-stone-800 font-serif italic">Thêm Người Con</h2>
-                            <p class="text-xs text-stone-400 mt-2">Của: <span
-                                    class="font-bold text-stone-600">{{ member?.personName || 'Thành viên' }}</span></p>
+                                class="text-[10px] font-bold text-red-800 tracking-[0.5em] uppercase opacity-50 block mb-2">Gia
+                                Phả Đại Việt</span>
+                            <h2 class="text-3xl font-bold text-stone-800 font-serif italic">Khai Báo Thành Viên</h2>
                             <div class="flex justify-center mt-4">
-                                <div class="h-0.5 w-20 bg-emerald-100 rounded-full relative">
+                                <div class="h-0.5 w-20 bg-amber-200 rounded-full relative">
                                     <div
-                                        class="absolute inset-y-0 left-1/2 -translate-x-1/2 w-8 bg-emerald-800 rounded-full">
+                                        class="absolute inset-y-0 left-1/2 -translate-x-1/2 w-8 bg-red-800 rounded-full">
                                     </div>
                                 </div>
                             </div>
@@ -149,7 +142,7 @@ watch(() => props.isOpen, (open) => {
                             <div class="flex flex-col items-center flex-shrink-0 lg:w-48 pt-2">
                                 <div class="relative group">
                                     <div
-                                        class="absolute inset-0 bg-emerald-500 rounded-full blur-2xl opacity-10 group-hover:opacity-20 transition-opacity">
+                                        class="absolute inset-0 bg-amber-500 rounded-full blur-2xl opacity-10 group-hover:opacity-20 transition-opacity">
                                     </div>
                                     <div @click="triggerFileInput"
                                         class="relative h-40 w-40 rounded-full border-4 border-white shadow-2xl overflow-hidden ring-1 ring-stone-100 bg-stone-50 flex items-center justify-center cursor-pointer transition-transform hover:scale-[1.02]">
@@ -179,9 +172,14 @@ watch(() => props.isOpen, (open) => {
                                     dung</p>
                             </div>
 
-                            <!-- Cột phải: Form nhập liệu -->
+                            <!-- Cột phải: Form nhập liệu (Bố cục ngang hoàn toàn) -->
                             <div class="flex-1 space-y-5">
+                                <!-- Group: Thông tin cơ bản -->
                                 <div class="space-y-4">
+                                    <h3
+                                        class="text-[11px] font-bold text-red-800 uppercase tracking-widest border-b border-stone-100 pb-2 mb-4">
+                                        Thông tin cơ bản</h3>
+
                                     <!-- Họ và Tên -->
                                     <div class="grid grid-cols-[150px_1fr] gap-6 items-start">
                                         <label
@@ -194,8 +192,8 @@ watch(() => props.isOpen, (open) => {
                                                     <User :size="16" />
                                                 </span>
                                                 <input v-model="fullName" type="text"
-                                                    placeholder="Nhập tên người con..."
-                                                    :class="['w-full pl-11 pr-5 py-3 bg-stone-50 border rounded-2xl focus:ring-4 focus:ring-emerald-900/5 focus:border-emerald-800 outline-none transition-all text-sm font-medium', errors.fullName ? 'border-red-300 bg-red-50/30' : 'border-stone-100']" />
+                                                    placeholder="Nhập tên thành viên..."
+                                                    :class="['w-full pl-11 pr-5 py-3 bg-stone-50 border rounded-2xl focus:ring-4 focus:ring-red-900/5 focus:border-red-800 outline-none transition-all text-sm font-medium', errors.fullName ? 'border-red-300 bg-red-50/30' : 'border-stone-100']" />
                                             </div>
                                             <div v-if="errors.fullName"
                                                 class="flex items-center gap-1 text-[10px] text-red-500 font-bold ml-1">
@@ -205,14 +203,15 @@ watch(() => props.isOpen, (open) => {
                                         </div>
                                     </div>
 
-                                    <!-- Giới tính & Thứ tự -->
+                                    <!-- Giới tính -->
                                     <div class="grid grid-cols-[150px_1fr] gap-6 items-center">
                                         <label
-                                            class="text-[12px] font-bold text-stone-500 uppercase tracking-widest">Giới
-                                            tính</label>
+                                            class="text-[12px] font-bold text-stone-500 uppercase tracking-widest flex items-center gap-2">
+                                            Giới tính
+                                        </label>
                                         <div class="relative">
                                             <select v-model="gender"
-                                                class="w-full px-5 py-3 bg-stone-50 border border-stone-100 rounded-2xl focus:ring-4 focus:ring-emerald-900/5 focus:border-emerald-800 outline-none transition-all text-stone-800 text-sm font-medium appearance-none cursor-pointer">
+                                                class="w-full px-5 py-3 bg-stone-50 border border-stone-100 rounded-2xl focus:ring-4 focus:ring-red-900/5 focus:border-red-800 outline-none transition-all text-stone-800 text-sm font-medium appearance-none cursor-pointer">
                                                 <option value="MALE">Nam (Tộc)</option>
                                                 <option value="FEMALE">Nữ (Thị)</option>
                                             </select>
@@ -222,35 +221,30 @@ watch(() => props.isOpen, (open) => {
                                         </div>
                                     </div>
 
+                                    <!-- Ngày sinh -->
                                     <div class="grid grid-cols-[150px_1fr] gap-6 items-center">
                                         <label
-                                            class="text-[12px] font-bold text-stone-500 uppercase tracking-widest">Con
-                                            thứ mấy</label>
-                                        <input v-model.number="birthOrder" type="number" min="1"
-                                            class="w-full px-5 py-3 bg-stone-50 border border-stone-100 rounded-2xl focus:ring-4 focus:ring-emerald-900/5 focus:border-emerald-800 outline-none transition-all text-stone-800 text-sm font-medium" />
-                                    </div>
-
-                                    <!-- Ngày sinh & SĐT -->
-                                    <div class="grid grid-cols-[150px_1fr] gap-6 items-center">
-                                        <label
-                                            class="text-[12px] font-bold text-stone-500 uppercase tracking-widest">Ngày
-                                            sinh</label>
+                                            class="text-[12px] font-bold text-stone-500 uppercase tracking-widest flex items-center gap-2">
+                                            Ngày sinh
+                                        </label>
                                         <div class="relative">
                                             <span class="absolute left-4 top-1/2 -translate-y-1/2 text-stone-300">
                                                 <Calendar :size="16" />
                                             </span>
                                             <input v-model="birthDate" type="date"
-                                                class="w-full pl-11 pr-4 py-3 bg-stone-50 border border-stone-100 rounded-2xl focus:ring-4 focus:ring-emerald-900/5 focus:border-emerald-800 outline-none transition-all text-sm font-medium text-stone-800" />
+                                                class="w-full pl-11 pr-4 py-3 bg-stone-50 border border-stone-100 rounded-2xl focus:ring-4 focus:ring-red-900/5 focus:border-red-800 outline-none transition-all text-sm font-medium text-stone-800" />
                                         </div>
                                     </div>
 
+                                    <!-- Tình trạng -->
                                     <div class="grid grid-cols-[150px_1fr] gap-6 items-center">
                                         <label
-                                            class="text-[12px] font-bold text-stone-500 uppercase tracking-widest">Tình
-                                            trạng</label>
+                                            class="text-[12px] font-bold text-stone-500 uppercase tracking-widest flex items-center gap-2">
+                                            Tình trạng
+                                        </label>
                                         <div class="relative">
                                             <select v-model="lifeStatus"
-                                                class="w-full px-5 py-3 bg-stone-50 border border-stone-100 rounded-2xl focus:ring-4 focus:ring-emerald-900/5 focus:border-emerald-800 outline-none transition-all text-stone-800 text-sm font-medium appearance-none cursor-pointer">
+                                                class="w-full px-5 py-3 bg-stone-50 border border-stone-100 rounded-2xl focus:ring-4 focus:ring-red-900/5 focus:border-red-800 outline-none transition-all text-stone-800 text-sm font-medium appearance-none cursor-pointer">
                                                 <option value="ALIVE">Còn sống</option>
                                                 <option value="DEAD">Đã mất</option>
                                             </select>
@@ -259,49 +253,68 @@ watch(() => props.isOpen, (open) => {
                                                 :size="16" />
                                         </div>
                                     </div>
+                                </div>
 
-                                    <!-- Thông tin khi Đã mất -->
-                                    <Transition name="expand">
-                                        <div v-if="values.lifeStatus === 'DEAD'"
-                                            class="space-y-4 pt-4 border-t border-red-50 bg-red-50/10 p-5 rounded-2xl">
-                                            <div class="grid grid-cols-[130px_1fr] gap-6 items-center">
-                                                <label
-                                                    class="text-[11px] font-bold text-red-800 uppercase tracking-widest">Ngày
-                                                    mất</label>
-                                                <div class="relative">
-                                                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-red-200">
-                                                        <Calendar :size="16" />
-                                                    </span>
-                                                    <input v-model="deathDate" type="date"
-                                                        class="w-full pl-11 pr-4 py-3 bg-white border border-red-100 rounded-2xl focus:ring-4 focus:ring-red-900/5 focus:border-red-800 outline-none transition-all text-sm font-medium text-stone-800" />
-                                                </div>
-                                            </div>
-                                            <div class="grid grid-cols-[130px_1fr] gap-6 items-center">
-                                                <label
-                                                    class="text-[11px] font-bold text-red-800 uppercase tracking-widest">Nơi
-                                                    an táng</label>
-                                                <div class="relative">
-                                                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-red-200">
-                                                        <MapPin :size="16" />
-                                                    </span>
-                                                    <input v-model="graveLocation" type="text"
-                                                        placeholder="Nhập địa chỉ an táng..."
-                                                        class="w-full pl-11 pr-5 py-3 bg-white border border-red-100 rounded-2xl focus:ring-4 focus:ring-red-900/5 focus:border-red-800 outline-none transition-all text-sm font-medium text-stone-800 placeholder:text-red-100" />
-                                                </div>
+                                <!-- Group: Khi Đã mất (Animation) -->
+                                <Transition name="expand">
+                                    <div v-if="values.lifeStatus === 'DEAD'"
+                                        class="space-y-4 pt-4 border-t border-red-50 bg-red-50/10 p-5 rounded-2xl">
+                                        <div class="grid grid-cols-[130px_1fr] gap-6 items-center">
+                                            <label
+                                                class="text-[11px] font-bold text-red-800 uppercase tracking-widest">Ngày
+                                                mất</label>
+                                            <div class="relative">
+                                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-red-200">
+                                                    <Calendar :size="16" />
+                                                </span>
+                                                <input v-model="deathDate" type="date"
+                                                    class="w-full pl-11 pr-4 py-3 bg-white border border-red-100 rounded-2xl focus:ring-4 focus:ring-red-900/5 focus:border-red-800 outline-none transition-all text-sm font-medium text-stone-800" />
                                             </div>
                                         </div>
-                                    </Transition>
+                                        <div class="grid grid-cols-[130px_1fr] gap-6 items-center">
+                                            <label
+                                                class="text-[11px] font-bold text-red-800 uppercase tracking-widest">Nơi
+                                                an táng</label>
+                                            <div class="relative">
+                                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-red-200">
+                                                    <MapPin :size="16" />
+                                                </span>
+                                                <input v-model="graveLocation" type="text"
+                                                    placeholder="Nhập địa chỉ an táng..."
+                                                    class="w-full pl-11 pr-5 py-3 bg-white border border-red-100 rounded-2xl focus:ring-4 focus:ring-red-900/5 focus:border-red-800 outline-none transition-all text-sm font-medium text-stone-800 placeholder:text-red-100" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </Transition>
 
-                                    <!-- Địa chỉ & Liên hệ -->
-                                    <div class="grid grid-cols-[150px_1fr] gap-6 items-center pt-2">
+                                <!-- Group: Liên hệ & Địa chỉ -->
+                                <div class="space-y-4 pt-4">
+                                    <h3
+                                        class="text-[11px] font-bold text-stone-400 uppercase tracking-widest border-b border-stone-100 pb-2 mb-4">
+                                        Liên hệ & Địa chỉ</h3>
+
+                                    <div class="grid grid-cols-[150px_1fr] gap-6 items-center">
                                         <label class="text-[12px] font-bold text-stone-500 uppercase tracking-widest">Số
                                             điện thoại</label>
                                         <div class="relative">
                                             <span class="absolute left-4 top-1/2 -translate-y-1/2 text-stone-300">
                                                 <Phone :size="16" />
                                             </span>
-                                            <input v-model="phoneNumber" type="tel" placeholder="0xxx..."
-                                                class="w-full pl-11 pr-5 py-3 bg-stone-50 border border-stone-100 rounded-2xl focus:ring-4 focus:ring-emerald-900/5 focus:border-emerald-800 outline-none transition-all text-sm font-medium text-stone-800" />
+                                            <input v-model="phoneNumber" type="tel" placeholder="Nhập số điện thoại..."
+                                                class="w-full pl-11 pr-5 py-3 bg-stone-50 border border-stone-100 rounded-2xl focus:ring-4 focus:ring-red-900/5 focus:border-red-800 outline-none transition-all text-sm font-medium text-stone-800" />
+                                        </div>
+                                    </div>
+
+                                    <div class="grid grid-cols-[150px_1fr] gap-6 items-center">
+                                        <label
+                                            class="text-[12px] font-bold text-stone-500 uppercase tracking-widest">Quê
+                                            quán</label>
+                                        <div class="relative">
+                                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-stone-300">
+                                                <MapPin :size="16" />
+                                            </span>
+                                            <input v-model="originPlace" type="text" placeholder="Nhập nguyên quán..."
+                                                class="w-full pl-11 pr-5 py-3 bg-stone-50 border border-stone-100 rounded-2xl focus:ring-4 focus:ring-red-900/5 focus:border-red-800 outline-none transition-all text-sm font-medium text-stone-800" />
                                         </div>
                                     </div>
 
@@ -314,38 +327,38 @@ watch(() => props.isOpen, (open) => {
                                                 <MapPin :size="16" />
                                             </span>
                                             <input v-model="placeOfResidence" type="text"
-                                                placeholder="Địa chỉ hiện tại..."
-                                                class="w-full pl-11 pr-5 py-3 bg-stone-50 border border-stone-100 rounded-2xl focus:ring-4 focus:ring-emerald-900/5 focus:border-emerald-800 outline-none transition-all text-sm font-medium text-stone-800" />
+                                                placeholder="Nhập địa chỉ hiện tại..."
+                                                class="w-full pl-11 pr-5 py-3 bg-stone-50 border border-stone-100 rounded-2xl focus:ring-4 focus:ring-red-900/5 focus:border-red-800 outline-none transition-all text-sm font-medium text-stone-800" />
                                         </div>
                                     </div>
+                                </div>
 
-                                    <!-- Tiểu sử -->
-                                    <div class="grid grid-cols-[150px_1fr] gap-6 items-start pt-4">
-                                        <label
-                                            class="text-[12px] font-bold text-stone-500 uppercase tracking-widest pt-3">Tiểu
-                                            sử</label>
-                                        <div class="relative">
-                                            <span class="absolute left-4 top-4 text-stone-300">
-                                                <BookOpen :size="16" />
-                                            </span>
-                                            <textarea v-model="biography" rows="3"
-                                                placeholder="Ghi chú thêm về cuộc đời..."
-                                                class="w-full pl-11 pr-5 py-4 bg-stone-50 border border-stone-100 rounded-[1.5rem] focus:ring-4 focus:ring-emerald-900/5 focus:border-emerald-800 outline-none transition-all text-sm font-medium text-stone-800 resize-none"></textarea>
-                                        </div>
+                                <!-- Tiểu sử -->
+                                <div class="grid grid-cols-[150px_1fr] gap-6 items-start pt-4">
+                                    <label
+                                        class="text-[12px] font-bold text-stone-500 uppercase tracking-widest pt-3">Tiểu
+                                        sử</label>
+                                    <div class="relative">
+                                        <span class="absolute left-4 top-4 text-stone-300">
+                                            <BookOpen :size="16" />
+                                        </span>
+                                        <textarea v-model="biography" rows="3"
+                                            placeholder="Ghi chú thêm về cuộc đời và sự nghiệp..."
+                                            class="w-full pl-11 pr-5 py-4 bg-stone-50 border border-stone-100 rounded-[1.5rem] focus:ring-4 focus:ring-red-900/5 focus:border-red-800 outline-none transition-all text-sm font-medium text-stone-800 resize-none"></textarea>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Footer -->
+                        <!-- Footer: Nút bấm -->
                         <div class="mt-12 flex items-center justify-end gap-4 pt-8 border-t border-stone-100">
                             <button @click="handleClose"
                                 class="px-8 py-3.5 rounded-2xl font-bold text-stone-400 bg-stone-100 hover:bg-stone-200 transition-all uppercase text-[10px] tracking-[0.2em]">
                                 Hủy bỏ
                             </button>
                             <button @click="onSave"
-                                class="px-10 py-3.5 rounded-2xl font-bold text-white bg-emerald-800 hover:bg-emerald-700 shadow-xl shadow-emerald-900/20 transition-all active:scale-[0.98] uppercase text-[10px] tracking-[0.2em] flex items-center gap-3 group">
-                                <span>Thêm thành viên</span>
+                                class="px-10 py-3.5 rounded-2xl font-bold text-white bg-red-900 hover:bg-red-800 shadow-xl shadow-red-900/20 transition-all active:scale-[0.98] uppercase text-[10px] tracking-[0.2em] flex items-center gap-3 group">
+                                <span>Khởi tạo thành viên</span>
                                 <div class="w-1.5 h-1.5 bg-amber-400 rounded-full group-hover:animate-ping"></div>
                             </button>
                         </div>
@@ -419,14 +432,5 @@ watch(() => props.isOpen, (open) => {
 
 .font-serif {
     font-family: 'Playfair Display', serif;
-}
-
-.font-serif {
-    font-family: 'Playfair Display', serif;
-}
-
-/* Đảm bảo giao diện không bị giật khi mở modal */
-body.modal-open {
-    overflow: hidden;
 }
 </style>

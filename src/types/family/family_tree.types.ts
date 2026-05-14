@@ -48,6 +48,7 @@ export interface PersonRes {
 }
 
 export interface PersonReq {
+  partnerId: number;
   generation: number;
   birthOrder?: number;
   fullName: string;
@@ -59,7 +60,9 @@ export interface PersonReq {
   placeOfResidence?: string;
   graveLocation?: string;
   lifeStatus: LifeStatus;
-  avatarUrl?: string;
+  avatar?: File;
   biography?: string;
   slug?: string;
 }
+
+
