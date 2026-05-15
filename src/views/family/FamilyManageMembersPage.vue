@@ -2,7 +2,6 @@
 import { computed, ref } from "vue"
 
 import { useFamilyMembers } from "@/composables/family_members/useFamilyMembers"
-import { useProfileQuery } from "@/hooks/queries/auth/useProfileQuery"
 import { useFamilyMembersQuery } from "@/hooks/queries/family/family_member/useFamilyMember"
 import { useInviteMemberMutation } from "@/hooks/queries/family/family_invitaion/useFamilyInvitation"
 
@@ -10,14 +9,13 @@ import FamilyMemberList from "@/components/family_manage/FamilyMemberList.vue"
 import AddFamilyMemberForm from "@/components/forms/common/AddFamilyInvitaionMemberForm.vue"
 import type { CreateFamilyInvitationReq } from "@/types/family/family-invitation.types"
 import { useRouter } from "vue-router"
+import { useFamilyStore } from "@/store/family/useFamilyStore"
 
 const searchKeyword = ref("")
 const router = useRouter();
-const { user } = useProfileQuery()
+const familyStore = useFamilyStore();
 
-const familyId = computed(() => {
-    return user.value?.families?.[0]?.familyId ?? null
-})
+const familyId = computed(() => familyStore.currentFamilyId);
 
 const {
     data: familyMembers,

@@ -44,7 +44,7 @@ const isMiniMap = ref<boolean>(false);
 const categoryId = computed(() => Number(route.query.categoryId))
 
 // data
-const { data: familyTreeData, refetch: refetchFamilyTree } = useFamilyTreeQuery(categoryId);
+const { data: familyTreeData, refetch: refetchFamilyTree, isLoading: isLoadingFamilyTree } = useFamilyTreeQuery(categoryId);
 const safeFamilyTrees = computed(() => familyTreeData.value?.data || [])
 
 
@@ -289,18 +289,21 @@ onMounted(() => {
         mouseScrool: (FamilyTree as any).action.zoom,
 
         roots: rootId.value,
-        // roots: [27],
-        layout: FamilyTree.layout.tree,
+        layout: FamilyTree.layout.normal,
 
 
         // Tăng khoảng cách giữa các đời
-        siblingSeparation: 50,
+        siblingSeparation: 70,
         levelSeparation: 200,
 
         // khoảng cách vợ chồng
-        partnerChildrenSplitSeparation: 0,
-        partnerNodeSeparation: 80,
+        partnerChildrenSplitSeparation: 100,
+        partnerNodeSeparation: 20,
 
+        // Tăng lên 100 để các chi/nhánh tách biệt rõ ràng hơn
+        subtreeSeparation: 170,
+
+        // Bắt buộc bật khi có người nhiều vợ/chồng
         polygamy: true,
         enableSearch: true,
         showLevelLines: true,
@@ -334,7 +337,6 @@ onMounted(() => {
         scaleMax: 10,
         // scaleMin: 0.5,
 
-        subtreeSeparation: 150, // Tăng lên 100 để các chi/nhánh tách biệt rõ ràng hơn
         zoom: {
           speed: 130,
           smooth: 10
@@ -398,7 +400,7 @@ watch(processedFamilyData, (newData) => {
   if (!family || !newData.length) return;
 
   const noParentNodes = newData.filter((n: any) => !n.fid && !n.mid);
-  
+
   // Chỉ lấy 1 root chính (nam isInFamily=true)
   const mainRoot = noParentNodes.find(
     (n: any) => n.gender === 'male' && n.isInFamily === true
@@ -422,9 +424,10 @@ const checkRoleAccount = () => {
 
 // ================== ACTION RootFocus  ====================
 const hanldeRootFocus = () => {
-  family.center("1", {
+  if (!family || !rootId.value) return;
+  family.center(rootId.value, {
     ripple: true,
-    zoomState: (FamilyTree as any).zoomIn,
+    zoomState: 0.3,
     slow: true
   });
 }
@@ -641,7 +644,7 @@ const handleSearch = (query?: string) => {
   if (!term || !family) return;
   const allNodesData = family.config.nodes;
   const foundMember = allNodesData?.find((node: any) =>
-    node.name?.toLowerCase().includes(term)
+    node.personName?.toLowerCase().includes(term)
   );
   if (foundMember) {
     const nodeId = foundMember.id;
@@ -670,13 +673,32 @@ const searchSuggestions = computed(() => {
   const query = searchQuery.value?.trim().toLowerCase();
   if (!query || !family) return [];
   return family.config.nodes?.filter((node: any) =>
-    node.name?.toLowerCase().includes(query)
+    node.personName?.toLowerCase().includes(query)
   ).slice(0, 6) || [];
 });
 
 const selectSuggestion = (member: any) => {
-  searchQuery.value = member.name;
-  handleSearch();
+  searchQuery.value = member.personName;
+  if (!family) return;
+
+  const nodeId = member.id;
+  try {
+    // Zoom vào node với mức phóng to rõ ràng
+    family.center(nodeId, { ripple: true, slow: true, zoomState: 2 });
+    family.search(member.personName);
+
+    const nodeElement = treeRef.value?.querySelector(`[data-n-id="${nodeId}"]`);
+    if (nodeElement) {
+      nodeElement.classList.add("found-node-highlight");
+      treeRef.value?.classList.add("is-searching");
+      setTimeout(() => {
+        nodeElement.classList.remove("found-node-highlight");
+        treeRef.value?.classList.remove("is-searching");
+      }, 5000);
+    }
+  } catch (e) {
+    family.fit();
+  }
 };
 
 const clearSearch = () => {
@@ -721,7 +743,21 @@ const resetView = async () => {
 
 
     <div class="flex-1 overflow-hidden border-2 border-slate-200 shadow-inner parchment-bg relative">
+
+      <!-- tree render -->
       <div ref="treeRef" class="h-full w-full parchment-bg"></div>
+
+
+
+      <!-- Loading overlay khi đang tải dữ liệu -->
+      <div v-if="isLoadingFamilyTree"
+        class="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm z-30">
+        <div class="bg-white/90 rounded-2xl shadow-xl p-6 flex flex-col items-center">
+          <div class="w-12 h-12 border-4 border-amber-600 border-t-transparent rounded-full animate-spin mb-3"></div>
+          <p class="text-stone-700 font-medium">Đang tải dữ liệu gia phả...</p>
+          <p class="text-stone-500 text-sm mt-1">Vui lòng chờ trong giây lát</p>
+        </div>
+      </div>
 
       <!-- Empty state overlay -->
       <div v-if="isEmpty" class="absolute inset-0 flex items-center justify-center bg-black/5 backdrop-blur-sm z-20">

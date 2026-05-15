@@ -44,18 +44,24 @@ export const usePersonQuery = (personId: MaybeRefOrGetter<number | null | undefi
   });
 };
 
-export const usePartnersQuery = (personId: MaybeRefOrGetter<number | null | undefined>) => {
-  const enabled = computed(() => !!toValue(personId));
+export const usePartnersQuery = (personId: MaybeRefOrGetter<number | null | undefined>, options?: any) => {
   const resolvedId = computed(() => toValue(personId));
+  const { enabled: externalEnabled, ...restOptions } = options || {};
+  const enabled = computed(() => {
+    const hasId = !!toValue(personId);
+    const externalOk = externalEnabled ? toValue(externalEnabled) : true;
+    return hasId && externalOk;
+  });
 
   return useQuery({
     queryKey: computed(() => familyTreeKey.partners(resolvedId)),
     queryFn: () => familyTreeService.getPartners(resolvedId.value!),
     enabled,
+    ...restOptions,
   });
 };
 
-export const useMothersQuery = (fatherId: MaybeRefOrGetter<number | null | undefined>) => {
+export const useMothersQuery = (fatherId: MaybeRefOrGetter<number | null | undefined>, options?: any) => {
   const enabled = computed(() => !!toValue(fatherId));
   const resolvedId = computed(() => toValue(fatherId));
 
@@ -63,6 +69,7 @@ export const useMothersQuery = (fatherId: MaybeRefOrGetter<number | null | undef
     queryKey: computed(() => familyTreeKey.mothers(resolvedId)),
     queryFn: () => familyTreeService.getMothersByFatherId(resolvedId.value!),
     enabled,
+    ...options,
   });
 };
 

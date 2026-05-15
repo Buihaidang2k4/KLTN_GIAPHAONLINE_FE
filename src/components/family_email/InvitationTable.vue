@@ -155,7 +155,9 @@ const canCancel = (status: FamilyInvitationStatus) => status === "PENDING"
                         <th
                             class="px-5 py-3 text-xs font-semibold text-slate-500 uppercase whitespace-nowrap text-right">
                             Hành động</th>
-                        <th class="px-5 py-3 text-xs font-semibold text-slate-500 uppercase whitespace-nowrap">Email
+                        <th class="px-5 py-3 text-xs font-semibold text-slate-500 uppercase whitespace-nowrap">Người nhận
+                        </th>
+                        <th class="px-5 py-3 text-xs font-semibold text-slate-500 uppercase whitespace-nowrap">Người gửi
                         </th>
                         <th class="px-5 py-3 text-xs font-semibold text-slate-500 uppercase whitespace-nowrap ">Gia đình
                         </th>
@@ -219,6 +221,10 @@ const canCancel = (status: FamilyInvitationStatus) => status === "PENDING"
                         </td>
 
                         <td class="px-5 py-4 text-sm text-slate-600">
+                            {{ invite.invitedByEmail || '--' }}
+                        </td>
+
+                        <td class="px-5 py-4 text-sm text-slate-600">
                             {{ invite.familyName }}
                         </td>
 
@@ -253,7 +259,7 @@ const canCancel = (status: FamilyInvitationStatus) => status === "PENDING"
                     </tr>
 
                     <tr v-if="filteredItems.length === 0">
-                        <td colspan="8" class="px-5 py-12 text-center text-sm text-slate-500">
+                        <td colspan="9" class="px-5 py-12 text-center text-sm text-slate-500">
                             Không có lời mời nào phù hợp.
                         </td>
                     </tr>

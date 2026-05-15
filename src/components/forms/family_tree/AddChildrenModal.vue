@@ -15,10 +15,18 @@ const props = defineProps<{
 const emit = defineEmits<{ close: []; save: [data: PersonReq] }>();
 
 const { data: partnersResponse } = usePartnersQuery(() => props.member?.id);
+
 const partners = computed(() => partnersResponse.value?.data || []);
 
 const isMaleParent = computed(() => props.member?.gender === 'male' || props.member?.gender === 'MALE');
 const partnerLabel = computed(() => isMaleParent.value ? "Chọn Mẹ" : "Chọn Cha");
+
+// Tự động chọn partner đầu tiên nếu chỉ có 1 người phối ngẫu
+watch(partners, (newPartners) => {
+    if (newPartners.length === 1 && !values.partnerId) {
+        setValues({ partnerId: newPartners[0].id });
+    }
+});
 
 
 const schema = toTypedSchema(

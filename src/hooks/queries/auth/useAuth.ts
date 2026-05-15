@@ -1,4 +1,3 @@
-import { useProfileQuery } from "@/hooks/queries/auth/useProfileQuery";
 import { useLoginMutation } from "@/hooks/queries/auth/useLoginMutation";
 import { useLogoutMutation } from "@/hooks/queries/auth/useLogoutMutation";
 import { useRegisterMutation } from "@/hooks/queries/auth/useRegisterMutation";

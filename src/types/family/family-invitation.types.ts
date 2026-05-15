@@ -17,6 +17,7 @@ export interface InviteInvitationMemberRes {
     roleName: string
     invitedEmail: string
     invitedByAccountId: number
+    invitedByEmail: string
     message: string
     invitationStatus: FamilyInvitationStatus
     inviteToken: string

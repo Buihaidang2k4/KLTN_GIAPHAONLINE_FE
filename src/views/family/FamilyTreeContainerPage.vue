@@ -86,7 +86,8 @@ const saveFamily = (payload: FamilyCategoryReq) => {
                 onSuccess: () => {
                     showToast("Đã cập nhật danh mục");
                     closeModal();
-                }
+                },
+                onError: () => showToast("Cập nhật danh mục thất bại"),
             }
         );
     } else {
@@ -96,7 +97,8 @@ const saveFamily = (payload: FamilyCategoryReq) => {
                 onSuccess: () => {
                     showToast("Thêm danh mục thành công");
                     closeModal();
-                }
+                },
+                onError: () => showToast("Thêm danh mục thất bại"),
             }
         );
     }
@@ -107,7 +109,8 @@ const deleteFamily = (id: number) => {
 
     if (confirm) {
         deleteFamilyCategory(id, {
-            onSuccess: () => showToast("Đã xóa danh mục")
+            onSuccess: () => showToast("Đã xóa danh mục"),
+            onError: () => showToast("Xóa danh mục thất bại"),
         });
     }
     return
@@ -118,7 +121,7 @@ const viewDetail = (category: FamilyCategoryRes) => {
 
     if (!categoryId) return;
 
-    showToast(`Đang mở: ${category.familyName}`);
+    showToast(`Đang mở danh mục: ${category.familyName}`);
 
     router.push({
         name: "FamilyChart",
@@ -146,7 +149,8 @@ const viewDetail = (category: FamilyCategoryRes) => {
                     <div>
                         <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-red-700">Gia phả online</p>
                         <h1 class="mt-0.5 text-2xl font-black tracking-tight text-slate-950">Thư viện Gia Phả</h1>
-                        <p class="mt-0.5 text-[13px] font-medium text-slate-500">Quản lý, lưu trữ và mở nhanh các cây phả hệ
+                        <p class="mt-0.5 text-[13px] font-medium text-slate-500">Quản lý, lưu trữ và mở nhanh các cây
+                            phả hệ
                             dòng tộc</p>
                     </div>
                 </div>
@@ -171,8 +175,7 @@ const viewDetail = (category: FamilyCategoryRes) => {
             </div>
 
             <!-- Grid of Family Cards -->
-            <div v-if="safeFamilyCategory.length"
-                class="grid grid-cols-1 gap-4 pb-16 sm:grid-cols-2 xl:grid-cols-3">
+            <div v-if="safeFamilyCategory.length" class="grid grid-cols-1 gap-4 pb-16 sm:grid-cols-2 xl:grid-cols-3">
                 <div v-for="family in safeFamilyCategory" :key="family.familyCategoryId"
                     class="group relative flex min-h-[328px] flex-col overflow-hidden rounded-[22px] border border-slate-200/70 bg-white shadow-[0_2px_8px_rgba(45,39,31,0.04),0_18px_48px_-8px_rgba(45,39,31,0.12)] ring-1 ring-inset ring-white/60 transition-all duration-500 ease-out hover:-translate-y-1 hover:border-amber-200/50 hover:shadow-[0_20px_56px_-12px_rgba(45,39,31,0.18)]">
                     <!-- Family Image -->
@@ -200,7 +203,8 @@ const viewDetail = (category: FamilyCategoryRes) => {
                                 class="text-base font-semibold tracking-tight text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.55)]">
                                 {{ family.familyName }}
                             </h3>
-                            <p class="mt-1 text-[10px] font-medium uppercase tracking-wider text-white/75">Mã danh mục #{{ family.familyCategoryId }}</p>
+                            <p class="mt-1 text-[10px] font-medium uppercase tracking-wider text-white/75">Mã danh mục
+                                #{{ family.familyCategoryId }}</p>
                         </div>
                     </div>
 
@@ -271,7 +275,8 @@ const viewDetail = (category: FamilyCategoryRes) => {
                     <Archive class="h-6 w-6 opacity-90" />
                 </div>
                 <h2 class="text-base font-bold text-slate-800">Chưa có danh mục gia phả</h2>
-                <p class="mt-2 text-xs leading-relaxed text-slate-500">Thêm danh mục để bắt đầu lưu trữ và mở cây phả hệ.
+                <p class="mt-2 text-xs leading-relaxed text-slate-500">Thêm danh mục để bắt đầu lưu trữ và mở cây phả
+                    hệ.
                 </p>
             </div>
 
