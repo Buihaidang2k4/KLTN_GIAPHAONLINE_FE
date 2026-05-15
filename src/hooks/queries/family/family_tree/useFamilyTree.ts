@@ -16,6 +16,8 @@ export const familyTreeKey = {
 
   partners: (personId: MaybeRefOrGetter<number | null | undefined>) =>
     [...familyTreeKey.person(personId), "partners"] as const,
+  mothers: (fatherId: MaybeRefOrGetter<number | null | undefined>) =>
+    [...familyTreeKey.person(fatherId), "mothers"] as const,
 };
 
 // ==================== Queries ====================
@@ -49,6 +51,17 @@ export const usePartnersQuery = (personId: MaybeRefOrGetter<number | null | unde
   return useQuery({
     queryKey: computed(() => familyTreeKey.partners(resolvedId)),
     queryFn: () => familyTreeService.getPartners(resolvedId.value!),
+    enabled,
+  });
+};
+
+export const useMothersQuery = (fatherId: MaybeRefOrGetter<number | null | undefined>) => {
+  const enabled = computed(() => !!toValue(fatherId));
+  const resolvedId = computed(() => toValue(fatherId));
+
+  return useQuery({
+    queryKey: computed(() => familyTreeKey.mothers(resolvedId)),
+    queryFn: () => familyTreeService.getMothersByFatherId(resolvedId.value!),
     enabled,
   });
 };

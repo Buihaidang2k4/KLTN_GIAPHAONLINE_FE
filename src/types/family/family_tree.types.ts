@@ -2,11 +2,12 @@ export type Gender = 'MALE' | 'FEMALE';
 export type LifeStatus = 'ALIVE' | 'DECEASED' | 'UNKNOWN';
 
 export interface FamilyTreeNodeRes {
-  id: string;
-  fid?: string;
-  mid?: string;
-  pids?: string[];
-  generation?: string;
+  id: number;
+  fid?: number;
+  mid?: number;
+  pids?: number[];
+  childs?: number[];
+  generation?: number;
   personName: string;
   phoneNumber?: string;
   gender: Gender;
@@ -48,7 +49,8 @@ export interface PersonRes {
 }
 
 export interface PersonReq {
-  partnerId: number;
+  partnerId?: number;
+  motherId?: number;
   generation: number;
   birthOrder?: number;
   fullName: string;

@@ -5,12 +5,10 @@ import bg_familytree from "@/assets/images/bg_familyTree.jpg";
 import { notify } from "@/utils/notify";
 import { useMyInfoQuery } from "@/hooks/queries/account/useAccount";
 import { useFamilyStore } from "@/store/family/useFamilyStore";
-import AddMemberModal from "@/components/forms/family_tree/AddChildrenModal.vue";
-import EditMemberModal from "@/components/forms/family_tree/EditChildrenModal.vue";
 import AddSiblingsModal from "@/components/forms/family_tree/AddSiblingsModal.vue";
 import HeaderFamilyTree from "@/components/family_tree/HeaderFamilyTree.vue";
 import { useRoute } from "vue-router";
-import { useAddChildMutation, useAddPartnerMutation, useAddRootMutation, useCreatePersonMutation, useFamilyTreeQuery } from "@/hooks/queries/family/family_tree/useFamilyTree";
+import { useAddChildMutation, useAddPartnerMutation, useAddRootMutation, useCreatePersonMutation, useDeletePersonMutation, useFamilyTreeQuery, useUpdatePersonMutation } from "@/hooks/queries/family/family_tree/useFamilyTree";
 import male_default from "@/assets/tree/male_default.jpg";
 import female_default from "@/assets/tree/female_default.jpg";
 import { formatDate } from "@/utils/format-date";
@@ -18,6 +16,7 @@ import type { PersonReq } from "@/types/family/family_tree.types";
 import AddChildrenModal from "@/components/forms/family_tree/AddChildrenModal.vue";
 import AddFistPersonModal from "@/components/forms/family_tree/AddFistPersonModal.vue";
 import AddPartnerModel from "@/components/forms/family_tree/AddPartnerModel.vue";
+import EditPersonModal from "@/components/forms/family_tree/EditPersonModal.vue";
 
 
 
@@ -45,7 +44,7 @@ const isMiniMap = ref<boolean>(false);
 const categoryId = computed(() => Number(route.query.categoryId))
 
 // data
-const { data: familyTreeData } = useFamilyTreeQuery(categoryId);
+const { data: familyTreeData, refetch: refetchFamilyTree } = useFamilyTreeQuery(categoryId);
 const safeFamilyTrees = computed(() => familyTreeData.value?.data || [])
 
 
@@ -63,6 +62,7 @@ const processedFamilyData = computed(() => {
       fid: node.fid || null,
       mid: node.mid || null,
       pids: node.pids || [],
+      childs: node.childs || [],
       generation: node.generation,
       personName: node.personName,
       phoneNumber: node.phoneNumber,
@@ -82,9 +82,26 @@ const processedFamilyData = computed(() => {
 });
 
 
-const rootId = computed(() => processedFamilyData.value[0]?.id);
+const rootId = computed(() => {
+  const noParentNodes = processedFamilyData.value.filter(
+    node => !node.fid && !node.mid
+  );
 
+  if (!noParentNodes.length) return null;
 
+  // Ưu tiên 1: nam isInFamily = true
+  const maleRoot = noParentNodes.find(
+    node => node.gender === 'male' && node.isInFamily === true
+  );
+  if (maleRoot) return maleRoot.id;
+
+  // Ưu tiên 2: bất kỳ isInFamily = true
+  const inFamilyRoot = noParentNodes.find(node => node.isInFamily === true);
+  if (inFamilyRoot) return inFamilyRoot.id;
+
+  // Fallback
+  return noParentNodes[0].id;
+});
 
 onMounted(() => {
   setTimeout(() => {
@@ -259,7 +276,7 @@ onMounted(() => {
             icon: iconMenu.edit,
             onClick: handleEditNode
           },
-          remove: {
+          removeNode: {
             text: "Xóa thành viên",
             icon: iconMenu.remove,
             onClick: hanldeRemoveNode
@@ -271,9 +288,9 @@ onMounted(() => {
         editForm: false,
         mouseScrool: (FamilyTree as any).action.zoom,
 
-        // roots: [100],  // xác định thủy tổ
         roots: rootId.value,
-        layout: (FamilyTree as any).layout.normal,
+        // roots: [27],
+        layout: FamilyTree.layout.tree,
 
 
         // Tăng khoảng cách giữa các đời
@@ -282,9 +299,9 @@ onMounted(() => {
 
         // khoảng cách vợ chồng
         partnerChildrenSplitSeparation: 0,
-        partnerNodeSeparation: 40,
+        partnerNodeSeparation: 80,
 
-
+        polygamy: true,
         enableSearch: true,
         showLevelLines: true,
 
@@ -343,21 +360,22 @@ onMounted(() => {
           node.gender === 'male' ||
           (Array.isArray(node.tags) && node.tags.includes('NAM'));
 
+        const hasParent = node.fid !== null || node.mid !== null;
+        const isInFamily = node.isInFamily;
+
+
         if (args.menu.addPartner) {
           args.menu.addPartner.text = isMale ? 'Thêm hôn thê' : 'Thêm hôn phu';
         }
-
-        // ẩn thêm đời đầu với người không có fid , mid , và khác là nữ 
-        if (!isMale && args.menu.addSiblings && node.fid === null && node.mid === null) {
+        // ẩn thêm đời đầu với người có fid , mid , và khác là nữ 
+        if (args.menu.addSiblings && hasParent) {
           delete args.menu.addSiblings;
         }
 
         //  ẩn thêm hôn phu với người không có cha mẹ
-        if (!isMale && args.menu.addPartner && node.fid === null && node.mid === null) {
-          delete args.menu.addPartner;
-        }
-
-
+        // if (!isMale && args.menu.addPartner && !hasParent && !isInFamily) {
+        //   delete args.menu.addPartner;
+        // }
 
       });
 
@@ -368,13 +386,29 @@ onMounted(() => {
   }, 0);
 });
 
+// watch(processedFamilyData, (newData) => {
+//   if (!family || !newData.length) return;
+//   const roots = newData.filter((n: any) => !n.fid && !n.mid).map((n: any) => n.id);
+//   family.config.roots = roots.length ? roots : [newData[0].id];
+//   family.load(newData);
+// }, { immediate: false });
+
+
 watch(processedFamilyData, (newData) => {
   if (!family || !newData.length) return;
-  const roots = newData.filter((n: any) => !n.fid && !n.mid).map((n: any) => n.id);
-  family.config.roots = roots.length ? roots : [newData[0].id];
+
+  const noParentNodes = newData.filter((n: any) => !n.fid && !n.mid);
+  
+  // Chỉ lấy 1 root chính (nam isInFamily=true)
+  const mainRoot = noParentNodes.find(
+    (n: any) => n.gender === 'male' && n.isInFamily === true
+  ) || noParentNodes.find(
+    (n: any) => n.isInFamily === true
+  ) || noParentNodes[0];
+
+  family.config.roots = mainRoot ? [mainRoot.id] : [newData[0].id];
   family.load(newData);
 }, { immediate: false });
-
 
 //  =========== check role ================
 const familyStore = useFamilyStore();
@@ -466,8 +500,6 @@ const onAddSiblingPerson = async (formData: PersonReq) => {
 
 }
 
-
-
 // ================== ACTION AddChildren  ====================
 const isModalAddChildrenOpen = ref<boolean>(false);
 const createChildrenMutation = useAddChildMutation();
@@ -481,12 +513,26 @@ const hanldeClickAddChilren = (nodeId: any) => {
 }
 
 
-// save member
 const onAddChildPerson = (updatedData: any) => {
   if (family && updatedData) {
     try {
-      family.updateNode(updatedData);
+      createChildrenMutation.mutateAsync({
+        personId: selectedMember.value.id,
+        data: updatedData
+      },
+        {
+          onSuccess: () => {
+            isModalAddChildrenOpen.value = false;
+            selectedMember.value = null;
+            notify.success("Thông báo", "Thêm thành viên con thành công");
+          },
 
+          onError: () => {
+            isModalAddChildrenOpen.value = false;
+            selectedMember.value = null;
+            notify.error("Thông báo", "Thêm thành viên con không thành công");
+          }
+        })
 
     } catch (error) {
       console.error("Lỗi khi cập nhật node vào FamilyTree:", error);
@@ -514,6 +560,7 @@ const onAddPartnerPerson = async (formData: PersonReq) => {
     }, {
       onSuccess: () => {
         isModelAddPartnerOpen.value = false;
+        selectedMember.value = null;
         notify.success("Thông báo", "Thêm hôn phối thành công");
       },
       onError: () => {
@@ -534,6 +581,7 @@ const handleViewChildren = () => {
 
 // ================== ACTION EditNode  ====================
 const isModalUpdateChildrenOpen = ref<boolean>(false);
+const updatePersonMutation = useUpdatePersonMutation();
 
 const handleEditNode = (nodeId: any) => {
   const rawData = family.get(nodeId);
@@ -543,14 +591,46 @@ const handleEditNode = (nodeId: any) => {
   }
 }
 
-// ================== ACTION RemoveNode  ====================
-const hanldeRemoveNode = (nodeId: any) => {
-  const rawData = family.get(nodeId);
-
+const onEditNode = async (FormData: PersonReq) => {
+  try {
+    await updatePersonMutation.mutateAsync({
+      personId: selectedMember.value.id,
+      data: FormData
+    }, {
+      onSuccess: () => {
+        isModalUpdateChildrenOpen.value = false;
+        selectedMember.value = null;
+        notify.success("Thông báo", "Cập nhật thành viên thành công");
+      },
+      onError: () => {
+        notify.error("Thông báo", "Cập nhật thành viên không thành công");
+      }
+    });
+  } catch (error) {
+    console.error("Lỗi khi cập nhật thành viên:", error);
+  }
 }
 
+// ================== ACTION RemoveNode  ====================
+const deletePersonMutation = useDeletePersonMutation();
 
-
+const hanldeRemoveNode = (nodeId: any) => {
+  const rawData = family.get(nodeId);
+  console.log('Node to remove:', rawData);
+  if (rawData) {
+    const confirm = window.confirm("Bạn có muốn xóa thành viên này không !")
+    if (confirm) {
+      deletePersonMutation.mutate(rawData.id, {
+        onSuccess: () => {
+          notify.success("Thông báo", "Xóa thành viên thành công");
+        },
+        onError: () => {
+          notify.error("Thông báo", "Thành viên phải không có con cái !");
+        }
+      })
+    }
+  }
+}
 
 
 // ------------------- Tìm kiếm -------------------
@@ -617,8 +697,9 @@ const toggleMiniMap = () => {
   }
 };
 
-const resetView = () => {
+const resetView = async () => {
   if (family) {
+    await refetchFamilyTree();
     family.fit({ slow: true, ripple: true });
   }
 };
@@ -663,7 +744,7 @@ const resetView = () => {
     <AddFistPersonModal :is-open="isModalAddFirstNodeOpen" @close="isModalAddFirstNodeOpen = false"
       @save="onCreateRootPerson" />
 
-    <AddPartnerModal :isOpen="isModelAddPartnerOpen" :member="selectedMember" @close="isModelAddPartnerOpen = false"
+    <AddPartnerModel :isOpen="isModelAddPartnerOpen" :member="selectedMember" @close="isModelAddPartnerOpen = false"
       @save="onAddPartnerPerson" />
 
     <AddChildrenModal :isOpen="isModalAddChildrenOpen" :member="selectedMember" @close="isModalAddChildrenOpen = false"
@@ -672,8 +753,8 @@ const resetView = () => {
     <AddSiblingsModal :isOpen="isModalAddSiblingOpen" :member="selectedMember" @close="isModalAddSiblingOpen = false"
       @save="onAddSiblingPerson" />
 
-    <EditMemberModal :isOpen="isModalUpdateChildrenOpen" :member="selectedMember"
-      @close="isModalUpdateChildrenOpen = false" @save="onAddChildPerson" />
+    <EditPersonModal :isOpen="isModalUpdateChildrenOpen" :member="selectedMember"
+      @close="isModalUpdateChildrenOpen = false" @save="onEditNode" />
   </div>
 </template>
 

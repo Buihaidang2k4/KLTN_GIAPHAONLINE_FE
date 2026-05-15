@@ -1,36 +1,44 @@
 <script setup lang="ts">
-import { ref, watch } from "vue";
-import { X, Camera, Trash2, User, Phone, MapPin, BookOpen, Calendar, ChevronDown, AlertCircle } from 'lucide-vue-next';
+import { ref, watch, computed } from "vue";
+import { X, Camera, Trash2, User, Phone, MapPin, BookOpen, Calendar, ChevronDown, AlertCircle, Users } from 'lucide-vue-next';
 import type { PersonReq } from "@/types/family/family_tree.types";
 import { useForm } from "vee-validate";
 import { toTypedSchema } from "@vee-validate/zod";
 import * as zod from "zod";
+import { usePartnersQuery } from "@/hooks/queries/family/family_tree/useFamilyTree";
 
 const props = defineProps<{
     isOpen: boolean;
-    member: any; // Parent member
+    member: any;
 }>();
 
 const emit = defineEmits<{ close: []; save: [data: PersonReq] }>();
 
-// Validation Schema
+const { data: partnersResponse } = usePartnersQuery(() => props.member?.id);
+const partners = computed(() => partnersResponse.value?.data || []);
+
+const isMaleParent = computed(() => props.member?.gender === 'male' || props.member?.gender === 'MALE');
+const partnerLabel = computed(() => isMaleParent.value ? "Chọn Mẹ" : "Chọn Cha");
+
+
 const schema = toTypedSchema(
     zod.object({
         fullName: zod.string().min(1, "Họ và tên không được để trống"),
         gender: zod.enum(["MALE", "FEMALE"]),
-        lifeStatus: zod.enum(["ALIVE", "DEAD"]),
-        birthDate: zod.string().optional(),
-        deathDate: zod.string().optional(),
+        lifeStatus: zod.enum(["ALIVE", "DECEASED"]),
+        birthDate: zod.string().optional().nullable(),
+        deathDate: zod.string().optional().nullable(),
         phoneNumber: zod.string().optional(),
         originPlace: zod.string().optional(),
         placeOfResidence: zod.string().optional(),
         biography: zod.string().optional(),
         graveLocation: zod.string().optional(),
         birthOrder: zod.number(),
+        partnerId: zod.number().optional().nullable(),
     })
 );
 
-const { values, errors, defineField, handleSubmit, resetForm } = useForm({
+const { values, errors, defineField, handleSubmit, resetForm, setValues } = useForm({
     validationSchema: schema,
     initialValues: {
         fullName: "",
@@ -44,6 +52,7 @@ const { values, errors, defineField, handleSubmit, resetForm } = useForm({
         originPlace: "",
         graveLocation: "",
         placeOfResidence: "",
+        partnerId: undefined,
     }
 });
 
@@ -58,6 +67,7 @@ const [placeOfResidence] = defineField("placeOfResidence");
 const [biography] = defineField("biography");
 const [graveLocation] = defineField("graveLocation");
 const [birthOrder] = defineField("birthOrder");
+const [partnerId] = defineField("partnerId");
 
 const avatarFile = ref<File | undefined>();
 const avatarPreview = ref<string | null>(null);
@@ -85,9 +95,12 @@ const triggerFileInput = () => {
 const onSave = handleSubmit((values) => {
     const payload: PersonReq = {
         ...values,
-        deathDate: values.lifeStatus === 'DEAD' ? values.deathDate || "" : "",
-        graveLocation: values.lifeStatus === 'DEAD' ? values.graveLocation || "" : "",
+        birthDate: values.birthDate || undefined,
+        deathDate: values.lifeStatus === 'DECEASED' ? (values.deathDate || undefined) : undefined,
+        graveLocation: values.lifeStatus === 'DECEASED' ? (values.graveLocation || undefined) : undefined,
         avatar: avatarFile.value,
+        partnerId: values.partnerId || undefined,
+        generation: (props.member?.generation || 0) + 1,
     };
     emit("save", payload);
     handleClose();
@@ -99,6 +112,13 @@ const handleClose = () => {
     avatarPreview.value = null;
     emit("close");
 };
+
+// Set default partner if only one exists
+watch(partners, (newPartners) => {
+    if (newPartners.length === 1 && !values.partnerId) {
+        setValues({ partnerId: newPartners[0].personId });
+    }
+});
 
 watch(() => props.isOpen, (open) => {
     if (!open) {
@@ -222,6 +242,29 @@ watch(() => props.isOpen, (open) => {
                                         </div>
                                     </div>
 
+                                    <!-- Chọn Cha/Mẹ (Partner) -->
+                                    <div class="grid grid-cols-[150px_1fr] gap-6 items-center">
+                                        <label
+                                            class="text-[12px] font-bold text-stone-500 uppercase tracking-widest flex items-center gap-2">
+                                            {{ partnerLabel }}
+                                        </label>
+                                        <div class="relative">
+                                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-stone-300">
+                                                <Users :size="16" />
+                                            </span>
+                                            <select v-model="partnerId"
+                                                class="w-full pl-11 pr-5 py-3 bg-stone-50 border border-stone-100 rounded-2xl focus:ring-4 focus:ring-emerald-900/5 focus:border-emerald-800 outline-none transition-all text-stone-800 text-sm font-medium appearance-none cursor-pointer">
+                                                <option :value="undefined">Không rõ (Hoặc chưa khai báo)</option>
+                                                <option v-for="p in partners" :key="p.personId" :value="p.personId">
+                                                    {{ p.fullName }}
+                                                </option>
+                                            </select>
+                                            <ChevronDown
+                                                class="absolute right-4 top-1/2 -translate-y-1/2 text-stone-300 pointer-events-none"
+                                                :size="16" />
+                                        </div>
+                                    </div>
+
                                     <div class="grid grid-cols-[150px_1fr] gap-6 items-center">
                                         <label
                                             class="text-[12px] font-bold text-stone-500 uppercase tracking-widest">Con
@@ -252,7 +295,7 @@ watch(() => props.isOpen, (open) => {
                                             <select v-model="lifeStatus"
                                                 class="w-full px-5 py-3 bg-stone-50 border border-stone-100 rounded-2xl focus:ring-4 focus:ring-emerald-900/5 focus:border-emerald-800 outline-none transition-all text-stone-800 text-sm font-medium appearance-none cursor-pointer">
                                                 <option value="ALIVE">Còn sống</option>
-                                                <option value="DEAD">Đã mất</option>
+                                                <option value="DECEASED">Đã mất</option>
                                             </select>
                                             <ChevronDown
                                                 class="absolute right-4 top-1/2 -translate-y-1/2 text-stone-300 pointer-events-none"
@@ -262,7 +305,7 @@ watch(() => props.isOpen, (open) => {
 
                                     <!-- Thông tin khi Đã mất -->
                                     <Transition name="expand">
-                                        <div v-if="values.lifeStatus === 'DEAD'"
+                                        <div v-if="values.lifeStatus === 'DECEASED'"
                                             class="space-y-4 pt-4 border-t border-red-50 bg-red-50/10 p-5 rounded-2xl">
                                             <div class="grid grid-cols-[130px_1fr] gap-6 items-center">
                                                 <label
@@ -301,6 +344,20 @@ watch(() => props.isOpen, (open) => {
                                                 <Phone :size="16" />
                                             </span>
                                             <input v-model="phoneNumber" type="tel" placeholder="0xxx..."
+                                                class="w-full pl-11 pr-5 py-3 bg-stone-50 border border-stone-100 rounded-2xl focus:ring-4 focus:ring-emerald-900/5 focus:border-emerald-800 outline-none transition-all text-sm font-medium text-stone-800" />
+                                        </div>
+                                    </div>
+
+                                    <div class="grid grid-cols-[150px_1fr] gap-6 items-center">
+                                        <label
+                                            class="text-[12px] font-bold text-stone-500 uppercase tracking-widest">Quê
+                                            quán</label>
+                                        <div class="relative">
+                                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-stone-300">
+                                                <MapPin :size="16" />
+                                            </span>
+                                            <input v-model="originPlace" type="text"
+                                                placeholder="Nguyên quán, cội nguồn..."
                                                 class="w-full pl-11 pr-5 py-3 bg-stone-50 border border-stone-100 rounded-2xl focus:ring-4 focus:ring-emerald-900/5 focus:border-emerald-800 outline-none transition-all text-sm font-medium text-stone-800" />
                                         </div>
                                     </div>

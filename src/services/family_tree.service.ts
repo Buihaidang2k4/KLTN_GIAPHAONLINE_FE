@@ -34,6 +34,13 @@ export const familyTreeService = {
     return res.data;
   },
 
+  getMothersByFatherId: async (fatherId: MaybeRefOrGetter<number>): Promise<ApiResponse<PersonRes[]>> => {
+    const res = await api.get<ApiResponse<PersonRes[]>>(
+      `/family-tree/persons/${toValue(fatherId)}/mothers`
+    );
+    return res.data;
+  },
+
   // ==================== Person ====================
 
   createPerson: async (
@@ -71,7 +78,7 @@ export const familyTreeService = {
   ): Promise<ApiResponse<FamilyTreeNodeRes>> => {
     const res = await api.post<ApiResponse<FamilyTreeNodeRes>>(
       `/family-tree/persons/${toValue(personId)}/root`,
-      toValue(data)
+      toFormData(toValue(data))
     );
     return res.data;
   },
@@ -82,7 +89,7 @@ export const familyTreeService = {
   ): Promise<ApiResponse<FamilyTreeNodeRes>> => {
     const res = await api.post<ApiResponse<FamilyTreeNodeRes>>(
       `/family-tree/persons/${toValue(personId)}/partner`,
-      toValue(data)
+      toFormData(toValue(data))
     );
     return res.data;
   },
@@ -93,7 +100,7 @@ export const familyTreeService = {
   ): Promise<ApiResponse<FamilyTreeNodeRes>> => {
     const res = await api.post<ApiResponse<FamilyTreeNodeRes>>(
       `/family-tree/persons/${toValue(personId)}/child`,
-      toValue(data)
+      toFormData(toValue(data))
     );
     return res.data;
   },

@@ -5,6 +5,7 @@ import type { PersonReq } from "@/types/family/family_tree.types";
 import { useForm } from "vee-validate";
 import { toTypedSchema } from "@vee-validate/zod";
 import * as zod from "zod";
+import { formatDate } from "@/utils/format-date";
 
 const props = defineProps<{
     isOpen: boolean;
@@ -19,8 +20,8 @@ const schema = toTypedSchema(
         fullName: zod.string().min(1, "Họ và tên không được để trống"),
         gender: zod.enum(["MALE", "FEMALE"]),
         lifeStatus: zod.enum(["ALIVE", "DECEASED"]),
-        birthDate: zod.string().optional(),
-        deathDate: zod.string().optional(),
+        birthDate: zod.string().optional().nullable(),
+        deathDate: zod.string().optional().nullable(),
         phoneNumber: zod.string().optional(),
         originPlace: zod.string().optional(),
         placeOfResidence: zod.string().optional(),
@@ -85,9 +86,11 @@ const triggerFileInput = () => {
 const onSave = handleSubmit((values) => {
     const payload: PersonReq = {
         ...values,
-        deathDate: values.lifeStatus === 'DECEASED' ? values.deathDate || "" : "",
-        graveLocation: values.lifeStatus === 'DECEASED' ? values.graveLocation || "" : "",
+        birthDate: values.birthDate || undefined,
+        deathDate: values.lifeStatus === 'DECEASED' ? (values.deathDate || undefined) : undefined,
+        graveLocation: values.lifeStatus === 'DECEASED' ? (values.graveLocation || undefined) : undefined,
         avatar: avatarFile.value,
+        generation: props.member?.generation || 1,
     };
     emit("save", payload);
     handleClose();
@@ -299,6 +302,19 @@ watch(() => props.isOpen, (open) => {
                                                 <Phone :size="16" />
                                             </span>
                                             <input v-model="phoneNumber" type="tel" placeholder="0xxx..."
+                                                class="w-full pl-11 pr-5 py-3 bg-stone-50 border border-stone-100 rounded-2xl focus:ring-4 focus:ring-blue-900/5 focus:border-blue-800 outline-none transition-all text-sm font-medium text-stone-800" />
+                                        </div>
+                                    </div>
+
+                                    <div class="grid grid-cols-[150px_1fr] gap-6 items-center">
+                                        <label
+                                            class="text-[12px] font-bold text-stone-500 uppercase tracking-widest">Quê quán</label>
+                                        <div class="relative">
+                                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-stone-300">
+                                                <MapPin :size="16" />
+                                            </span>
+                                            <input v-model="originPlace" type="text"
+                                                placeholder="Nguyên quán, cội nguồn..."
                                                 class="w-full pl-11 pr-5 py-3 bg-stone-50 border border-stone-100 rounded-2xl focus:ring-4 focus:ring-blue-900/5 focus:border-blue-800 outline-none transition-all text-sm font-medium text-stone-800" />
                                         </div>
                                     </div>

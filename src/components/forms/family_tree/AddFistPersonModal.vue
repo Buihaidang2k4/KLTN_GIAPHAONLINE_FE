@@ -5,6 +5,7 @@ import type { PersonReq } from "@/types/family/family_tree.types";
 import { useForm } from "vee-validate";
 import { toTypedSchema } from "@vee-validate/zod";
 import * as zod from "zod";
+import { formatDate } from "@/utils/format-date";
 
 const props = defineProps<{ isOpen: boolean }>();
 const emit = defineEmits<{ close: []; save: [data: PersonReq] }>();
@@ -14,9 +15,9 @@ const schema = toTypedSchema(
     zod.object({
         fullName: zod.string().min(1, "Họ và tên không được để trống"),
         gender: zod.enum(["MALE", "FEMALE"]),
-        lifeStatus: zod.enum(["ALIVE", "DEAD"]),
-        birthDate: zod.string().optional(),
-        deathDate: zod.string().optional(),
+        lifeStatus: zod.enum(["ALIVE", "DECEASED"]),
+        birthDate: zod.string().optional().nullable(),
+        deathDate: zod.string().optional().nullable(),
         phoneNumber: zod.string().optional(),
         originPlace: zod.string().optional(),
         placeOfResidence: zod.string().optional(),
@@ -80,9 +81,11 @@ const triggerFileInput = () => {
 const onSave = handleSubmit((values) => {
     const payload: PersonReq = {
         ...values,
-        deathDate: values.lifeStatus === 'DEAD' ? values.deathDate || "" : "",
-        graveLocation: values.lifeStatus === 'DEAD' ? values.graveLocation || "" : "",
+        birthDate: values.birthDate || undefined,
+        deathDate: values.lifeStatus === 'DECEASED' ? (values.deathDate || undefined) : undefined,
+        graveLocation: values.lifeStatus === 'DECEASED' ? (values.graveLocation || undefined) : undefined,
         avatar: avatarFile.value,
+        generation: 1,
     };
     emit("save", payload);
     handleClose();
