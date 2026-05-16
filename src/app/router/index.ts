@@ -6,6 +6,7 @@ import userRoutes from "./user.routes";
 import { getCurrentUser } from "@/composables/auth/auth.storage";
 import { authService } from "@/services/auth.service";
 import { hasAnyPermission } from "@/composables/auth/auth.permission.helper";
+import { roleService } from "@/services/role.service";
 
 // router
 const routes: RouteRecordRaw[] = [
@@ -49,6 +50,7 @@ router.beforeEach(async (to, from, next) => {
     const isGuestOnly = !!to.meta.guestOnly;
     const requiresAuth = !!to.meta.requiresAuth;
     const requiresActiveAccount = !!to.meta.requiresActiveAccount;
+    const requiresSystemRole = !!to.meta.requiresSystemRole;
     const requiredPermissions = to.meta.permissions as string[] | undefined;
 
     let profileRes = null;
@@ -78,6 +80,15 @@ router.beforeEach(async (to, from, next) => {
 
     if (requiresActiveAccount && isLoggedIn && !isActive) {
         return next("/verify-account");
+    }
+
+    if (requiresSystemRole && isLoggedIn) {
+        try {
+            const res = await roleService.isSystemAccount();
+            if (res.data !== true) return next("/403");
+        } catch {
+            return next("/403");
+        }
     }
 
     if (requiredPermissions?.length) {

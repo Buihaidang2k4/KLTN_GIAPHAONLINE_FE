@@ -83,30 +83,19 @@ const selectedCeremony = computed(() =>
 const { mutate: createCeremonyMutation } = useCreateCeremonyMutation();
 const { mutate: updateCeremonyMutation } = useUpdateCeremonyMutation();
 const { mutate: deleteCeremonyMutation } = useDeleteCeremonyMutation();
-const { canManageCeremony } = useFamilyPermissions(familyId);
-
+const { canManageCeremony, withPermission } = useFamilyPermissions(familyId);
 
 // handle action
-const hanldeDeleteCeremony = (ceremonyId: number) => {
-    if (!canManageCeremony.value) {
-        notify.error("Thông báo", "Bạn không có quyền thực hiện thao tác này")
-        return
-    }
-
+const hanldeDeleteCeremony = withPermission(canManageCeremony, (ceremonyId: number) => {
     if (ceremonyId == null) return;
-
     deleteCeremonyMutation(ceremonyId, {
-        onSuccess: () => {
-            notify.success("Thông báo", "Xóa phong tục thành công")
-        }
+        onSuccess: () => notify.success("Thông báo", "Xóa phong tục thành công")
     })
-}
+})
 
 const handleCreateCeremony = (pay: CeremonyReq) => {
     createCeremonyMutation({ familyId: familyId.value, data: pay }, {
-        onSuccess: () => {
-            notify.success("Thông báo", "Tạo phong tục thành công")
-        }
+        onSuccess: () => notify.success("Thông báo", "Tạo phong tục thành công")
     })
 }
 
@@ -115,12 +104,12 @@ const handleUpdateFromForm = (payload: CeremonyUpdateReq) => {
     updateCeremonyMutation({ ceremonyId: editingCeremonyId.value, data: payload }, {
         onSuccess: () => {
             isShowForm.value = false
-            notify.success("Thông báo", "Cập nhật phong tục thànhc công")
+            notify.success("Thông báo", "Cập nhật phong tục thành công")
         }
     })
 }
 
-// state 
+// state
 const isShowForm = ref(false);
 const mode = ref<'create' | 'update'>('create')
 const editingCeremonyId = ref<number | null>(null)
@@ -129,31 +118,21 @@ const editingCeremony = computed(() =>
     safeCeremonies.value?.find(item => item.ceremonyId === editingCeremonyId.value) ?? null
 )
 
-const openCreateForm = () => {
-    if (!canManageCeremony.value) {
-        notify.error("Thông báo", "Bạn không có quyền thực hiện thao tác này")
-        return
-    }
-
+const openCreateForm = withPermission(canManageCeremony, () => {
     mode.value = 'create'
     editingCeremonyId.value = null
     isShowForm.value = true
-}
+})
 
 const handleSelectCeremony = (id: number) => {
     selectedCeremonyId.value = id
 }
 
-
-const listenerUpdateCeremony = (id: number) => {
-    if (!canManageCeremony.value) {
-        notify.error("Thông báo", "Bạn không có quyền thực hiện thao tác này")
-        return
-    }
+const listenerUpdateCeremony = withPermission(canManageCeremony, (id: number) => {
     isShowForm.value = true
     mode.value = 'update'
     editingCeremonyId.value = id
-}
+})
 
 const closeFormCeremony = () => {
     isShowForm.value = false;
@@ -183,22 +162,14 @@ const selectedTimelines = computed(() => {
     return sortedTimelines;
 })
 
-const openCreateTimelineModal = () => {
-    if (!canManageCeremony.value) {
-        notify.error("Thông báo", "Bạn không có quyền thực hiện thao tác này")
-        return
-    }
-
+const openCreateTimelineModal = withPermission(canManageCeremony, () => {
     modeTimeline.value = 'create'
     openModal(null)
-}
+})
 
 const handleTimelineSave = (data: CeremonyTimelineReq) => {
-    if (modeTimeline.value === 'update') {
-        handleUpdateTimelineStep(data)
-    } else {
-        handleCreateTimelineStep(data)
-    }
+    if (modeTimeline.value === 'update') handleUpdateTimelineStep(data)
+    else handleCreateTimelineStep(data)
 }
 
 const handleEditTimelineStep = (step: CeremonyTimelineRes) => {
@@ -207,15 +178,12 @@ const handleEditTimelineStep = (step: CeremonyTimelineRes) => {
 }
 
 const handleCreateTimelineStep = (data: CeremonyTimelineReq) => {
-
     if (!selectedCeremonyId.value) return
-
     createTimelineMutaion({ ceremonyId: selectedCeremonyId.value, data }, {
         onSuccess: () => {
             closeStepModal()
             notify.success("Thông báo", "Tạo bước thành công")
         },
-
         onError: (error) => {
             console.error('create timeline error', error)
             notify.error('Thông báo', 'Tạo bước thất bại')
@@ -223,37 +191,23 @@ const handleCreateTimelineStep = (data: CeremonyTimelineReq) => {
     })
 }
 
-const handleUpdateTimelineStep = (data: CeremonyTimelineReq) => {
-    if (!canManageCeremony.value) {
-        notify.error("Thông báo", "Bạn không có quyền thực hiện thao tác này")
-        return
-    }
-
+const handleUpdateTimelineStep = withPermission(canManageCeremony, (data: CeremonyTimelineReq) => {
     if (!editingStep.value?.timelineId) return
-
     updateTimelineMutaion({ timelineId: editingStep.value.timelineId, data }, {
         onSuccess: () => {
             closeStepModal()
             notify.success("Thông báo", "Cập nhật bước thành công")
         }
     })
-}
+})
 
-const handleDeleteTimelineStep = (timelineId: number) => {
-    if (!canManageCeremony.value) {
-        notify.error("Thông báo", "Bạn không có quyền thực hiện thao tác này")
-        return
-    }
-
+const handleDeleteTimelineStep = withPermission(canManageCeremony, (timelineId: number) => {
     if (!confirm('Bạn có chắc chắn muốn xóa bước này?')) return
-
     if (!timelineId) return
     deleteTimelineMutation(timelineId, {
-        onSuccess: () => {
-            notify.success("Thông báo", "Xóa bước thành công")
-        }
+        onSuccess: () => notify.success("Thông báo", "Xóa bước thành công")
     })
-}
+})
 
 const handleManagePreparations = (step: CeremonyTimelineRes) => {
     selectedPreparationTimeline.value = step

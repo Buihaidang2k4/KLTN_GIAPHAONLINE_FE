@@ -104,6 +104,25 @@ export const albumService = {
         return res.data;
     },
 
+    uploadLink: async (
+        albumId: MaybeRefOrGetter<number | null | undefined>,
+        url: MaybeRefOrGetter<string>,
+        title?: MaybeRefOrGetter<string | null | undefined>
+    ): Promise<ApiResponse<AlbumMediaRes>> => {
+        const res = await api.post<ApiResponse<AlbumMediaRes>>(
+            `/albums/${toValue(albumId)}/media/link`,
+            null,
+            {
+                params: {
+                    url: toValue(url),
+                    title: toValue(title)
+                }
+            }
+        );
+
+        return res.data;
+    },
+
     getMediaByAlbumId: async (
         albumId: MaybeRefOrGetter<number | null | undefined>,
         mediaType?: MaybeRefOrGetter<string | null | undefined>,

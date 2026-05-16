@@ -141,7 +141,7 @@ watch(debounceKeyword, () => {
 const { mutate: createEventMutation } = useCreateFamilyEventMutation();
 const { mutate: updateEventMutation } = useUpdateFamilyEventMutation();
 const { mutate: deleteEventMutation } = useDeleteFamilyEventMutation();
-const { canManageEvent } = useFamilyPermissions(familyId);
+const { canManageEvent, withPermission } = useFamilyPermissions(familyId);
 
 const mode = {
   create: 'create',
@@ -157,77 +157,35 @@ const closeEventForm = () => {
   selectedEvent.value = null
 }
 
-const openCreateForm = () => {
-  if (!canManageEvent.value) {
-    notify.error("Thông báo", 'Bạn không có quyền thực hiện thao tác này ')
-    return
-  }
-
+const openCreateForm = withPermission(canManageEvent, () => {
   currentMode.value = mode.create
   selectedEvent.value = null
   isShowAddOrUpdateEventForm.value = true
-}
+})
 
-const openUpdateForm = (event: FamilyEventRes) => {
-  if (!canManageEvent.value) {
-    notify.error("Thông báo", 'Bạn không có quyền thực hiện thao tác này ')
-    return
-  }
+const openUpdateForm = withPermission(canManageEvent, (event: FamilyEventRes) => {
   currentMode.value = mode.update
   selectedEvent.value = event
   isShowAddOrUpdateEventForm.value = true
-}
-
+})
 
 const handleCreateEvent = (payload: FamilyEventReq) => {
   if (!familyId.value) return
-
-  createEventMutation({
-    familyId: familyId.value,
-    data: payload
-  }, {
-    onSuccess: () => {
-      closeEventForm()
-    }
-  })
+  createEventMutation({ familyId: familyId.value, data: payload }, { onSuccess: () => closeEventForm() })
 }
-
 
 const handleUpdateEvent = (payload: UpdateFamilyEventReq) => {
   if (!familyId.value || !selectedEvent.value?.familyEventId) return
-
-  updateEventMutation({
-    familyId: familyId.value,
-    eventId: selectedEvent.value.familyEventId,
-    data: payload
-  }, {
-    onSuccess: () => {
-      closeEventForm()
-    }
-  })
+  updateEventMutation({ familyId: familyId.value, eventId: selectedEvent.value.familyEventId, data: payload }, { onSuccess: () => closeEventForm() })
 }
 
-
-const handleDeleteEvent = (eventId: number) => {
-  if (!canManageEvent.value) {
-    notify.error("Thông báo", 'Bạn không có quyền thực hiện thao tác này ')
-    return
-  }
-
+const handleDeleteEvent = withPermission(canManageEvent, (eventId: number) => {
   if (!familyId.value) return
+  if (!confirm('Bạn có chắc chắn muốn xóa sự kiện này?')) return
+  deleteEventMutation({ familyId: familyId.value, eventId })
+})
 
-  const confirmed = confirm('Bạn có chắc chắn muốn xóa sự kiện này?')
-  if (!confirmed) return
-
-  deleteEventMutation({
-    familyId: familyId.value,
-    eventId
-  })
-}
-
-const handleReload = () => {
-  keyword.value = ''
-}
+const handleReload = () => { keyword.value = '' }
 
 </script>
 

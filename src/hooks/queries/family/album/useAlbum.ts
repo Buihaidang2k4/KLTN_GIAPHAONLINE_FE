@@ -184,6 +184,26 @@ export const useUploadMultipleAlbumMediaMutation = () => {
     });
 };
 
+export const useUploadAlbumLinkMutation = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({
+            albumId,
+            url,
+            title
+        }: {
+            albumId: MaybeRefOrGetter<number | null | undefined>;
+            url: string;
+            title?: string;
+        }) => albumService.uploadLink(albumId, url, title),
+        onSuccess: (_res, variables) => {
+            queryClient.invalidateQueries({ queryKey: albumKey.detail(variables.albumId) });
+            queryClient.invalidateQueries({ queryKey: albumKey.mediaLists() });
+        }
+    });
+};
+
 export const useDeleteAlbumMediaMutation = () => {
     const queryClient = useQueryClient();
 

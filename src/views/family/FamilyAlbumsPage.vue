@@ -26,7 +26,8 @@ import {
   useDeleteAlbumMediaMutation,
   useDeleteAlbumMutation,
   useFamilyAlbumsQuery,
-  useUpdateAlbumMutation
+  useUpdateAlbumMutation,
+  useUploadAlbumLinkMutation
 } from '@/hooks/queries/family/album/useAlbum'
 import { notify } from '@/utils/notify'
 import type { AlbumMediaRes, AlbumReq, AlbumRes } from '@/types/family/album.types'
@@ -177,7 +178,7 @@ const { data: mediaData } = useAlbumMediaQuery(selectedAlbumId, mediaType, { pag
 const safeMedia = computed(() => mediaData.value?.data?.items ?? [])
 const previewMedia = ref<AlbumMediaRes | null>(null)
 const { mutate: deleteMediaMutation } = useDeleteAlbumMediaMutation();
-
+const uploadLinkAblumMutation = useUploadAlbumLinkMutation();
 
 
 const moveOnToDetailMedia = (album: AlbumRes) => {

@@ -29,8 +29,7 @@ const familyId = computed(() => familyStore.currentFamilyId);
 const { mutate: createAchievement } = useCreateFamilyAchievementMutation();
 const { mutate: updateAchievement } = useUpdateFamilyAchievementMutation();
 const { mutate: deleteAchievement } = useDeleteFamilyAchievementMutation();
-const { canManageAchievement } = useFamilyPermissions(familyId);
-
+const { canManageAchievement, withPermission } = useFamilyPermissions(familyId);
 
 const {
     pagination,
@@ -42,72 +41,32 @@ const {
     setTotalPages
 } = usePagination(6, 0);
 
-const paginationPage = computed(() => ({
-    page: pagination.page,
-    size: pagination.size
-}))
-
+const paginationPage = computed(() => ({ page: pagination.page, size: pagination.size }))
 const keyword = ref('');
-
 const { data: achievements } = useFamilyAchievementsQuery(familyId, paginationPage, keyword)
 
-watch(
-    () => achievements.value?.data?.totalPages,
-    total => {
-        setTotalPages(total || 0)
-    },
-    { immediate: true }
-)
-// safe access to achievements list
+watch(() => achievements.value?.data?.totalPages, total => setTotalPages(total || 0), { immediate: true })
+
 const safeAchievements = computed(() => achievements.value?.data?.items || [])
 
-
-// ui 
 const getTypeStyle = (type: string) => {
     switch (type) {
-        case 'AWARD':
-            return {
-                icon: Award,
-                label: 'Giải thưởng',
-                badge: 'bg-yellow-50 text-yellow-700 border-yellow-100'
-            }
-        case 'SOCIAL':
-            return {
-                icon: Award,
-                label: 'Xã hội',
-                badge: 'bg-purple-50 text-purple-700 border-purple-100'
-            }
-        case 'SPORT':
-            return {
-                icon: Trophy,
-                label: 'Thể thao',
-                badge: 'bg-orange-50 text-orange-700 border-orange-100'
-            }
-        default:
-            return {
-                icon: Medal,
-                label: 'Sự nghiệp',
-                badge: 'bg-emerald-50 text-emerald-700 border-emerald-100'
-            }
+        case 'AWARD': return { icon: Award, label: 'Giải thưởng', badge: 'bg-yellow-50 text-yellow-700 border-yellow-100' }
+        case 'SOCIAL': return { icon: Award, label: 'Xã hội', badge: 'bg-purple-50 text-purple-700 border-purple-100' }
+        case 'SPORT': return { icon: Trophy, label: 'Thể thao', badge: 'bg-orange-50 text-orange-700 border-orange-100' }
+        default: return { icon: Medal, label: 'Sự nghiệp', badge: 'bg-emerald-50 text-emerald-700 border-emerald-100' }
     }
 }
 
-
-// actions
 const isOpenForm = ref<boolean>(false)
 const formMode = ref<'create' | 'update'>('create')
 const selectedAchievement = ref<FamilyAchievementRes | null>(null)
 
-const openCreateForm = () => {
-    if (!canManageAchievement.value) {
-        notify.error("Thông báo", 'Bạn không có quyền thực hiện thao tác này ')
-        return
-    }
-
+const openCreateForm = withPermission(canManageAchievement, () => {
     formMode.value = 'create'
     selectedAchievement.value = null
     isOpenForm.value = true
-}
+})
 
 const openUpdateForm = (achievement: FamilyAchievementRes) => {
     formMode.value = 'update'
@@ -120,69 +79,29 @@ const closeForm = () => {
     selectedAchievement.value = null
 }
 
-// action
-const hanldeDeleteAchievement = (achievementId: number) => {
-    if (!canManageAchievement.value) {
-        notify.error("Thông báo", 'Bạn không có quyền thực hiện thao tác này ')
-        return
-    }
+const hanldeDeleteAchievement = withPermission(canManageAchievement, (achievementId: number) => {
+    if (!window.confirm('Bạn có chắc chắn muốn xóa thành tích này?')) return
+    deleteAchievement({ familyId: familyId.value!, achievementId }, {
+        onSuccess: () => notify.success("Thông báo", "Xóa thành tích thành công")
+    })
+})
 
-    const isConfirmed = window.confirm('Bạn có chắc chắn muốn xóa thành tích này?')
-    if (!isConfirmed) return
-
-    deleteAchievement({ familyId: familyId.value!, achievementId },
-        {
-            onSuccess: () => {
-                notify.success(
-                    "Thông báo",
-                    "Xóa thành tích thành công"
-                )
-            }
-        }
-    )
-}
-const handleCreateOrUpdateAchievement = (payload: {
+const handleCreateOrUpdateAchievement = withPermission(canManageAchievement, (payload: {
     data: FamilyAchievementReq | UpdateFamilyAchievementReq
     evidenceFile: File | null
 }) => {
-    if (!canManageAchievement.value) {
-        notify.error("Thông báo", 'Bạn không có quyền thực hiện thao tác này ')
-        return
-    }
-
-
     if (formMode.value === 'create') {
         createAchievement(
-            {
-                familyId: familyId.value!,
-                data: payload.data as FamilyAchievementReq,
-                evidenceFile: payload.evidenceFile
-            },
-            {
-                onSuccess: () => {
-                    notify.success('Thông báo', 'Thêm thành tích thành công')
-                    closeForm()
-                }
-            }
+            { familyId: familyId.value!, data: payload.data as FamilyAchievementReq, evidenceFile: payload.evidenceFile },
+            { onSuccess: () => { notify.success('Thông báo', 'Thêm thành tích thành công'); closeForm() } }
         )
     } else {
         updateAchievement(
-            {
-                familyId: familyId.value!,
-                achievementId: selectedAchievement.value!.achievementId,
-                data: payload.data as UpdateFamilyAchievementReq,
-                evidenceFile: payload.evidenceFile
-            },
-            {
-                onSuccess: () => {
-                    notify.success('Thông báo', 'Cập nhật thành tích thành công')
-                    closeForm()
-                }
-            }
+            { familyId: familyId.value!, achievementId: selectedAchievement.value!.achievementId, data: payload.data as UpdateFamilyAchievementReq, evidenceFile: payload.evidenceFile },
+            { onSuccess: () => { notify.success('Thông báo', 'Cập nhật thành tích thành công'); closeForm() } }
         )
     }
-}
-
+})
 </script>
 
 <template>

@@ -2,29 +2,40 @@
 import { computed, ref } from "vue"
 
 import { useFamilyMembers } from "@/composables/family_members/useFamilyMembers"
-import { useFamilyMembersQuery } from "@/hooks/queries/family/family_member/useFamilyMember"
+import { useFamilyMembersQuery, useRemoveMemberMutation } from "@/hooks/queries/family/family_member/useFamilyMember"
 import { useInviteMemberMutation } from "@/hooks/queries/family/family_invitaion/useFamilyInvitation"
 
 import FamilyMemberList from "@/components/family_manage/FamilyMemberList.vue"
 import AddFamilyMemberForm from "@/components/forms/common/AddFamilyInvitaionMemberForm.vue"
 import type { CreateFamilyInvitationReq } from "@/types/family/family-invitation.types"
+import type { FamilyMemberRes } from "@/types/family/family-member.types"
 import { useRouter } from "vue-router"
 import { useFamilyStore } from "@/store/family/useFamilyStore"
+import { useFamilyPermissions } from "@/composables/family/useFamilyPermissions"
+import { notify } from "@/utils/notify"
+import { useMyInfoQuery } from "@/hooks/queries/account/useAccount"
 
 const searchKeyword = ref("")
 const router = useRouter();
 const familyStore = useFamilyStore();
 
 const familyId = computed(() => familyStore.currentFamilyId);
+const { canManageMember, withPermission } = useFamilyPermissions(familyId);
+
 
 const {
-    data: familyMembers,
+    data: familyMembersData,
     isLoading,
     isError,
     refetch,
 } = useFamilyMembersQuery(familyId)
 
+const familyMembers = computed<FamilyMemberRes[]>(() => familyMembersData.value?.data ?? [])
+
 const { safeMembers, getMemberStatusLabel } = useFamilyMembers(familyMembers)
+const removeMememberMutation = useRemoveMemberMutation();
+const { data: currentAccount } = useMyInfoQuery();
+const currentAccountId = computed(() => currentAccount.value?.data?.accountId);
 
 const filteredMembers = computed(() => {
     const keyword = searchKeyword.value.trim().toLowerCase()
@@ -46,7 +57,7 @@ const filteredMembers = computed(() => {
 
 const isShowFormAddMember = ref(false);
 
-const openForm = () => isShowFormAddMember.value = true;
+const openForm = withPermission(canManageMember, () => isShowFormAddMember.value = true)
 const closeFrom = () => isShowFormAddMember.value = false;
 const inviteMember = useInviteMemberMutation();
 
@@ -66,6 +77,24 @@ function handleAddMemberSubmit(form: CreateFamilyInvitationReq) {
         data: form
     });
 }
+
+
+const handleRemoveMemeber = withPermission(canManageMember, (memeberId: number) => {
+    if (memeberId === currentAccountId.value) {
+        notify.error("Lỗi", "Bạn không thể tự mình xóa tài khoản của mình")
+        return;
+    }
+
+    if (window.confirm("Bạn có muốn xóa thành viên này không")) {
+        removeMememberMutation.mutate({
+            familyId: familyId.value!,
+            targetAccountId: memeberId,
+            actorAccountId: currentAccountId.value!
+        }, {
+            onSuccess: () => notify.success("Thông báo", "Xóa thành công thành viên ")
+        })
+    }
+})
 
 function handleSearch() {
 }
@@ -130,7 +159,8 @@ function handleSearch() {
                 </div>
 
                 <div v-else class="p-4 sm:p-6">
-                    <FamilyMemberList :members="filteredMembers" :get-status="getMemberStatusLabel" />
+                    <FamilyMemberList :members="filteredMembers" :get-status="getMemberStatusLabel"
+                        @remove="handleRemoveMemeber" />
                 </div>
             </div>
         </div>

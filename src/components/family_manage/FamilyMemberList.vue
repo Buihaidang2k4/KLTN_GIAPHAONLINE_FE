@@ -6,6 +6,11 @@ defineProps<{
     members: FamilyMemberRes[]
     getStatus: (status: FamilyMemberRes['status']) => string
 }>()
+
+const emit = defineEmits<{
+    (e: 'remove', id: number): void
+}>()
+
 </script>
 
 <template>
@@ -31,7 +36,7 @@ defineProps<{
 
         <div class="divide-y divide-slate-100">
             <FamilyMemberItem v-for="member in members" :key="member.accountId" :member="member"
-                :get-status="getStatus" />
+                @remove="emit('remove', member.accountId)" :get-status="getStatus" />
         </div>
 
     </div>

@@ -1,26 +1,36 @@
-import { useQuery } from '@tanstack/vue-query'
-import { computed, type MaybeRefOrGetter, toValue } from 'vue'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
+import { computed, toValue, type MaybeRefOrGetter } from 'vue'
 import { familyMemberService } from '@/services/family_member.service'
-import { QUERY_KEYS } from '@/hooks/keys/query-keys'
+
+const familyMemberKey = {
+    all: ['family-members'] as const,
+    lists: () => [...familyMemberKey.all, 'list'] as const,
+    list: (familyId: MaybeRefOrGetter<number | null | undefined>) =>
+        [...familyMemberKey.lists(), toValue(familyId)] as const,
+}
 
 export function useFamilyMembersQuery(familyId: MaybeRefOrGetter<number | null | undefined>) {
-    const resolvedFamilyId = computed(() => toValue(familyId))
+    const resolvedId = computed(() => toValue(familyId))
 
-    const query = useQuery({
-        queryKey: computed(() =>
-            QUERY_KEYS.FAMILY.members(resolvedFamilyId.value ?? 'unknown')
-        ),
-        queryFn: () =>
-            familyMemberService.getFamilyMembersByFamilyId(resolvedFamilyId.value!),
-        enabled: computed(() => !!resolvedFamilyId.value),
+    return useQuery({
+        queryKey: computed(() => familyMemberKey.list(resolvedId)),
+        queryFn: () => familyMemberService.getFamilyMembersByFamilyId(resolvedId.value!),
+        enabled: computed(() => !!resolvedId.value),
         staleTime: 1000 * 60 * 5,
     })
+}
 
-    return {
-        data: computed(() => query.data.value?.data ?? []),
-        isLoading: query.isLoading,
-        isError: query.isError,
-        error: query.error,
-        refetch: query.refetch,
-    }
+export function useRemoveMemberMutation() {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: ({ familyId, targetAccountId, actorAccountId }: {
+            familyId: MaybeRefOrGetter<number | null | undefined>
+            targetAccountId: MaybeRefOrGetter<number | null | undefined>
+            actorAccountId: MaybeRefOrGetter<number | null | undefined>
+        }) => familyMemberService.removeMember(familyId, targetAccountId, actorAccountId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: familyMemberKey.lists() })
+        },
+    })
 }
