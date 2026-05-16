@@ -21,6 +21,7 @@ import AppPagination from '@/components/forms/common/AppPagination.vue';
 import type { FamilyAchievementReq, FamilyAchievementRes, UpdateFamilyAchievementReq } from '@/types/family/family-achievement.types';
 import CreateOrUpdateAchievementForm from '@/components/forms/family_achievement/CreateOrUpdateAchievementForm.vue';
 import { notify } from '@/utils/notify';
+import { useFamilyPermissions } from '@/composables/family/useFamilyPermissions';
 
 const familyStore = useFamilyStore();
 const familyId = computed(() => familyStore.currentFamilyId);
@@ -28,6 +29,7 @@ const familyId = computed(() => familyStore.currentFamilyId);
 const { mutate: createAchievement } = useCreateFamilyAchievementMutation();
 const { mutate: updateAchievement } = useUpdateFamilyAchievementMutation();
 const { mutate: deleteAchievement } = useDeleteFamilyAchievementMutation();
+const { canManageAchievement } = useFamilyPermissions(familyId);
 
 
 const {
@@ -97,13 +99,17 @@ const formMode = ref<'create' | 'update'>('create')
 const selectedAchievement = ref<FamilyAchievementRes | null>(null)
 
 const openCreateForm = () => {
+    if (!canManageAchievement.value) {
+        notify.error("Thông báo", 'Bạn không có quyền thực hiện thao tác này ')
+        return
+    }
+
     formMode.value = 'create'
     selectedAchievement.value = null
     isOpenForm.value = true
 }
 
 const openUpdateForm = (achievement: FamilyAchievementRes) => {
-    console.log('achievement', achievement.achievementId)
     formMode.value = 'update'
     selectedAchievement.value = achievement
     isOpenForm.value = true
@@ -116,6 +122,11 @@ const closeForm = () => {
 
 // action
 const hanldeDeleteAchievement = (achievementId: number) => {
+    if (!canManageAchievement.value) {
+        notify.error("Thông báo", 'Bạn không có quyền thực hiện thao tác này ')
+        return
+    }
+
     const isConfirmed = window.confirm('Bạn có chắc chắn muốn xóa thành tích này?')
     if (!isConfirmed) return
 
@@ -134,6 +145,12 @@ const handleCreateOrUpdateAchievement = (payload: {
     data: FamilyAchievementReq | UpdateFamilyAchievementReq
     evidenceFile: File | null
 }) => {
+    if (!canManageAchievement.value) {
+        notify.error("Thông báo", 'Bạn không có quyền thực hiện thao tác này ')
+        return
+    }
+
+
     if (formMode.value === 'create') {
         createAchievement(
             {

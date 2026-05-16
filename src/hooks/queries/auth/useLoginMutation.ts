@@ -12,7 +12,7 @@ export function useLoginMutation() {
         mutationFn: (data: LoginReq) => authService.login(data),
 
         onSuccess: async () => {
-            notify.success("LOGIN_SUCCESS");
+            notify.success('Thông báo', "Đăng nhập thành công");
 
             await queryClient.refetchQueries({
                 queryKey: QUERY_KEYS.AUTH.profile(),

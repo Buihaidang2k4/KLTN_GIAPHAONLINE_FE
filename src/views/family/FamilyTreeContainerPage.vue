@@ -14,6 +14,8 @@ import {
     useUpdateFamilyCategoryMutation
 } from '@/hooks/queries/family/family_category/useFamilyCategory';
 import type { FamilyCategoryReq, FamilyCategoryRes } from '@/types/family/family-category.types';
+import { useFamilyPermissions } from '@/composables/family/useFamilyPermissions';
+import { notify } from '@/utils/notify';
 
 
 const familyStore = useFamilyStore()
@@ -50,6 +52,8 @@ const toast = ref({ show: false, message: '' });
 const { mutate: createFamilyCategory, isPending: isCreatingCategory } = useCreateFamilyCategoryMutation();
 const { mutate: updateFamilyCategory, isPending: isUpdatingCategory } = useUpdateFamilyCategoryMutation();
 const { mutate: deleteFamilyCategory } = useDeleteFamilyCategoryMutation();
+const { canDeleteFamily, canWriteFamily } = useFamilyPermissions(familyId);
+
 
 const totalCategory = computed(() => safeFamilyCategory.value.length);
 const publicCategory = computed(() => safeFamilyCategory.value.filter(item => item.isPublic).length);
@@ -59,6 +63,11 @@ const selectedCategory = computed(() =>
 const isSavingCategory = computed(() => isCreatingCategory.value || isUpdatingCategory.value);
 
 const openModal = (type: 'add' | 'edit', data: FamilyCategoryRes | null = null) => {
+    if (!canWriteFamily.value) {
+        notify.error("Thông báo", "Bạn không có quyền thực hiện thao tác này");
+        return;
+    }
+
     modalType.value = type;
     editingCategoryId.value = type === 'edit' && data ? Number(data.familyCategoryId) : null;
     isModalOpen.value = true;
@@ -105,6 +114,11 @@ const saveFamily = (payload: FamilyCategoryReq) => {
 };
 
 const deleteFamily = (id: number) => {
+    if (!canDeleteFamily.value) {
+        notify.error("Thông báo", "Bạn không có quyền thực hiện thao tác này");
+        return;
+    }
+
     const confirm = window.confirm("Bạn có muốn xóa gia phả này không !");
 
     if (confirm) {

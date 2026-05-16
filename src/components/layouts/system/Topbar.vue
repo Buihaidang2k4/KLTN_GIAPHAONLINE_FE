@@ -1,14 +1,16 @@
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 import {
     Bell, Sun, Moon, User, LogOut, Settings,
     ChevronDown, ShieldCheck
 } from 'lucide-vue-next'
+import { useLogoutMutation } from '@/hooks/queries/auth/useLogoutMutation';
+import ConfirmForm from '@/components/forms/common/ConfirmForm.vue';
 
-// State
 const isDark = ref(false)
 const notificationCount = ref(3)
 const isProfileOpen = ref(false)
+const isConfirmLogoutOpen = ref(false)
 
 const userProfile = ref({
     name: 'Admin',
@@ -18,6 +20,13 @@ const userProfile = ref({
 
 const toggleProfile = () => {
     isProfileOpen.value = !isProfileOpen.value
+}
+
+const { logout, isLoggingOut } = useLogoutMutation();
+
+const handleLogout = () => {
+    isProfileOpen.value = false;
+    isConfirmLogoutOpen.value = true;
 }
 </script>
 
@@ -118,9 +127,8 @@ const toggleProfile = () => {
 
                     <div class="h-px bg-gray-100 my-1"></div>
 
-                    <button
-                        class="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-500 hover:bg-red-50"
-                    >
+                    <button @click="handleLogout"
+                        class="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-500 hover:bg-red-50">
                         <LogOut :size="14" />
                         Đăng xuất
                     </button>
@@ -128,6 +136,10 @@ const toggleProfile = () => {
             </div>
         </div>
     </header>
+
+    <ConfirmForm :show="isConfirmLogoutOpen" :is-loading="isLoggingOut" title="Xác nhận đăng xuất"
+        description="Bạn có chắc muốn đăng xuất khỏi hệ thống không?" confirm-text="Đăng xuất" cancel-text="Hủy bỏ"
+        variant="danger" @close="isConfirmLogoutOpen = false" @confirm="logout" />
 </template>
 
 <style scoped>

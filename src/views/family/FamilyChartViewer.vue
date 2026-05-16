@@ -17,6 +17,7 @@ import AddChildrenModal from "@/components/forms/family_tree/AddChildrenModal.vu
 import AddFistPersonModal from "@/components/forms/family_tree/AddFistPersonModal.vue";
 import AddPartnerModel from "@/components/forms/family_tree/AddPartnerModel.vue";
 import EditPersonModal from "@/components/forms/family_tree/EditPersonModal.vue";
+import { useFamilyPermissions } from "@/composables/family/useFamilyPermissions";
 
 
 
@@ -374,11 +375,6 @@ onMounted(() => {
           delete args.menu.addSiblings;
         }
 
-        //  ẩn thêm hôn phu với người không có cha mẹ
-        // if (!isMale && args.menu.addPartner && !hasParent && !isInFamily) {
-        //   delete args.menu.addPartner;
-        // }
-
       });
 
       // Nạp dữ liệu vào cây
@@ -387,13 +383,6 @@ onMounted(() => {
     }
   }, 0);
 });
-
-// watch(processedFamilyData, (newData) => {
-//   if (!family || !newData.length) return;
-//   const roots = newData.filter((n: any) => !n.fid && !n.mid).map((n: any) => n.id);
-//   family.config.roots = roots.length ? roots : [newData[0].id];
-//   family.load(newData);
-// }, { immediate: false });
 
 
 watch(processedFamilyData, (newData) => {
@@ -416,18 +405,16 @@ watch(processedFamilyData, (newData) => {
 const familyStore = useFamilyStore();
 const familyId = computed(() => familyStore.currentFamilyId);
 
-const { data: myInfoAccount } = useMyInfoQuery();
-
-const checkRoleAccount = () => {
-
-}
-
+const {
+  canWriteNode,
+  canDeleteNode,
+} = useFamilyPermissions(familyId);
 // ================== ACTION RootFocus  ====================
 const hanldeRootFocus = () => {
   if (!family || !rootId.value) return;
   family.center(rootId.value, {
     ripple: true,
-    zoomState: 0.3,
+    zoomState: 1.5,
     slow: true
   });
 }
@@ -439,6 +426,11 @@ const createFirstPersonMutation = useCreatePersonMutation();
 
 
 const handleAddFirstNodeOpen = () => {
+  if (!canWriteNode.value) {
+    notify.error("Thông báo", "Bạn không có quyền thực hiện thao tác này");
+    return;
+  }
+
   if (isEmpty.value) {
     isModalAddFirstNodeOpen.value = true;
   }
@@ -474,6 +466,11 @@ const addRootPersonMutation = useAddRootMutation();
 
 
 const hanldeAddSiblingOpen = (nodeId: any) => {
+  if (!canWriteNode.value) {
+    notify.error("Thông báo", "Bạn không có quyền thực hiện thao tác này");
+    return;
+  }
+
   const rawData = family.get(nodeId);
   if (rawData) {
     selectedMember.value = structuredClone(rawData);
@@ -508,6 +505,11 @@ const isModalAddChildrenOpen = ref<boolean>(false);
 const createChildrenMutation = useAddChildMutation();
 
 const hanldeClickAddChilren = (nodeId: any) => {
+  if (!canWriteNode.value) {
+    notify.error("Thông báo", "Bạn không có quyền thực hiện thao tác này");
+    return;
+  }
+
   const rawData = family.get(nodeId);
   if (rawData) {
     selectedMember.value = structuredClone(rawData);
@@ -548,6 +550,11 @@ const isModelAddPartnerOpen = ref<boolean>(false);
 const addPartnerMutation = useAddPartnerMutation();
 
 const handleAddPatner = (nodeId: any) => {
+  if (!canWriteNode.value) {
+    notify.error("Thông báo", "Bạn không có quyền thực hiện thao tác này");
+    return;
+  }
+
   const rawData = family.get(nodeId);
   if (rawData) {
     selectedMember.value = structuredClone(rawData);
@@ -587,6 +594,11 @@ const isModalUpdateChildrenOpen = ref<boolean>(false);
 const updatePersonMutation = useUpdatePersonMutation();
 
 const handleEditNode = (nodeId: any) => {
+  if (!canWriteNode.value) {
+    notify.error("Thông báo", "Bạn không có quyền thực hiện thao tác này");
+    return;
+  }
+
   const rawData = family.get(nodeId);
   if (rawData) {
     selectedMember.value = structuredClone(rawData);
@@ -618,6 +630,11 @@ const onEditNode = async (FormData: PersonReq) => {
 const deletePersonMutation = useDeletePersonMutation();
 
 const hanldeRemoveNode = (nodeId: any) => {
+  if (!canDeleteNode.value) {
+    notify.error("Thông báo", "Bạn không có quyền thực hiện thao tác này");
+    return;
+  }
+
   const rawData = family.get(nodeId);
   console.log('Node to remove:', rawData);
   if (rawData) {
@@ -732,8 +749,8 @@ const resetView = async () => {
 <template>
   <div class="flex h-screen flex-col bg-slate-50 font-sans">
     <HeaderFamilyTree v-model="searchQuery" :isMiniMap="isMiniMap" :searchSuggestions="searchSuggestions"
-      @toggleMiniMap="toggleMiniMap" @resetView="resetView" @search="handleSearch" @clearSearch="clearSearch"
-      @selectSuggestion="selectSuggestion" />
+      @toggleMiniMap="toggleMiniMap" @resetView="resetView" @goToRoot="hanldeRootFocus" @search="handleSearch"
+      @clearSearch="clearSearch" @selectSuggestion="selectSuggestion" />
 
 
     <!--  tree -->

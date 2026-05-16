@@ -14,6 +14,8 @@ export const roleKey = {
 
   myRoles: () => [...roleKey.all, "me"] as const,
 
+  isSystem: () => [...roleKey.all, "me", "is-system"] as const,
+
   myRolesByFamily: (familyId: MaybeRefOrGetter<number | null | undefined>) =>
     [...roleKey.myRoles(), "family", toValue(familyId)] as const,
 };
@@ -37,6 +39,13 @@ export const useMyRolesQuery = () => {
   return useQuery({
     queryKey: roleKey.myRoles(),
     queryFn: () => roleService.getMyRoles(),
+  });
+};
+
+export const useIsSystemAccountQuery = () => {
+  return useQuery({
+    queryKey: roleKey.isSystem(),
+    queryFn: () => roleService.isSystemAccount(),
   });
 };
 

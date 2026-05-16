@@ -21,6 +21,8 @@ import AppPagination from '@/components/forms/common/AppPagination.vue'
 import { useFamilyStore } from '@/store/family/useFamilyStore'
 import AddOrUpdateEventForm from '@/components/forms/family_event/AddOrUpdateEventForm.vue'
 import { usePagination } from '@/composables/common/usePagination'
+import { useFamilyPermissions } from '@/composables/family/useFamilyPermissions'
+import { notify } from '@/utils/notify'
 
 const activeTab = ref<'ALL' | 'UPCOMING'>('ALL')
 const familyStore = useFamilyStore()
@@ -139,6 +141,8 @@ watch(debounceKeyword, () => {
 const { mutate: createEventMutation } = useCreateFamilyEventMutation();
 const { mutate: updateEventMutation } = useUpdateFamilyEventMutation();
 const { mutate: deleteEventMutation } = useDeleteFamilyEventMutation();
+const { canManageEvent } = useFamilyPermissions(familyId);
+
 const mode = {
   create: 'create',
   update: 'update',
@@ -154,12 +158,21 @@ const closeEventForm = () => {
 }
 
 const openCreateForm = () => {
+  if (!canManageEvent.value) {
+    notify.error("Thông báo", 'Bạn không có quyền thực hiện thao tác này ')
+    return
+  }
+
   currentMode.value = mode.create
   selectedEvent.value = null
   isShowAddOrUpdateEventForm.value = true
 }
 
 const openUpdateForm = (event: FamilyEventRes) => {
+  if (!canManageEvent.value) {
+    notify.error("Thông báo", 'Bạn không có quyền thực hiện thao tác này ')
+    return
+  }
   currentMode.value = mode.update
   selectedEvent.value = event
   isShowAddOrUpdateEventForm.value = true
@@ -196,6 +209,11 @@ const handleUpdateEvent = (payload: UpdateFamilyEventReq) => {
 
 
 const handleDeleteEvent = (eventId: number) => {
+  if (!canManageEvent.value) {
+    notify.error("Thông báo", 'Bạn không có quyền thực hiện thao tác này ')
+    return
+  }
+
   if (!familyId.value) return
 
   const confirmed = confirm('Bạn có chắc chắn muốn xóa sự kiện này?')

@@ -13,6 +13,8 @@ import {
     useUpdateCeremonyTimelinePreparationMutation,
     useDeleteCeremonyTimelinePreparationMutation
 } from '@/hooks/queries/family/ceremony/useCeremonyTimelinePreparation'
+import { useFamilyStore } from '@/store/family/useFamilyStore'
+import { useFamilyPermissions } from '@/composables/family/useFamilyPermissions'
 
 const props = defineProps<{
     show: boolean
@@ -24,11 +26,15 @@ const emit = defineEmits<{
 }>()
 
 const timelineId = computed(() => props.timeline?.timelineId ?? null)
+const familyStore = useFamilyStore();
+const familyId = computed(() => familyStore.currentFamilyId);
+
 
 const { data: preparationsData } = useCeremonyTimelinePreparationsQuery(timelineId)
 const { mutate: createPreparationMutation } = useCreateCeremonyTimelinePreparationMutation()
 const { mutate: updatePreparationMutation } = useUpdateCeremonyTimelinePreparationMutation()
 const { mutate: deletePreparationMutation } = useDeleteCeremonyTimelinePreparationMutation()
+const { canManageCeremony } = useFamilyPermissions(familyId);
 
 const preparations = computed(() => preparationsData.value?.data?.items ?? [])
 const editingPreparationId = ref<number | null>(null)
@@ -81,6 +87,11 @@ const validateForm = () => {
 }
 
 const handleSubmit = () => {
+    if (!canManageCeremony.value) {
+        notify.error("Thông báo", "Bạn không có quyền thực hiện thao tác này")
+        return
+    }
+
     if (!validateForm() || !timelineId.value) return
 
     const payload: CeremonyTimelinePreparationReq = {
@@ -125,6 +136,10 @@ const handleSubmit = () => {
 }
 
 const handleEdit = (item: CeremonyTimelinePreparationRes) => {
+    if (!canManageCeremony.value) {
+        notify.error("Thông báo", "Bạn không có quyền thực hiện thao tác này")
+        return
+    }
     editingPreparationId.value = item.preparationId
     Object.assign(form, {
         timelineId: item.timelineId,
@@ -138,6 +153,11 @@ const handleEdit = (item: CeremonyTimelinePreparationRes) => {
 }
 
 const handleDelete = (preparationId: number) => {
+    if (!canManageCeremony.value) {
+        notify.error("Thông báo", "Bạn không có quyền thực hiện thao tác này")
+        return
+    }
+
     if (!window.confirm('Bạn có chắc muốn xóa lễ vật này không?')) return
 
     deletePreparationMutation(preparationId, {
@@ -168,26 +188,31 @@ const handleClose = () => {
                 <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]" @click="handleClose"></div>
 
                 <!-- Modal Container -->
-                <div class="relative w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden rounded-[2.5rem] bg-[#fefaf6] shadow-2xl border border-amber-200/30 animate-in fade-in zoom-in duration-300">
-                    
+                <div
+                    class="relative w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden rounded-[2.5rem] bg-[#fefaf6] shadow-2xl border border-amber-200/30 animate-in fade-in zoom-in duration-300">
+
                     <!-- Subtle Ornaments -->
-                    <div class="absolute top-0 right-0 w-32 h-32 bg-[radial-gradient(circle_at_top_right,rgba(180,83,9,0.03),transparent)] pointer-events-none"></div>
+                    <div
+                        class="absolute top-0 right-0 w-32 h-32 bg-[radial-gradient(circle_at_top_right,rgba(180,83,9,0.03),transparent)] pointer-events-none">
+                    </div>
                     <div class="absolute top-6 left-6 text-amber-900/[0.02] pointer-events-none">
                         <Gift :size="120" />
                     </div>
 
                     <!-- Header Section -->
                     <div class="relative shrink-0 px-8 pt-8 pb-4 text-center border-b border-amber-100/50">
-                        <div class="inline-flex items-center gap-1.5 mb-2 px-2.5 py-0.5 bg-amber-50 rounded-full border border-amber-100/50">
+                        <div
+                            class="inline-flex items-center gap-1.5 mb-2 px-2.5 py-0.5 bg-amber-50 rounded-full border border-amber-100/50">
                             <Sparkles :size="12" class="text-amber-600" />
-                            <span class="text-[9px] font-bold text-amber-700 uppercase tracking-widest">Lễ vật truyền thống</span>
+                            <span class="text-[9px] font-bold text-amber-700 uppercase tracking-widest">Lễ vật truyền
+                                thống</span>
                         </div>
                         <h2 class="text-2xl font-black text-slate-900 tracking-tight">Quản lý lễ vật</h2>
                         <p class="mt-1 text-xs text-slate-500 font-bold uppercase tracking-tighter">
                             {{ timeline?.stepName || 'Bước chuẩn bị' }}
                         </p>
 
-                        <button @click="handleClose" 
+                        <button @click="handleClose"
                             class="absolute top-6 right-8 p-1.5 rounded-full hover:bg-amber-50 text-slate-400 hover:text-amber-600 transition-all active:scale-90">
                             <X :size="20" />
                         </button>
@@ -195,35 +220,41 @@ const handleClose = () => {
 
                     <!-- Main Content -->
                     <div class="flex min-h-0 flex-1 flex-col md:flex-row">
-                        
+
                         <!-- Left: List View -->
-                        <div class="flex min-h-0 flex-col md:w-[55%] border-b md:border-b-0 md:border-r border-amber-100/50">
+                        <div
+                            class="flex min-h-0 flex-col md:w-[55%] border-b md:border-b-0 md:border-r border-amber-100/50">
                             <div class="shrink-0 px-6 py-4 bg-amber-50/20">
                                 <div class="flex items-center gap-2">
                                     <div class="w-1.5 h-4 bg-amber-500 rounded-full"></div>
-                                    <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Danh mục cần chuẩn bị</h4>
+                                    <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Danh mục cần
+                                        chuẩn bị</h4>
                                 </div>
                             </div>
 
                             <div class="custom-scrollbar flex-1 overflow-y-auto p-6 bg-amber-50/10">
-                                <div v-if="!preparations.length" class="flex flex-col items-center justify-center h-full py-12 opacity-40">
+                                <div v-if="!preparations.length"
+                                    class="flex flex-col items-center justify-center h-full py-12 opacity-40">
                                     <Scroll :size="48" class="text-amber-900 mb-3" />
-                                    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Chưa có lễ vật nào</p>
+                                    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Chưa có lễ vật
+                                        nào</p>
                                 </div>
 
                                 <div v-else class="space-y-4">
-                                    <div v-for="item in preparations" :key="item.preparationId" 
-                                        :class="[
-                                            'relative rounded-[1.25rem] border p-5 transition-all duration-300 group',
-                                            editingPreparationId === item.preparationId
-                                                ? 'border-amber-400 bg-white shadow-lg ring-4 ring-amber-500/5'
-                                                : 'border-amber-200/40 bg-white hover:border-amber-300 hover:shadow-md'
-                                        ]">
+                                    <div v-for="item in preparations" :key="item.preparationId" :class="[
+                                        'relative rounded-[1.25rem] border p-5 transition-all duration-300 group',
+                                        editingPreparationId === item.preparationId
+                                            ? 'border-amber-400 bg-white shadow-lg ring-4 ring-amber-500/5'
+                                            : 'border-amber-200/40 bg-white hover:border-amber-300 hover:shadow-md'
+                                    ]">
                                         <div class="flex items-start justify-between gap-4">
                                             <div class="min-w-0 flex-1">
                                                 <!-- Title and Badge -->
                                                 <div class="flex items-start gap-2 mb-2">
-                                                    <p class="font-black text-slate-900 text-base leading-none pt-1 truncate">{{ item.itemName }}</p>
+                                                    <p
+                                                        class="font-black text-slate-900 text-base leading-none pt-1 truncate">
+                                                        {{ item.itemName }}
+                                                    </p>
                                                     <span :class="[
                                                         'shrink-0 px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-tighter',
                                                         item.required
@@ -236,26 +267,33 @@ const handleClose = () => {
 
                                                 <!-- Metadata Grid -->
                                                 <div class="flex flex-wrap items-center gap-y-2 gap-x-4">
-                                                    <div class="flex items-center gap-1.5 px-2 py-1 bg-amber-50 rounded-lg border border-amber-100">
-                                                        <span class="text-[10px] font-black text-amber-800">{{ item.quantity }}</span>
-                                                        <span class="text-[9px] font-bold text-amber-600 uppercase tracking-tighter">{{ item.unit }}</span>
+                                                    <div
+                                                        class="flex items-center gap-1.5 px-2 py-1 bg-amber-50 rounded-lg border border-amber-100">
+                                                        <span
+                                                            class="text-[10px] font-black text-amber-800">{{ item.quantity }}</span>
+                                                        <span
+                                                            class="text-[9px] font-bold text-amber-600 uppercase tracking-tighter">{{ item.unit }}</span>
                                                     </div>
-                                                    <div class="flex items-center gap-1.5 px-2 py-1 bg-slate-50 rounded-lg border border-slate-100">
+                                                    <div
+                                                        class="flex items-center gap-1.5 px-2 py-1 bg-slate-50 rounded-lg border border-slate-100">
                                                         <BookmarkCheck :size="10" class="text-slate-400" />
-                                                        <span class="text-[10px] font-bold text-slate-600 uppercase tracking-tighter">{{ item.itemType }}</span>
+                                                        <span
+                                                            class="text-[10px] font-bold text-slate-600 uppercase tracking-tighter">{{ item.itemType }}</span>
                                                     </div>
                                                 </div>
 
                                                 <!-- Note -->
                                                 <div v-if="item.note" class="mt-3 pl-3 border-l-2 border-amber-200/50">
-                                                    <p class="text-xs text-slate-500 font-medium leading-relaxed italic">
+                                                    <p
+                                                        class="text-xs text-slate-500 font-medium leading-relaxed italic">
                                                         "{{ item.note }}"
                                                     </p>
                                                 </div>
                                             </div>
 
                                             <!-- Actions -->
-                                            <div class="flex shrink-0 gap-1.5 md:opacity-0 group-hover:opacity-100 transition-all duration-300">
+                                            <div
+                                                class="flex shrink-0 gap-1.5 md:opacity-0 group-hover:opacity-100 transition-all duration-300">
                                                 <button type="button" @click="handleEdit(item)"
                                                     class="p-2.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-xl border border-transparent hover:border-amber-100 transition-all shadow-sm bg-white md:bg-transparent">
                                                     <Pencil :size="16" />
@@ -286,7 +324,8 @@ const handleClose = () => {
                                 <div class="space-y-5">
                                     <!-- Tên lễ vật -->
                                     <div class="space-y-1.5">
-                                        <label class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
+                                        <label
+                                            class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
                                             <BookmarkCheck :size="14" class="text-amber-600/70" />
                                             Tên lễ vật <span class="text-red-400">*</span>
                                         </label>
@@ -297,7 +336,8 @@ const handleClose = () => {
 
                                     <div class="grid grid-cols-2 gap-4">
                                         <div class="space-y-1.5">
-                                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
+                                            <label
+                                                class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
                                                 Loại <span class="text-red-400">*</span>
                                             </label>
                                             <input v-model="form.itemType" type="text"
@@ -305,7 +345,8 @@ const handleClose = () => {
                                                 placeholder="Lễ vật" />
                                         </div>
                                         <div class="space-y-1.5">
-                                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
+                                            <label
+                                                class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
                                                 Số lượng <span class="text-red-400">*</span>
                                             </label>
                                             <input v-model.number="form.quantity" type="number" min="1"
@@ -314,7 +355,8 @@ const handleClose = () => {
                                     </div>
 
                                     <div class="space-y-1.5">
-                                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
+                                        <label
+                                            class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
                                             Đơn vị tính <span class="text-red-400">*</span>
                                         </label>
                                         <input v-model="form.unit" type="text"
@@ -323,7 +365,8 @@ const handleClose = () => {
                                     </div>
 
                                     <div class="space-y-1.5">
-                                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
+                                        <label
+                                            class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
                                             Ghi chú
                                         </label>
                                         <textarea v-model="form.note" rows="3"
@@ -331,15 +374,18 @@ const handleClose = () => {
                                             placeholder="Thêm hướng dẫn chuẩn bị..."></textarea>
                                     </div>
 
-                                    <label class="flex items-center gap-3 p-3 rounded-xl border border-amber-100 bg-amber-50/30 cursor-pointer hover:bg-amber-50 transition group">
+                                    <label
+                                        class="flex items-center gap-3 p-3 rounded-xl border border-amber-100 bg-amber-50/30 cursor-pointer hover:bg-amber-50 transition group">
                                         <div class="relative flex items-center justify-center">
                                             <input v-model="form.required" type="checkbox"
                                                 class="peer h-5 w-5 opacity-0 absolute z-10 cursor-pointer" />
-                                            <div class="h-5 w-5 bg-white border-2 border-amber-200 rounded-md peer-checked:bg-amber-500 peer-checked:border-amber-500 transition-all flex items-center justify-center">
+                                            <div
+                                                class="h-5 w-5 bg-white border-2 border-amber-200 rounded-md peer-checked:bg-amber-500 peer-checked:border-amber-500 transition-all flex items-center justify-center">
                                                 <X :size="14" class="text-white rotate-45" v-if="form.required" />
                                             </div>
                                         </div>
-                                        <span class="text-xs font-bold text-amber-800/80 uppercase tracking-wider">Bắt buộc chuẩn bị</span>
+                                        <span class="text-xs font-bold text-amber-800/80 uppercase tracking-wider">Bắt
+                                            buộc chuẩn bị</span>
                                     </label>
                                 </div>
                             </div>
@@ -358,9 +404,11 @@ const handleClose = () => {
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Decorative footer line -->
-                    <div class="h-1.5 w-full bg-[linear-gradient(90deg,transparent_0%,#d97706_50%,transparent_100%)] opacity-10"></div>
+                    <div
+                        class="h-1.5 w-full bg-[linear-gradient(90deg,transparent_0%,#d97706_50%,transparent_100%)] opacity-10">
+                    </div>
                 </div>
             </div>
         </Transition>

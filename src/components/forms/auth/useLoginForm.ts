@@ -1,11 +1,11 @@
 import { useLoginMutation } from "@/hooks/queries/auth/useLoginMutation";
+import { roleService } from "@/services/role.service";
 import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
 
 export function useLoginForm() {
     const router = useRouter();
     const { loginAsync, isLoggingIn } = useLoginMutation();
-    
 
     const email = ref("");
     const password = ref("");
@@ -45,17 +45,19 @@ export function useLoginForm() {
     const submit = async () => {
         if (!validate()) return;
 
-        await loginAsync({
-            email: email.value.trim(),
-            password: password.value,
-        })
-
-        router.push("/family");
+        await loginAsync(
+            { email: email.value.trim(), password: password.value },
+            {
+                onSuccess: async () => {
+                    const res = await roleService.isSystemAccount();
+                    if (res.data === true) router.push('/system');
+                    else router.push('/family');
+                }
+            }
+        );
     }
 
-    const isSubmitDisabled = computed(() => {
-        return isLoggingIn.value;
-    });
+    const isSubmitDisabled = computed(() => isLoggingIn.value);
 
     return {
         email,

@@ -18,6 +18,11 @@ export const roleService = {
     return res.data;
   },
 
+  isSystemAccount: async (): Promise<ApiResponse<boolean>> => {
+    const res = await api.get<ApiResponse<boolean>>("/roles/me/is-system");
+    return res.data;
+  },
+
   getMyRolesByFamily: async (
     familyId: MaybeRefOrGetter<number | null | undefined>
   ): Promise<ApiResponse<RoleRes[]>> => {

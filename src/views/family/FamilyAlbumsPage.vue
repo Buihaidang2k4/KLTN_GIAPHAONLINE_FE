@@ -38,6 +38,7 @@ import PreviewImageModal from '@/components/forms/album/PreviewImageModal.vue'
 import PreviewVideoModal from '@/components/forms/album/PreviewVideoModal.vue'
 import PreviewDocsModal from '@/components/forms/album/PreviewDocsModal.vue'
 import UploadMediaForm from '@/components/forms/album/UploadMediaForm.vue'
+import { useFamilyPermissions } from '@/composables/family/useFamilyPermissions'
 
 const keyword = ref('')
 const debounceKeyword = refDebounced(keyword, 400)
@@ -52,6 +53,7 @@ const isShowUploadModal = ref(false)
 const { mutate: createAlbumMutation, isPending: isCreatingAlbum } = useCreateAlbumMutation()
 const { mutate: updateAlbumMutation, isPending: isUpdatingAlbum } = useUpdateAlbumMutation()
 const { mutate: deleteAlbumMutation } = useDeleteAlbumMutation()
+const { canManageAlbum } = useFamilyPermissions(familyId);
 
 const {
   pagination,
@@ -80,11 +82,21 @@ watch(
 )
 
 const openFormCreateAlbum = () => {
+  if (!canManageAlbum.value) {
+    notify.error("Thông báo", 'Bạn không có quyền thực hiện thao tác này ')
+    return
+  }
+
   mode.value = 'create'
   isShowAlbumForm.value = true
 }
 
 const openFormUpdateAlbum = (album: AlbumRes) => {
+  if (!canManageAlbum.value) {
+    notify.error("Thông báo", 'Bạn không có quyền thực hiện thao tác này ')
+    return
+  }
+
   mode.value = 'update'
   isShowAlbumForm.value = true
   edittingAlbum.value = album
@@ -119,6 +131,11 @@ const handleCreateAlbum = (payload: AlbumReq) => {
 }
 
 const handleDeleteAlbum = (id: number) => {
+  if (!canManageAlbum.value) {
+    notify.error("Thông báo", 'Bạn không có quyền thực hiện thao tác này ')
+    return
+  }
+
   if (!id) {
     notify.error('Thông báo', 'Không tìm thấy album')
     return
@@ -195,6 +212,11 @@ const closePreviewDocsModal = () => {
 }
 
 const handleDeleteMedia = (mediaId: number) => {
+  if (!canManageAlbum.value) {
+    notify.error("Thông báo", 'Bạn không có quyền thực hiện thao tác này ')
+    return
+  }
+
   if (!mediaId) {
     notify.error('Thông báo', 'Không tìm thấy media')
     return
@@ -215,6 +237,11 @@ const handleDeleteMedia = (mediaId: number) => {
 }
 
 const openUploadModal = () => {
+  if (!canManageAlbum.value) {
+    notify.error("Thông báo", 'Bạn không có quyền thực hiện thao tác này ')
+    return
+  }
+
   isShowUploadModal.value = true
 }
 
@@ -250,8 +277,7 @@ const handleDownloadMedia = async (media: AlbumMediaRes) => {
 </script>
 
 <template>
-  <div
-    class="min-h-screen bg-[#fbfaf5] p-4 font-sans text-slate-900 md:p-8">
+  <div class="min-h-screen bg-[#fbfaf5] p-4 font-sans text-slate-900 md:p-8">
     <CreateOrUpdateAlbumForm :mode="mode" :album="edittingAlbum" :show="isShowAlbumForm" :family-id="familyId"
       :is-loading="isCreatingAlbum || isUpdatingAlbum" @close="closeFormAlbum" @create="handleCreateAlbum"
       @update="handelUpdateAlbum" />
