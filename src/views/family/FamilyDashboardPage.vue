@@ -39,7 +39,7 @@ const quickActions = [
   { label: 'Phong tục', icon: Scroll, color: 'text-violet-600', bg: 'bg-violet-50', route: '/family/phong-tuc' },
 ]
 
-const params = ref({ page: 0, size: 4, keyword: '', option: 'UPCOMING' })
+const params = ref({ page: 0, size: 5, keyword: '', option: 'UPCOMING' })
 const { data: familyEventsData } = useFamilyEventsByFamilyQuery(familyId, params)
 const safeEvents = computed<FamilyEventRes[]>(() => familyEventsData.value?.data?.items ?? [])
 

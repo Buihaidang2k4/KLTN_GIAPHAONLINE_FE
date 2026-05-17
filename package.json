@@ -19,6 +19,7 @@
     "@wangeditor/editor": "^5.1.23",
     "@wangeditor/editor-for-vue": "^5.1.12",
     "axios": "^1.13.2",
+    "jspdf": "^4.2.1",
     "lucide-vue-next": "^0.562.0",
     "pinia": "^3.0.4",
     "pinia-plugin-persistedstate": "^4.7.1",

@@ -61,7 +61,7 @@ export const useFamilySubscriptionStore = defineStore('familySubscription', () =
 
   const guardAddAdmin = (): boolean => {
     if (!canAddAdmin.value) {
-      notify.error('Thông báo', `Đã đạt giới hạn ${maxAdmin.value} quản trị viên của gói ${planName.value}`)
+      notify.error('Thông báo', `Đã đạt giới hạn ${maxAdmin.value} quản trị viên của gói ${planName.value} `)
       return false
     }
     return true

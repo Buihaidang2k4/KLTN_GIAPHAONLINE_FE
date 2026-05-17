@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import FamilyTreePreview from "@/components/family_tree/TreeChartPreview.vue";
+import FamilyTreePreview from "@/components/forms/family_tree/TreeChartPreview.vue";
 import { ref } from "vue";
 
 const familyNodes = [
@@ -12,15 +12,15 @@ const familyNodes = [
 //  droppdown export gia pha 
 const isExportMenuOpen = ref(false);
 
-// const runExport = (type: string) => {
-//     if (!family) return;
+const runExport = (type: string) => {
+    if (!family) return;
 
-//     if (type === 'pdf') family.exportPDF({ filename: "Gia-pha.pdf" });
-//     if (type === 'png') family.exportPNG({ filename: "Gia-pha.png" });
-//     if (type === 'svg') family.exportSVG({ filename: "Gia-pha.svg" });
+    if (type === 'pdf') family.exportPDF({ filename: "Gia-pha.pdf" });
+    if (type === 'png') family.exportPNG({ filename: "Gia-pha.png" });
+    if (type === 'svg') family.exportSVG({ filename: "Gia-pha.svg" });
 
-//     isExportMenuOpen.value = false;
-// };
+    isExportMenuOpen.value = false;
+};
 
 </script>
 

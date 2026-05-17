@@ -133,12 +133,12 @@ const handleClose = () => {
 }
 
 const totalSizeMb = computed(() =>
-  selectedFiles.value.reduce((sum, file) => sum + file.size, 0) / (1024 * 1024)
+    selectedFiles.value.reduce((sum, file) => sum + file.size, 0) / (1024 * 1024)
 )
 
 
 const handleUpload = () => {
-    if (!subStore.guardUploadStorage(totalSizeMb)) return
+    if (!subStore.guardUploadStorage(totalSizeMb.value)) return
 
     if (!props.albumId) {
         notify.error('Thông báo', 'Không tìm thấy album')
@@ -284,7 +284,8 @@ const handleUpload = () => {
                                         <div class="min-w-0">
                                             <p class="truncate text-xs font-bold text-slate-800">{{ file.name }}</p>
                                             <p class="text-[10px] font-bold text-slate-400 uppercase">
-                                                {{ formatByte(file.size) }}</p>
+                                                {{ formatByte(file.size) }}
+                                            </p>
                                         </div>
                                     </div>
 

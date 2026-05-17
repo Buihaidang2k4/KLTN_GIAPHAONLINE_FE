@@ -130,14 +130,14 @@ const deleteFamily = (id: number) => {
     return
 };
 
-const viewDetail = (category: FamilyCategoryRes) => {
+const viewDetail = async (category: FamilyCategoryRes) => {
     const categoryId = Number(category.familyCategoryId);
 
     if (!categoryId) return;
 
     showToast(`Đang mở danh mục: ${category.familyName}`);
 
-    router.push({
+    await router.push({
         name: "FamilyChart",
         query: {
             categoryId
@@ -224,7 +224,8 @@ const viewDetail = (category: FamilyCategoryRes) => {
                         </div>
 
                         <div class="absolute right-3 top-3">
-                            <span class="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-black/45 px-2.5 py-1 text-[9px] font-bold tracking-wide text-white shadow-[0_2px_8px_rgba(0,0,0,0.2)] backdrop-blur-md">
+                            <span
+                                class="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-black/45 px-2.5 py-1 text-[9px] font-bold tracking-wide text-white shadow-[0_2px_8px_rgba(0,0,0,0.2)] backdrop-blur-md">
                                 <Users :size="10" class="text-amber-300" />
                                 {{ family.totalPerson }} thành viên
                             </span>

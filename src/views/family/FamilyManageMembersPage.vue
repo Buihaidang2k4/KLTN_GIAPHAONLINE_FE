@@ -71,9 +71,9 @@ function goToInvitationDetail() {
 }
 
 function handleAddMemberSubmit(form: CreateFamilyInvitationReq) {
-    if (!subStore.guardAddAdmin || form.roleName === "FAMILY_ADMIN") {
-        return;
-    }
+   // Chỉ check quota admin khi mời với role FAMILY_ADMIN
+    if (form.roleName === 'FAMILY_ADMIN' && !subStore.guardAddAdmin()) return;
+
 
     if (!familyId.value) return;
     closeFrom();
