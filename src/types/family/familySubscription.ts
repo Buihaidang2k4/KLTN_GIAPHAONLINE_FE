@@ -4,6 +4,11 @@ export interface FamilySubscriptionRes {
     createdByAccountId: number;
     planName: string;
     planCode: string;
+    price: string;
+    maxPerson: number;
+    maxAdmin: number;
+    maxStorageMb: number;
+    durationMonth: number;
     status: string;
     autoRenewal: boolean;
     startDate: string;
@@ -12,4 +17,10 @@ export interface FamilySubscriptionRes {
     updatedAt: string;
     canceledAt: string | null
     expiredAt: string | null
+}
+
+export interface FamilySubscriptionCheckQuotaRes {
+    currentPersonCount: number;
+    currentStorageUsedMb: number;
+    currentAdminCount: number;
 }

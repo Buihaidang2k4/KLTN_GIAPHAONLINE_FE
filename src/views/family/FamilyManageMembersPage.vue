@@ -14,14 +14,18 @@ import { useFamilyStore } from "@/store/family/useFamilyStore"
 import { useFamilyPermissions } from "@/composables/family/useFamilyPermissions"
 import { notify } from "@/utils/notify"
 import { useMyInfoQuery } from "@/hooks/queries/account/useAccount"
+import { useFamilySubscriptionStore } from "@/store/family/useFamilySubscriptionStore"
 
 const searchKeyword = ref("")
 const router = useRouter();
 const familyStore = useFamilyStore();
 
 const familyId = computed(() => familyStore.currentFamilyId);
+// check permission
 const { canManageMember, withPermission } = useFamilyPermissions(familyId);
 
+// check quota
+const subStore = useFamilySubscriptionStore();
 
 const {
     data: familyMembersData,
@@ -67,8 +71,11 @@ function goToInvitationDetail() {
 }
 
 function handleAddMemberSubmit(form: CreateFamilyInvitationReq) {
+    if (!subStore.guardAddAdmin || form.roleName === "FAMILY_ADMIN") {
+        return;
+    }
+
     if (!familyId.value) return;
-    console.log("submitt add member", familyId.value, form.invitedEmail, form.message, form.roleName)
     closeFrom();
 
     //  api 

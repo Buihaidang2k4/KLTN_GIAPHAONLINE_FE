@@ -15,6 +15,7 @@ import {
 import { formatByte } from '@/utils/format-byte'
 import { useUploadMultipleAlbumMediaMutation } from '@/hooks/queries/family/album/useAlbum'
 import { notify } from '@/utils/notify'
+import { useFamilySubscriptionStore } from '@/store/family/useFamilySubscriptionStore'
 
 const props = defineProps<{
     show: boolean
@@ -31,6 +32,8 @@ const selectedFiles = ref<File[]>([])
 const isUploading = ref(false)
 
 const { mutate: uploadMediaMutation } = useUploadMultipleAlbumMediaMutation()
+// check quota
+const subStore = useFamilySubscriptionStore();
 
 const acceptedMimeTypes = [
     'image/jpeg',
@@ -129,7 +132,14 @@ const handleClose = () => {
     emit('close')
 }
 
+const totalSizeMb = computed(() =>
+  selectedFiles.value.reduce((sum, file) => sum + file.size, 0) / (1024 * 1024)
+)
+
+
 const handleUpload = () => {
+    if (!subStore.guardUploadStorage(totalSizeMb)) return
+
     if (!props.albumId) {
         notify.error('Thông báo', 'Không tìm thấy album')
         return
@@ -173,20 +183,23 @@ const handleUpload = () => {
                 <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]" @click="handleClose"></div>
 
                 <!-- Modal Container -->
-                <div class="relative w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden rounded-[2.5rem] bg-[#fefaf6] shadow-2xl border border-amber-200/30 animate-in fade-in zoom-in duration-300">
-                    
+                <div
+                    class="relative w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden rounded-[2.5rem] bg-[#fefaf6] shadow-2xl border border-amber-200/30 animate-in fade-in zoom-in duration-300">
+
                     <!-- Header -->
                     <div class="relative shrink-0 px-8 pt-8 pb-4 text-center md:text-left">
-                        <div class="inline-flex items-center gap-1.5 mb-2 px-2.5 py-0.5 bg-amber-50 rounded-full border border-amber-100/50">
+                        <div
+                            class="inline-flex items-center gap-1.5 mb-2 px-2.5 py-0.5 bg-amber-50 rounded-full border border-amber-100/50">
                             <Sparkles :size="12" class="text-amber-600" />
-                            <span class="text-[9px] font-bold text-amber-700 uppercase tracking-widest">Tải lên kỷ niệm</span>
+                            <span class="text-[9px] font-bold text-amber-700 uppercase tracking-widest">Tải lên kỷ
+                                niệm</span>
                         </div>
                         <h2 class="text-2xl font-black text-slate-900 tracking-tight">Thêm nội dung mới</h2>
                         <p class="mt-1 text-xs text-slate-500 font-medium leading-relaxed">
                             Đưa những thước phim, hình ảnh và tài liệu quý giá vào kho lưu trữ của dòng tộc.
                         </p>
 
-                        <button @click="handleClose" 
+                        <button @click="handleClose"
                             class="absolute top-8 right-8 p-1.5 rounded-full hover:bg-amber-50 text-slate-400 hover:text-amber-600 transition-all active:scale-90">
                             <X :size="20" />
                         </button>
@@ -201,9 +214,10 @@ const handleUpload = () => {
                                 ? 'border-amber-400 bg-amber-50/50 ring-4 ring-amber-500/5'
                                 : 'border-slate-200 bg-white hover:border-amber-300 hover:bg-amber-50/10'
                         ]" @dragover="handleDragOver" @dragleave="handleDragLeave" @drop="handleDrop">
-                            
+
                             <!-- Ornament -->
-                            <div class="absolute -bottom-4 -right-4 text-amber-900/[0.03] pointer-events-none group-hover:scale-110 transition-transform duration-500">
+                            <div
+                                class="absolute -bottom-4 -right-4 text-amber-900/[0.03] pointer-events-none group-hover:scale-110 transition-transform duration-500">
                                 <CloudUpload :size="120" />
                             </div>
 
@@ -215,8 +229,10 @@ const handleUpload = () => {
                                     <CloudUpload :size="32" />
                                 </div>
 
-                                <h4 class="text-sm font-black text-slate-800 uppercase tracking-widest">Thả tệp vào đây</h4>
-                                <p class="mt-1 text-[10px] font-bold text-slate-400 uppercase tracking-tighter">hoặc nhấp để chọn từ thiết bị</p>
+                                <h4 class="text-sm font-black text-slate-800 uppercase tracking-widest">Thả tệp vào đây
+                                </h4>
+                                <p class="mt-1 text-[10px] font-bold text-slate-400 uppercase tracking-tighter">hoặc
+                                    nhấp để chọn từ thiết bị</p>
 
                                 <label class="mt-5">
                                     <input type="file" multiple :accept="acceptedMimeTypes.join(',')" class="hidden"
@@ -236,7 +252,8 @@ const handleUpload = () => {
                                 <div class="flex items-center gap-2">
                                     <div class="w-1 h-1 rounded-full bg-amber-500"></div>
                                     <p class="text-[10px] font-bold text-slate-900 uppercase tracking-widest">
-                                        {{ selectedFiles.length }} tệp đã chọn <span class="text-slate-400 ml-1">({{ allFilesSize }})</span>
+                                        {{ selectedFiles.length }} tệp đã chọn <span class="text-slate-400 ml-1">({{
+                                            allFilesSize }})</span>
                                     </p>
                                 </div>
                                 <button type="button" @click="clearFiles"
@@ -247,7 +264,8 @@ const handleUpload = () => {
                             </div>
 
                             <div class="space-y-2.5 max-h-56 overflow-y-auto custom-scrollbar pr-1">
-                                <div v-for="(file, index) in selectedFiles" :key="file.name + file.size + file.lastModified"
+                                <div v-for="(file, index) in selectedFiles"
+                                    :key="file.name + file.size + file.lastModified"
                                     class="flex items-center justify-between rounded-2xl border border-amber-100/50 bg-white p-3 shadow-sm group hover:border-amber-200 transition-all">
                                     <div class="flex min-w-0 items-center gap-3">
                                         <div :class="[
@@ -265,7 +283,8 @@ const handleUpload = () => {
 
                                         <div class="min-w-0">
                                             <p class="truncate text-xs font-bold text-slate-800">{{ file.name }}</p>
-                                            <p class="text-[10px] font-bold text-slate-400 uppercase">{{ formatByte(file.size) }}</p>
+                                            <p class="text-[10px] font-bold text-slate-400 uppercase">
+                                                {{ formatByte(file.size) }}</p>
                                         </div>
                                     </div>
 
@@ -278,10 +297,12 @@ const handleUpload = () => {
                         </div>
 
                         <!-- Info Note -->
-                        <div class="mt-6 p-4 bg-amber-50/40 rounded-2xl border border-amber-100/30 flex items-start gap-3">
+                        <div
+                            class="mt-6 p-4 bg-amber-50/40 rounded-2xl border border-amber-100/30 flex items-start gap-3">
                             <Scroll :size="16" class="text-amber-600 shrink-0 mt-0.5" />
                             <div>
-                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Định dạng hỗ trợ</p>
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Định dạng
+                                    hỗ trợ</p>
                                 <p class="text-[11px] font-bold text-slate-700 leading-relaxed">
                                     JPG, PNG, WebP • MP4, MOV, WebM • PDF, DOC, XLS, PPT, TXT
                                 </p>
@@ -290,7 +311,8 @@ const handleUpload = () => {
                     </div>
 
                     <!-- Fixed Footer Actions -->
-                    <div class="shrink-0 flex items-center justify-end gap-3 px-8 py-5 border-t border-amber-100/30 bg-[#fefaf6]/80 backdrop-blur-sm">
+                    <div
+                        class="shrink-0 flex items-center justify-end gap-3 px-8 py-5 border-t border-amber-100/30 bg-[#fefaf6]/80 backdrop-blur-sm">
                         <button type="button" @click="handleClose"
                             class="px-8 py-2.5 rounded-xl text-xs font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-all">
                             Quay lại
@@ -298,14 +320,18 @@ const handleUpload = () => {
 
                         <button type="button" @click="handleUpload" :disabled="!selectedFiles.length || isUploading"
                             class="flex items-center gap-2 px-10 py-2.5 rounded-xl bg-slate-900 text-white font-bold text-xs shadow-lg shadow-slate-200 hover:bg-slate-800 transition-all active:scale-[0.98] disabled:opacity-40">
-                            <div v-if="isUploading" class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                            <div v-if="isUploading"
+                                class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent">
+                            </div>
                             <Upload v-else :size="16" />
                             <span>{{ isUploading ? 'Đang tải...' : 'Bắt đầu tải lên' }}</span>
                         </button>
                     </div>
-                    
+
                     <!-- Decorative footer line -->
-                    <div class="h-1.5 w-full bg-[linear-gradient(90deg,transparent_0%,#d97706_50%,transparent_100%)] opacity-10"></div>
+                    <div
+                        class="h-1.5 w-full bg-[linear-gradient(90deg,transparent_0%,#d97706_50%,transparent_100%)] opacity-10">
+                    </div>
                 </div>
             </div>
         </Transition>

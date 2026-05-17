@@ -57,8 +57,12 @@ const invoice = computed(() => ({
     maxAdmin: safeSubscriptionPlan.value?.maxAdmin,
     maxStorageMb: safeSubscriptionPlan.value?.maxStorageMb,
     durationMonth: safeSubscriptionPlan.value?.durationMonth,
-    startDate: formatDate(new Date()),
-    endDate: formatDate(new Date()),
+    startDate: new Date().toISOString().split('T')[0],
+    endDate: (() => {
+        const d = new Date();
+        d.setMonth(d.getMonth() + (safeSubscriptionPlan.value?.durationMonth || 1));
+        return d.toISOString().split('T')[0];
+    })(),
 
     amount: formatMoney(safeSubscriptionPlan.value?.price),
     discount: 0,

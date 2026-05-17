@@ -2,6 +2,17 @@
 import { RouterView } from 'vue-router';
 import NavBar from './NavBar.vue';
 import TopBar from './TopBar.vue';
+import { useFamilyStore } from '@/store/family/useFamilyStore';
+import { computed } from 'vue';
+import { useFamilySubscriptionStore } from '@/store/family/useFamilySubscriptionStore';
+
+
+
+const familyStore = useFamilyStore()
+const familyId = computed(() => familyStore.currentFamilyId)
+const subStore = useFamilySubscriptionStore()
+subStore.init(familyId)
+
 </script>
 
 <template>

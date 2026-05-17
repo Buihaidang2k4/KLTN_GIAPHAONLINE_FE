@@ -1394,6 +1394,7 @@ import AddFistPersonModal from "@/components/forms/family_tree/AddFistPersonModa
 import AddPartnerModel from "@/components/forms/family_tree/AddPartnerModel.vue";
 import EditPersonModal from "@/components/forms/family_tree/EditPersonModal.vue";
 import { useFamilyPermissions } from "@/composables/family/useFamilyPermissions";
+import { useFamilySubscriptionStore } from "@/store/family/useFamilySubscriptionStore";
 
 const iconMenu = {
   addSiblings:
@@ -1489,6 +1490,7 @@ function getDisplayIdsForView(rootId: number, nodes: any[]): number[] {
   return Array.from(resultSet);
 }
 
+// Dữ liệu hiển thị trên cây (có thể bị lọc theo chế độ xem đời sau)
 const displayFamilyData = computed(() => {
   if (viewRootId.value === null) {
     return processedFamilyData.value;
@@ -1730,6 +1732,8 @@ watch(
 const familyStore = useFamilyStore();
 const familyId = computed(() => familyStore.currentFamilyId);
 const { canWriteNode, canDeleteNode, withPermission } = useFamilyPermissions(familyId);
+// check quota
+const subStore = useFamilySubscriptionStore();
 
 // ================== ACTION RootFocus ====================
 const hanldeRootFocus = () => {
@@ -1746,6 +1750,8 @@ const isEmpty = computed(() => processedFamilyData.value.length === 0);
 const createFirstPersonMutation = useCreatePersonMutation();
 
 const handleAddFirstNodeOpen = withPermission(canWriteNode, () => {
+  if (!subStore.guardAddPerson) return;
+
   if (isEmpty.value) isModalAddFirstNodeOpen.value = true;
 });
 
@@ -2023,6 +2029,7 @@ const resetView = async () => {
   }
 };
 </script>
+
 <template>
   <div class="flex h-screen flex-col bg-slate-50 font-sans">
     <HeaderFamilyTree v-model="searchQuery" :isMiniMap="isMiniMap" :searchSuggestions="searchSuggestions"

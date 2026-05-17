@@ -70,16 +70,20 @@ const handleCreateAlbum = (payload: AlbumReq) => {
   if (!familyId.value) return notify.error('Thông báo', 'Không tìm thấy gia phả hiện tại')
   createAlbumMutation(
     { familyId: familyId.value, data: payload },
-    { onSuccess: () => { notify.success('Thông báo', 'Tạo album thành công'); closeFormAlbum() },
-      onError: () => notify.error('Thông báo', 'Tạo album thất bại') }
+    {
+      onSuccess: () => { notify.success('Thông báo', 'Tạo album thành công'); closeFormAlbum() },
+      onError: () => notify.error('Thông báo', 'Tạo album thất bại')
+    }
   )
 }
 
 const handelUpdateAlbum = (payload: AlbumReq) => {
   updateAlbumMutation(
     { albumId: edittingAlbum.value?.albumId, data: payload },
-    { onSuccess: () => { notify.success('Thông báo', 'Cập nhật album thành công'); closeFormAlbum() },
-      onError: () => notify.error('Thông báo', 'Cập nhật album không thành công') }
+    {
+      onSuccess: () => { notify.success('Thông báo', 'Cập nhật album thành công'); closeFormAlbum() },
+      onError: () => notify.error('Thông báo', 'Cập nhật album không thành công')
+    }
   )
 }
 
@@ -152,8 +156,10 @@ const handleUploadLink = async (formData: any) => {
   if (!selectedAlbumId.value) return
   await uploadLinkAblumMutation.mutateAsync(
     { albumId: formData.albumId, url: formData.url, title: formData.title },
-    { onSuccess: () => { notify.success('Thông báo', 'Upload link thành công'); isShowUploadLinkModal.value = false },
-      onError: () => { notify.error('Thông báo', 'Upload link thất bại'); isShowUploadLinkModal.value = false } }
+    {
+      onSuccess: () => { notify.success('Thông báo', 'Upload link thành công'); isShowUploadLinkModal.value = false },
+      onError: () => { notify.error('Thông báo', 'Upload link thất bại'); isShowUploadLinkModal.value = false }
+    }
   )
 }
 </script>

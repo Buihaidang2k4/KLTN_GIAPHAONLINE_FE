@@ -199,7 +199,7 @@ const handleRoute = (route: string) => router.push(route)
               <!-- Left meta -->
               <div class="space-y-0">
                 <div v-for="item in [
-                  { label: 'Giá dịch vụ', value: formatMoney(dashboardInfo?.currentSubscriptionPlanPrice) + ' VNĐ' },
+                  { label: 'Giá dịch vụ', value: formatMoney(dashboardInfo?.currentSubscriptionPlanPrice, 'VNĐ') },
                   { label: 'Ngày bắt đầu', value: dashboardInfo?.currentSubscriptionStartDate ? formatDate(dashboardInfo.currentSubscriptionStartDate) : '—' },
                   { label: 'Ngày kết thúc', value: dashboardInfo?.currentSubscriptionEndDate ? formatDate(dashboardInfo.currentSubscriptionEndDate) : '—' },
                 ]" :key="item.label"
