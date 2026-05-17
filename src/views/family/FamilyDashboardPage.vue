@@ -1,334 +1,299 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import {
-  Users,
-  FileText,
-  Calendar,
-  Crown,
-  CheckCircle2,
-  ArrowUpCircle,
-  Clock,
-  ShieldCheck,
-  MapPin,
-  ExternalLink,
+  Users, Calendar, Crown, ArrowUpCircle, Bell,
+  HardDrive, Images, Trophy, BookOpen, Cloud,
+  ChevronRight, UserCog, FolderOpen, Sparkles, Scroll,
+  LayoutDashboard
 } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
-import { useFamilyStore } from '@/store/family/useFamilyStore';
-import { useFamilyEventsByFamilyQuery } from '@/hooks/queries/family/family_event/useFamilyEvent';
-import { formatDate } from '@/utils/format-date';
-import type { FamilyEventRes } from '@/types/family/family-event.types';
-const router = useRouter();
+import { useFamilyStore } from '@/store/family/useFamilyStore'
+import { useFamilyEventsByFamilyQuery } from '@/hooks/queries/family/family_event/useFamilyEvent'
+import { useActiveSubscriptionPlansQuery } from '@/hooks/queries/subscription_plan/useSubscriptionPlan'
+import { useFamilySubscriptionByFamilyQuery } from '@/hooks/queries/family/family_subscription/useFamilySubscription'
+import { useDashboardQuery } from '@/hooks/queries/dashboard/useDashboard'
+import PackageCard from '@/components/family_service/PackageCard.vue'
+import { formatDate } from '@/utils/format-date'
+import type { FamilyEventRes } from '@/types/family/family-event.types'
+import { formatMoney } from '@/utils/format-money'
 
-const familyInfo = ref({
-  name: "Gia Tộc Nguyễn Tộc - Từ Liêm",
-  admin: {
-    name: "Nguyễn Văn Hùng",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix",
-    role: "Trưởng tộc / Quản trị viên"
-  },
-  currentPlan: {
-    name: "Premium Plan",
-    status: "Active",
-    expiryDate: "2025-12-31",
-    storageUsed: "45GB",
-    storageLimit: "100GB"
-  }
-})
-
-// --- THỐNG KÊ TỔNG QUAN ---
-const stats = ref([
-  { label: 'Thành viên', value: 128, icon: Users, color: 'bg-blue-500', trend: '+5 trong tháng này' },
-  { label: 'Bài viết', value: 456, icon: FileText, color: 'bg-emerald-500', trend: '+12 tuần này' },
-  { label: 'Sự kiện', value: 24, icon: Calendar, color: 'bg-amber-500', trend: '3 sự kiện sắp tới' }
-])
-
-// hook
+const router = useRouter()
 const familyStore = useFamilyStore()
 const familyId = computed(() => familyStore.currentFamilyId)
 
-const params = ref({
-  page: 0,
-  size: 5,
-  keyword: '',
-  option: "UPCOMING"
+const { data: dashboardData } = useDashboardQuery(familyId)
+const dashboardInfo = computed(() => dashboardData.value?.data)
+
+const stats = computed(() => [
+  { label: 'Thành viên', value: dashboardInfo.value?.totalMembersInFamilyTree || 0, icon: Users, iconColor: 'text-blue-600', iconBg: 'bg-blue-50' },
+  { label: 'Albums', value: dashboardInfo.value?.totalAlbumMedias || 0, icon: Images, iconColor: 'text-emerald-600', iconBg: 'bg-emerald-50' },
+  { label: 'Sự kiện', value: dashboardInfo.value?.totalEvents || 0, icon: Calendar, iconColor: 'text-amber-600', iconBg: 'bg-amber-50' },
+  { label: 'Thành tích', value: dashboardInfo.value?.totalAchievement || 0, icon: Trophy, iconColor: 'text-rose-500', iconBg: 'bg-rose-50' },
+  { label: 'Phong tục', value: dashboardInfo.value?.totalCustoms || 0, icon: BookOpen, iconColor: 'text-violet-600', iconBg: 'bg-violet-50' },
+])
+
+const quickActions = [
+  { label: 'Gia phả', icon: UserCog, color: 'text-blue-600', bg: 'bg-blue-50', route: '/family/danh-sach' },
+  { label: 'Albums', icon: FolderOpen, color: 'text-emerald-600', bg: 'bg-emerald-50', route: '/family/thu-vien-anh' },
+  { label: 'Sự kiện', icon: Calendar, color: 'text-amber-600', bg: 'bg-amber-50', route: '/family/su-kien' },
+  { label: 'Phong tục', icon: Scroll, color: 'text-violet-600', bg: 'bg-violet-50', route: '/family/phong-tuc' },
+]
+
+const params = ref({ page: 0, size: 4, keyword: '', option: 'UPCOMING' })
+const { data: familyEventsData } = useFamilyEventsByFamilyQuery(familyId, params)
+const safeEvents = computed<FamilyEventRes[]>(() => familyEventsData.value?.data?.items ?? [])
+
+const { data: plansData } = useActiveSubscriptionPlansQuery()
+const servicePlans = computed(() => plansData.value?.data || [])
+
+const { data: familySubData } = useFamilySubscriptionByFamilyQuery(familyId)
+const safeFamilySub = computed(() => familySubData.value?.data || null)
+
+const currentPlanDetails = computed(() =>
+  servicePlans.value.find(p => p.namePlan === dashboardInfo.value?.currentSubscriptionPlanName) || null
+)
+
+const formatStorage = (mb: number | undefined) => {
+  if (!mb) return '0 MB'
+  return mb >= 1024 ? (mb / 1024).toFixed(1) + ' GB' : mb.toFixed(0) + ' MB'
+}
+
+const storagePercentage = computed(() => {
+  const used = dashboardInfo.value?.totalUsedStorages || 0
+  const total = currentPlanDetails.value?.maxStorageMb || 1
+  return Math.min(100, Math.round((used / total) * 100))
 })
 
-const { data: familyEventsData } =
-  useFamilyEventsByFamilyQuery(familyId, params);
-const safeEvents = computed<FamilyEventRes[]>(() => familyEventsData.value?.data?.items ?? []);
+const storageBarColor = computed(() => {
+  if (storagePercentage.value > 80) return 'from-rose-400 to-rose-500'
+  if (storagePercentage.value > 60) return 'from-amber-400 to-amber-500'
+  return 'from-teal-400 to-emerald-500'
+})
 
 const getEventDateLabel = (event: FamilyEventRes) => {
   if (event.nextOccurrenceDate) return formatDate(event.nextOccurrenceDate)
-  if (event.day && event.month) return `${event.day}/${event.month}/${event.year || 'Hằng năm'}`
-  return 'Chưa có ngày'
+  if (event.day && event.month) return `${event.day}/${event.month}`
+  return '—'
 }
 
-const getCalendarTypeLabel = (event: FamilyEventRes) =>
-  event.calendarType === 'LUNAR' ? 'Âm lịch' : 'Dương lịch'
-
-const serviceInfo = ref({
-  website: 'bui13.giaphadaiviet.vn',
-  views: 32,
-  planName: 'Khởi đầu',
-  price: 'Miễn phí',
-  startDate: '01/01/2026',
-  endDate: 'Vĩnh viễn',
-  limits: {
-    members: 50,
-    admins: 1,
-    storage: '1 GB'
-  },
-  current: {
-    members: 28,
-    admins: 1,
-    storage: '0,11 GB'
-  }
-})
-
-const servicePlans = ref([
-  {
-    name: 'Gói Cơ bản',
-    price: 500000,
-    features: ['200 thành viên', '1 người quản lý', '2 GB dung lượng lưu trữ', 'Website gia phả trực tuyến']
-  },
-  {
-    name: 'Gói Đoàn viên',
-    price: 1000000,
-    features: ['500 thành viên', '2 người quản lý', '3 GB dung lượng lưu trữ', 'Website gia phả trực tuyến']
-  },
-  {
-    name: 'Gói Đồng tâm',
-    price: 2000000,
-    features: ['2.000 thành viên', '5 người quản lý', '10 GB dung lượng lưu trữ', 'Website gia phả trực tuyến']
-  }
-])
-
-const formatPrice = (price: number) =>
-  new Intl.NumberFormat('vi-VN').format(price)
-
-const handleViewDetailEvents = () => router.push("/family/su-kien");
-const handleViewServices = () => router.push("/family/dich-vu");
+const handleViewServices = () => router.push('/family/dich-vu')
+const handleViewEvents = () => router.push('/family/su-kien')
+const handleRoute = (route: string) => router.push(route)
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#fbfaf5] p-4 md:p-8 text-slate-900 font-sans">
-    <div class="max-w-7xl mx-auto space-y-8">
+  <div class="min-h-screen bg-[#f8f8f6] font-outfit">
 
-      <!-- HEADER & ADMIN INFO -->
-      <section class="flex flex-col lg:flex-row gap-6 items-start justify-between">
-        <div class="flex items-center gap-4">
-          <div class="p-3 bg-indigo-600 rounded-2xl text-white shadow-lg shadow-indigo-200">
-            <ShieldCheck :size="32" />
+    <!-- HEADER -->
+    <header class="bg-white/80 backdrop-blur border-b border-slate-100 sticky top-0 z-20">
+      <div class="max-w-[1320px] mx-auto px-6 h-[58px] flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center">
+            <LayoutDashboard class="text-white" :size="15" />
+          </div>
+          <div class="flex flex-col">
+            <span class="text-[13px] font-bold text-slate-900 leading-none">{{ dashboardInfo?.currentFamilyName }}</span>
+            <span class="text-[11px] text-slate-400 mt-0.5">Bảng điều khiển quản trị</span>
+          </div>
+        </div>
+        <div class="flex items-center gap-2.5">
+          <button
+            class="w-8 h-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-400 hover:bg-slate-50 transition-colors">
+            <Bell :size="14" />
+          </button>
+          <div
+            class="flex items-center gap-1.5 bg-amber-50 border border-amber-100 text-amber-700 px-3 py-1.5 rounded-lg">
+            <Crown :size="12" class="text-amber-500" />
+            <span class="text-[11px] font-bold">{{ dashboardInfo?.currentSubscriptionPlanName || 'Free' }}</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="max-w-[1320px] mx-auto px-6 py-5 space-y-4">
+
+      <!-- STATS ROW -->
+      <div class="grid grid-cols-5 gap-3">
+        <div v-for="(stat, i) in stats" :key="stat.label"
+          class="bg-white rounded-xl border border-slate-100 px-4 py-3.5 flex items-center gap-3 hover:shadow-sm hover:-translate-y-px transition-all duration-200">
+          <div
+            :class="[stat.iconBg, stat.iconColor, 'w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0']">
+            <component :is="stat.icon" :size="18" />
           </div>
           <div>
-            <h1 class="text-2xl md:text-3xl font-black text-slate-900">{{ familyInfo.name }}</h1>
-            <p class="text-slate-500 font-medium flex items-center gap-2">
-              Bảng điều khiển quản trị hệ thống
-            </p>
+            <p class="text-[22px] font-bold text-slate-900 leading-none">{{ stat.value.toLocaleString() }}</p>
+            <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mt-0.5">{{ stat.label }}</p>
           </div>
-        </div>
-
-        <div
-          class="w-full lg:w-auto bg-white p-4 rounded-[2rem] shadow-sm border border-slate-200 flex items-center gap-4">
-          <img :src="familyInfo.admin.avatar" class="w-12 h-12 rounded-full border-2 border-indigo-100" />
-          <div class="pr-8">
-            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Quản trị viên</p>
-            <h4 class="font-black text-slate-800 flex items-center gap-1">
-              {{ familyInfo.admin.name }}
-              <Crown :size="14" class="text-amber-500" />
-            </h4>
-          </div>
-          <div class="h-10 w-[1px] bg-slate-100"></div>
-          <div class="pl-4">
-            <span
-              class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[11px] font-black uppercase">
-              <CheckCircle2 :size="12" /> Đang hoạt động
-            </span>
-          </div>
-        </div>
-      </section>
-
-      <!-- STATS GRID -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div v-for="stat in stats" :key="stat.label"
-          class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 hover:shadow-md transition-all group">
-          <div class="flex items-center justify-between mb-4">
-            <div
-              :class="[stat.color, 'w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-opacity-20']">
-              <component :is="stat.icon" :size="24" />
-            </div>
-            <span
-              class="text-[11px] font-bold text-emerald-500 bg-emerald-50 px-2 py-1 rounded-lg">{{ stat.trend }}</span>
-          </div>
-          <h3 class="text-4xl font-black text-slate-900 mb-1">{{ stat.value.toLocaleString() }}</h3>
-          <p class="text-slate-400 font-bold uppercase text-xs tracking-widest">{{ stat.label }}</p>
         </div>
       </div>
 
-      <section>
-        <!-- Lưu trữ info -->
-        <div
-          class="bg-slate-900 rounded-[2.5rem] p-8 text-white flex flex-col md:flex-row items-center justify-between gap-8">
-          <div class="space-y-2">
-            <h4 class="text-xl font-bold">Trạng thái lưu trữ dữ liệu</h4>
-            <p class="text-slate-400 text-sm">Gia tộc đã sử dụng {{ familyInfo.currentPlan.storageUsed }} trên tổng số
-              {{ familyInfo.currentPlan.storageLimit }}
-            </p>
-          </div>
-          <div class="flex-1 w-full max-w-md space-y-3">
-            <div class="h-3 w-full bg-slate-700 rounded-full overflow-hidden">
-              <div class="h-full bg-indigo-500 rounded-full" style="width: 45%"></div>
-            </div>
-            <div class="flex justify-between text-[10px] font-black text-slate-500 uppercase tracking-widest">
-              <span>0 GB</span>
-              <span>45% ĐÃ DÙNG</span>
-              <span>100 GB</span>
-            </div>
-          </div>
-          <button @click="handleViewServices"
-            class="px-8 py-4 bg-white text-slate-900 rounded-2xl font-black text-sm hover:bg-slate-100 transition-all flex items-center gap-2">
-            <ArrowUpCircle :size="18" /> Mua thêm dung lượng
-          </button>
-        </div>
-      </section>
+      <!-- MAIN GRID -->
+      <div class="grid grid-cols-3 gap-4 items-start">
 
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <!-- CHI TIẾT DỊCH VỤ (BÊN TRÁI) -->
-        <div class="lg:col-span-2 overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm">
-          <div class="border-b border-slate-200 bg-slate-50 px-6 py-4">
-            <h3 class="text-sm font-black text-slate-700">Chi tiết dịch vụ</h3>
-          </div>
+        <!-- LEFT COL (2/3) -->
+        <div class="col-span-2 space-y-4">
 
-          <div class="p-6">
-            <div class="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_1.2fr]">
-              <div class="space-y-2 text-sm">
-                <p><span class="font-bold text-slate-900">Website:</span>
-                  <span class="ml-2 font-medium text-teal-700">{{ serviceInfo.website }}</span>
-                </p>
-                <p><span class="font-bold text-slate-900">Lượt xem:</span>
-                  <span class="ml-2 font-medium text-teal-700">{{ serviceInfo.views }}</span>
-                </p>
-                <p>
-                  <span class="font-bold text-slate-900">Gói dịch vụ:</span>
-                  <span class="ml-2 font-bold text-teal-700">{{ serviceInfo.planName }}</span>
-                  <span
-                    class="ml-2 rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-black uppercase text-white">
-                    Free
-                  </span>
-                </p>
-                <p><span class="font-bold text-slate-900">Giá:</span>
-                  <span class="ml-2 text-slate-600">{{ serviceInfo.price }}</span>
-                </p>
-                <p><span class="font-bold text-slate-900">Ngày bắt đầu:</span>
-                  <span class="ml-2 text-slate-600">{{ serviceInfo.startDate }}</span>
-                </p>
-                <p><span class="font-bold text-slate-900">Ngày kết thúc:</span>
-                  <span class="ml-2 text-slate-600">{{ serviceInfo.endDate }}</span>
-                </p>
-              </div>
+          <!-- ROW: Storage + Quick actions -->
+          <div class="grid grid-cols-2 gap-4">
 
-              <div class="overflow-hidden rounded-sm border border-slate-200">
-                <table class="w-full border-collapse text-sm">
-                  <thead>
-                    <tr class="bg-slate-100">
-                      <th class="border-r border-slate-200 px-4 py-3 text-left font-bold text-slate-700"></th>
-                      <th class="border-r border-slate-200 px-4 py-3 text-center font-black text-slate-900">Cho phép</th>
-                      <th class="px-4 py-3 text-center font-black text-slate-900">Hiện có</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr class="border-t border-slate-200">
-                      <td class="border-r border-slate-200 px-4 py-3">Số thành viên</td>
-                      <td class="border-r border-slate-200 px-4 py-3 text-center">{{ serviceInfo.limits.members }}</td>
-                      <td class="px-4 py-3 text-center">{{ serviceInfo.current.members }}</td>
-                    </tr>
-                    <tr class="border-t border-slate-200">
-                      <td class="border-r border-slate-200 px-4 py-3">Số quản trị viên</td>
-                      <td class="border-r border-slate-200 px-4 py-3 text-center">{{ serviceInfo.limits.admins }}</td>
-                      <td class="px-4 py-3 text-center">{{ serviceInfo.current.admins }}</td>
-                    </tr>
-                    <tr class="border-t border-slate-200">
-                      <td class="border-r border-slate-200 px-4 py-3">Dung lượng lưu trữ</td>
-                      <td class="border-r border-slate-200 px-4 py-3 text-center">{{ serviceInfo.limits.storage }}</td>
-                      <td class="px-4 py-3 text-center">{{ serviceInfo.current.storage }}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <p class="my-6 text-center text-sm font-black text-slate-600">
-              Bạn muốn nâng cấp gói dịch vụ ?
-              <button @click="handleViewServices" class="text-teal-700 hover:underline">Ấn dịch vụ</button>
-            </p>
-
-            <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
-              <div v-for="plan in servicePlans" :key="plan.name"
-                class="rounded-lg border border-amber-100 bg-[#fff7e8] p-5 shadow-sm">
-                <div class="mb-5">
-                  <span class="text-2xl font-black text-amber-700">{{ formatPrice(plan.price) }} VND</span>
-                  <span class="ml-1 text-xs font-bold text-slate-500">/1 năm</span>
+            <!-- STORAGE -->
+            <div class="bg-white rounded-xl border border-slate-100 p-5">
+              <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2">
+                  <div class="w-7 h-7 bg-slate-100 rounded-lg flex items-center justify-center">
+                    <Cloud class="text-slate-500" :size="14" />
+                  </div>
+                  <span class="text-[13px] font-semibold text-slate-700">Lưu trữ</span>
                 </div>
-                <h4 class="mb-3 text-base font-bold text-amber-700">{{ plan.name }}</h4>
-                <ul class="mb-5 space-y-2">
-                  <li v-for="feature in plan.features" :key="feature"
-                    class="flex items-center gap-3 text-xs font-medium text-slate-700">
-                    <CheckCircle2 :size="16" class="shrink-0 text-amber-700" />
-                    {{ feature }}
-                  </li>
-                </ul>
                 <button @click="handleViewServices"
-                  class="flex w-full items-center justify-center gap-2 rounded-md border border-amber-300 bg-amber-100/70 px-4 py-2 text-sm font-bold text-amber-800 hover:bg-amber-200">
-                  <ExternalLink :size="15" /> Nâng cấp ngay
+                  class="flex items-center gap-1 text-[11px] font-semibold text-teal-600 bg-teal-50 hover:bg-teal-100 border border-teal-100 px-2.5 py-1 rounded-lg transition-colors">
+                  <ArrowUpCircle :size="11" /> Nâng cấp
+                </button>
+              </div>
+
+              <div class="flex items-baseline gap-1.5 mb-1">
+                <span
+                  class="text-[26px] font-bold text-slate-900">{{ formatStorage(dashboardInfo?.totalUsedStorages) }}</span>
+                <span class="text-sm text-slate-400 font-medium">/
+                  {{ formatStorage(currentPlanDetails?.maxStorageMb) }}</span>
+              </div>
+              <p class="text-xs text-slate-400 mb-3">Đã dùng {{ storagePercentage }}% dung lượng</p>
+
+              <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                <div class="h-full rounded-full bg-gradient-to-r transition-all duration-700" :class="storageBarColor"
+                  :style="{ width: storagePercentage + '%' }" />
+              </div>
+              <div class="flex justify-between mt-1.5">
+                <span class="text-[10px] text-slate-300">0 MB</span>
+                <span class="text-[10px] text-slate-300">{{ formatStorage(currentPlanDetails?.maxStorageMb) }}</span>
+              </div>
+            </div>
+
+            <!-- QUICK ACTIONS -->
+            <div class="bg-white rounded-xl border border-slate-100 p-5">
+              <p class="text-[13px] font-semibold text-slate-700 mb-3.5">Thao tác nhanh</p>
+              <div class="grid grid-cols-2 gap-2">
+                <button v-for="action in quickActions" :key="action.label" @click="handleRoute(action.route)"
+                  class="flex flex-col items-center gap-2 py-3 rounded-xl border border-slate-100 hover:border-slate-200 hover:shadow-sm hover:-translate-y-0.5 transition-all duration-150 group">
+                  <div
+                    :class="[action.bg, action.color, 'w-9 h-9 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-150']">
+                    <component :is="action.icon" :size="16" />
+                  </div>
+                  <span class="text-[11px] font-semibold text-slate-500">{{ action.label }}</span>
                 </button>
               </div>
             </div>
           </div>
+
+          <!-- SERVICE DETAIL -->
+          <div class="bg-white rounded-xl border border-slate-100 p-5">
+            <div class="flex items-center justify-between mb-4">
+              <p class="text-[13px] font-semibold text-slate-700">Chi tiết dịch vụ</p>
+              <span
+                class="text-[11px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-lg">
+                {{ dashboardInfo?.currentSubscriptionPlanName || '—' }}
+              </span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <!-- Left meta -->
+              <div class="space-y-0">
+                <div v-for="item in [
+                  { label: 'Giá dịch vụ', value: formatMoney(dashboardInfo?.currentSubscriptionPlanPrice) + ' VNĐ' },
+                  { label: 'Ngày bắt đầu', value: dashboardInfo?.currentSubscriptionStartDate ? formatDate(dashboardInfo.currentSubscriptionStartDate) : '—' },
+                  { label: 'Ngày kết thúc', value: dashboardInfo?.currentSubscriptionEndDate ? formatDate(dashboardInfo.currentSubscriptionEndDate) : '—' },
+                ]" :key="item.label"
+                  class="flex items-center justify-between py-2.5 border-b border-slate-50 last:border-0">
+                  <span class="text-xs text-slate-400">{{ item.label }}</span>
+                  <span class="text-xs font-semibold text-slate-700">{{ item.value }}</span>
+                </div>
+              </div>
+
+              <!-- Right quota -->
+              <div class="bg-slate-50 rounded-xl p-3.5">
+                <div class="grid grid-cols-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 px-1">
+                  <span>Hạng mục</span>
+                  <span class="text-center">Giới hạn</span>
+                  <span class="text-center">Hiện có</span>
+                </div>
+                <div v-for="row in [
+                  { label: 'Thành viên', limit: currentPlanDetails?.maxPerson, cur: dashboardInfo?.totalMembersInFamilyTree },
+                  { label: 'Quản trị', limit: currentPlanDetails?.maxAdmin, cur: dashboardInfo?.totalAdmin },
+                  { label: 'Dung lượng', limit: formatStorage(currentPlanDetails?.maxStorageMb), cur: formatStorage(dashboardInfo?.totalUsedStorages) },
+                ]" :key="row.label" class="grid grid-cols-3 text-xs py-2 border-b border-white/70 last:border-0 px-1">
+                  <span class="text-slate-500 font-medium">{{ row.label }}</span>
+                  <span
+                    class="text-center text-slate-400">{{ row.limit?.toLocaleString?.() ?? row.limit ?? '—' }}</span>
+                  <span
+                    class="text-center font-bold text-emerald-600">{{ row.cur?.toLocaleString?.() ?? row.cur ?? 0 }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <!-- SỰ KIỆN SẮP DIỄN RA (BÊN PHẢI) -->
-        <div class="bg-indigo-900 text-white p-8 rounded-[3rem] shadow-xl shadow-indigo-100 relative overflow-hidden">
-          <div class="absolute top-0 right-0 p-8 opacity-10">
-            <Calendar :size="120" />
+        <!-- RIGHT COL (1/3): EVENTS -->
+        <div class="bg-white rounded-xl border border-slate-100 overflow-hidden flex flex-col">
+          <div class="flex items-center justify-between px-5 py-4 border-b border-slate-50">
+            <div class="flex items-center gap-2">
+              <div class="w-7 h-7 bg-amber-50 rounded-lg flex items-center justify-center">
+                <Calendar class="text-amber-500" :size="13" />
+              </div>
+              <span class="text-[13px] font-semibold text-slate-700">Sự kiện sắp tới</span>
+            </div>
+            <button @click="handleViewEvents"
+              class="flex items-center gap-0.5 text-[11px] font-semibold text-blue-500 hover:text-blue-700 transition-colors">
+              Tất cả
+              <ChevronRight :size="13" />
+            </button>
           </div>
 
-          <h3 class="text-xl font-black mb-6 flex items-center gap-2">
-            <Clock :size="20" class="text-indigo-300" /> Sự kiện sắp tới
-          </h3>
-
-          <div v-if="safeEvents.length > 0"
-            class="event-scroll relative z-10 max-h-[360px] space-y-4 overflow-y-auto pr-1">
+          <div v-if="safeEvents.length" class="divide-y divide-slate-50">
             <div v-for="event in safeEvents" :key="event.familyEventId"
-              class="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/10 hover:bg-white/20 transition-all cursor-pointer group">
-              <div class="flex justify-between items-start mb-2">
-                <span
-                  class="text-[9px] font-black px-2 py-0.5 rounded-full uppercase bg-indigo-400 text-indigo-950">
-                  {{ getCalendarTypeLabel(event) }}
+              class="px-5 py-3.5 hover:bg-slate-50/60 transition-colors cursor-pointer group">
+              <div class="flex items-start justify-between gap-2 mb-1">
+                <p
+                  class="text-[13px] font-semibold text-slate-800 leading-snug line-clamp-1 group-hover:text-blue-600 transition-colors">
+                  {{ event.eventName }}
+                </p>
+                <span class="text-[9px] font-bold px-1.5 py-0.5 rounded flex-shrink-0 mt-0.5"
+                  :class="event.calendarType === 'LUNAR' ? 'bg-blue-50 text-blue-500' : 'bg-amber-50 text-amber-500'">
+                  {{ event.calendarType === 'LUNAR' ? 'ÂL' : 'DL' }}
                 </span>
-                <span class="text-[11px] font-bold text-indigo-200">{{ getEventDateLabel(event) }}</span>
               </div>
-              <h4 class="font-bold text-sm mb-1 group-hover:translate-x-1 transition-transform">
-                {{ event.eventName }}
-              </h4>
-              <div class="flex items-center gap-2 text-[11px] text-indigo-200 opacity-80">
-                <Clock v-if="event.eventTime" :size="13" class="shrink-0" />
-                <span v-if="event.eventTime" class="shrink-0">{{ event.eventTime }}</span>
-                <MapPin v-if="event.location" :size="13" class="shrink-0" />
-                <span class="line-clamp-1">{{ event.location || event.note || 'Chưa có địa điểm' }}</span>
+              <div class="flex items-center gap-1.5 text-[11px] text-slate-400">
+                <span class="font-medium text-slate-500">{{ getEventDateLabel(event) }}</span>
+                <span v-if="event.eventTime">· {{ event.eventTime }}</span>
+                <span v-if="event.location" class="truncate">· {{ event.location }}</span>
               </div>
             </div>
           </div>
 
-          <div v-else class="relative z-10 rounded-2xl border border-white/10 bg-white/10 p-6 text-center">
-            <Calendar :size="36" class="mx-auto mb-3 text-indigo-300" />
-            <p class="text-sm font-bold">Chưa có sự kiện sắp tới</p>
-            <p class="mt-1 text-xs text-indigo-200">Các sự kiện mới sẽ hiển thị tại đây.</p>
+          <div v-else class="flex flex-col items-center justify-center py-12 px-6 text-center">
+            <div class="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center mb-3">
+              <Calendar class="text-slate-300" :size="22" />
+            </div>
+            <p class="text-sm font-semibold text-slate-400">Chưa có sự kiện</p>
+            <p class="text-xs text-slate-300 mt-1">Sự kiện mới sẽ xuất hiện ở đây</p>
           </div>
+        </div>
+      </div>
 
-          <button @click="() => handleViewDetailEvents()"
-            class="w-full mt-6 py-4 bg-white cursor-pointer text-indigo-900 rounded-2xl font-black text-sm hover:bg-indigo-50 transition-colors shadow-lg">
-            Xem Lịch Sự kiện Toàn Gia Tộc
-          </button>
+      <!-- SERVICE PLANS -->
+      <div class="bg-white rounded-xl border border-slate-100 p-5">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="text-[13px] font-bold text-slate-800">Các gói dịch vụ</h3>
+            <p class="text-[11px] text-slate-400 mt-0.5">Nâng cấp để mở khóa thêm tính năng và dung lượng</p>
+          </div>
+          <div class="flex items-center gap-1.5 text-[11px] text-slate-400">
+            <Sparkles :size="12" class="text-amber-400" />
+            <span>Ưu đãi đặc biệt</span>
+          </div>
+        </div>
+        <div class="grid grid-cols-4 gap-3">
+          <PackageCard v-for="plan in servicePlans" :key="plan.subscriptionPlanId" :plan="plan"
+            :current-family-sub="safeFamilySub" @select="handleViewServices" />
         </div>
       </div>
 
@@ -337,36 +302,45 @@ const handleViewServices = () => router.push("/family/dich-vu");
 </template>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
 
-.font-sans {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+.font-outfit {
+  font-family: 'Outfit', sans-serif;
 }
 
-/* Hiệu ứng mượt cho các thẻ */
-.transition-all {
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+.grid>* {
+  animation: fadeUp 0.3s ease both;
 }
 
-/* Tùy chỉnh thanh cuộn nếu cần */
-::-webkit-scrollbar {
-  width: 6px;
+.grid>*:nth-child(1) {
+  animation-delay: 0ms;
 }
 
-::-webkit-scrollbar-track {
-  background: transparent;
+.grid>*:nth-child(2) {
+  animation-delay: 50ms;
 }
 
-::-webkit-scrollbar-thumb {
-  background: #e2e8f0;
-  border-radius: 10px;
+.grid>*:nth-child(3) {
+  animation-delay: 100ms;
 }
 
-.event-scroll::-webkit-scrollbar {
-  width: 4px;
+.grid>*:nth-child(4) {
+  animation-delay: 150ms;
 }
 
-.event-scroll::-webkit-scrollbar-thumb {
-  background: rgba(199, 210, 254, 0.5);
+.grid>*:nth-child(5) {
+  animation-delay: 200ms;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>

@@ -1,107 +1,65 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import {
-  Image as ImageIcon,
-  Video,
-  FileText,
-  ChevronLeft,
-  Folder,
-  Calendar,
-  Layers,
-  Plus,
-  Download,
-  Eye,
-  PlayCircle,
-  HardDrive,
-  Search,
-  Trash2,
-  Edit
+  Image as ImageIcon, Video, FileText, ChevronLeft, Folder,
+  Calendar, Layers, Plus, Download, Eye, PlayCircle,
+  HardDrive, Search, Trash2, Edit, Link
 } from 'lucide-vue-next'
-import { formatByte } from '@/utils/format-byte'
-import CreateOrUpdateAlbumForm from '@/components/forms/album/CreateOrUpdateAlbumForm.vue'
-import { useFamilyStore } from '@/store/family/useFamilyStore'
-import {
-  useAlbumMediaQuery,
-  useCreateAlbumMutation,
-  useDeleteAlbumMediaMutation,
-  useDeleteAlbumMutation,
-  useFamilyAlbumsQuery,
-  useUpdateAlbumMutation,
-  useUploadAlbumLinkMutation
-} from '@/hooks/queries/family/album/useAlbum'
-import { notify } from '@/utils/notify'
-import type { AlbumMediaRes, AlbumReq, AlbumRes } from '@/types/family/album.types'
-import { formatDate } from '@/utils/format-date'
 import { refDebounced } from '@vueuse/core'
+import { formatByte } from '@/utils/format-byte'
+import { formatDate } from '@/utils/format-date'
+import { notify } from '@/utils/notify'
+import { useFamilyStore } from '@/store/family/useFamilyStore'
 import { usePagination } from '@/composables/common/usePagination'
+import { useFamilyPermissions } from '@/composables/family/useFamilyPermissions'
+import {
+  useFamilyAlbumsQuery, useAlbumMediaQuery,
+  useCreateAlbumMutation, useUpdateAlbumMutation, useDeleteAlbumMutation,
+  useDeleteAlbumMediaMutation, useUploadAlbumLinkMutation
+} from '@/hooks/queries/family/album/useAlbum'
+import type { AlbumMediaRes, AlbumReq, AlbumRes } from '@/types/family/album.types'
 import AppPagination from '@/components/forms/common/AppPagination.vue'
+import CreateOrUpdateAlbumForm from '@/components/forms/album/CreateOrUpdateAlbumForm.vue'
 import PreviewImageModal from '@/components/forms/album/PreviewImageModal.vue'
 import PreviewVideoModal from '@/components/forms/album/PreviewVideoModal.vue'
 import PreviewDocsModal from '@/components/forms/album/PreviewDocsModal.vue'
 import UploadMediaForm from '@/components/forms/album/UploadMediaForm.vue'
-import { useFamilyPermissions } from '@/composables/family/useFamilyPermissions'
+import UploadLinkAlbum from '@/components/forms/album/UploadLinkAlbum.vue'
 
-const keyword = ref('')
-const debounceKeyword = refDebounced(keyword, 400)
-const mode = ref<'create' | 'update'>('create')
-const isShowAlbumForm = ref(false)
+// ==================== Store & Permission ====================
 const familyStore = useFamilyStore()
 const familyId = computed(() => familyStore.currentFamilyId)
-const selectedAlbum = ref<AlbumRes | null>(null)
-const edittingAlbum = ref<AlbumRes | null>(null)
-const isShowUploadModal = ref(false)
+const { canManageAlbum, withPermission } = useFamilyPermissions(familyId)
+
+// ==================== Pagination & Search ====================
+const keyword = ref('')
+const debounceKeyword = refDebounced(keyword, 400)
+const { pagination, currentPage, hasNextPage, hasPrevPage, nextPage, prevPage, setTotalPages } = usePagination(9, 0)
+const params = computed(() => ({ page: pagination.page, size: pagination.size }))
+
+// ==================== Album List ====================
+const { data: albumData } = useFamilyAlbumsQuery(familyId, params, debounceKeyword)
+const safeAlbums = computed(() => albumData.value?.data?.items || [])
+watch(() => albumData.value?.data?.totalPages, (total) => setTotalPages(total || 0), { immediate: true })
 
 const { mutate: createAlbumMutation, isPending: isCreatingAlbum } = useCreateAlbumMutation()
 const { mutate: updateAlbumMutation, isPending: isUpdatingAlbum } = useUpdateAlbumMutation()
 const { mutate: deleteAlbumMutation } = useDeleteAlbumMutation()
-const { canManageAlbum } = useFamilyPermissions(familyId);
 
-const {
-  pagination,
-  currentPage,
-  hasNextPage,
-  hasPrevPage,
-  nextPage,
-  prevPage,
-  setTotalPages
-} = usePagination(9, 0)
+const mode = ref<'create' | 'update'>('create')
+const isShowAlbumForm = ref(false)
+const edittingAlbum = ref<AlbumRes | null>(null)
 
-const params = computed(() => ({
-  page: pagination.page,
-  size: pagination.size
-}))
-
-const { data: albumData } = useFamilyAlbumsQuery(familyId, params, debounceKeyword)
-const safeAlbums = computed(() => albumData.value?.data?.items || [])
-
-watch(
-  () => albumData.value?.data?.totalPages,
-  (total) => {
-    setTotalPages(total || 0)
-  },
-  { immediate: true }
-)
-
-const openFormCreateAlbum = () => {
-  if (!canManageAlbum.value) {
-    notify.error("Thông báo", 'Bạn không có quyền thực hiện thao tác này ')
-    return
-  }
-
+const openFormCreateAlbum = withPermission(canManageAlbum, () => {
   mode.value = 'create'
   isShowAlbumForm.value = true
-}
+})
 
-const openFormUpdateAlbum = (album: AlbumRes) => {
-  if (!canManageAlbum.value) {
-    notify.error("Thông báo", 'Bạn không có quyền thực hiện thao tác này ')
-    return
-  }
-
+const openFormUpdateAlbum = withPermission(canManageAlbum, (album: AlbumRes) => {
   mode.value = 'update'
-  isShowAlbumForm.value = true
   edittingAlbum.value = album
-}
+  isShowAlbumForm.value = true
+})
 
 const closeFormAlbum = () => {
   isShowAlbumForm.value = false
@@ -109,171 +67,94 @@ const closeFormAlbum = () => {
 }
 
 const handleCreateAlbum = (payload: AlbumReq) => {
-  if (!familyId.value) {
-    notify.error('Thông báo', 'Không tìm thấy gia phả hiện tại')
-    return
-  }
-
+  if (!familyId.value) return notify.error('Thông báo', 'Không tìm thấy gia phả hiện tại')
   createAlbumMutation(
-    {
-      familyId: familyId.value,
-      data: payload
-    },
-    {
-      onSuccess: () => {
-        notify.success('Thông báo', 'Tạo album thành công')
-        closeFormAlbum()
-      },
-      onError: () => {
-        notify.error('Thông báo', 'Tạo album thất bại')
-      }
-    }
+    { familyId: familyId.value, data: payload },
+    { onSuccess: () => { notify.success('Thông báo', 'Tạo album thành công'); closeFormAlbum() },
+      onError: () => notify.error('Thông báo', 'Tạo album thất bại') }
   )
-}
-
-const handleDeleteAlbum = (id: number) => {
-  if (!canManageAlbum.value) {
-    notify.error("Thông báo", 'Bạn không có quyền thực hiện thao tác này ')
-    return
-  }
-
-  if (!id) {
-    notify.error('Thông báo', 'Không tìm thấy album')
-    return
-  }
-
-  const isDelete = window.confirm('Bạn có muốn xóa album này không?')
-
-  if (!isDelete) return
-
-  deleteAlbumMutation(id, {
-    onSuccess: () => {
-      notify.success('Thông báo', 'Xóa album thành công')
-    },
-    onError: () => {
-      notify.error('Thông báo', 'Xóa album không thành công')
-    }
-  })
 }
 
 const handelUpdateAlbum = (payload: AlbumReq) => {
   updateAlbumMutation(
     { albumId: edittingAlbum.value?.albumId, data: payload },
-    {
-      onSuccess: () => {
-        notify.success('Thông báo', 'Cập nhật album thành công')
-        closeFormAlbum()
-      },
-      onError: () => {
-        notify.error('Thông báo', 'Cập nhật album không thành công')
-      }
-    }
+    { onSuccess: () => { notify.success('Thông báo', 'Cập nhật album thành công'); closeFormAlbum() },
+      onError: () => notify.error('Thông báo', 'Cập nhật album không thành công') }
   )
 }
 
-const activeTab = ref<'IMAGE' | 'VIDEO' | 'DOCUMENT'>('IMAGE')
-const mediaType = computed(() => activeTab.value)
+const handleDeleteAlbum = withPermission(canManageAlbum, (id: number) => {
+  if (!id || !window.confirm('Bạn có muốn xóa album này không?')) return
+  deleteAlbumMutation(id, {
+    onSuccess: () => notify.success('Thông báo', 'Xóa album thành công'),
+    onError: () => notify.error('Thông báo', 'Xóa album không thành công')
+  })
+})
+
+// ==================== Album Detail & Media ====================
+const selectedAlbum = ref<AlbumRes | null>(null)
+const activeTab = ref<'IMAGE' | 'VIDEO' | 'DOCUMENT' | 'LINK'>('IMAGE')
 const selectedAlbumId = computed(() => selectedAlbum.value?.albumId)
+const mediaType = computed(() => activeTab.value)
+const currentAlbumSize = computed(() => formatByte(selectedAlbum.value?.totalSize))
+
 const { data: mediaData } = useAlbumMediaQuery(selectedAlbumId, mediaType, { page: 0, size: 100 })
 const safeMedia = computed(() => mediaData.value?.data?.items ?? [])
-const previewMedia = ref<AlbumMediaRes | null>(null)
-const { mutate: deleteMediaMutation } = useDeleteAlbumMediaMutation();
-const uploadLinkAblumMutation = useUploadAlbumLinkMutation();
 
+const { mutate: deleteMediaMutation } = useDeleteAlbumMediaMutation()
+const uploadLinkAblumMutation = useUploadAlbumLinkMutation()
 
 const moveOnToDetailMedia = (album: AlbumRes) => {
   selectedAlbum.value = album
   activeTab.value = 'IMAGE'
 }
 
-const currentAlbumSize = computed(() => formatByte(selectedAlbum.value?.totalSize))
+// ==================== Preview ====================
+const previewMedia = ref<AlbumMediaRes | null>(null)
+const openPreviewImageModal = (media: AlbumMediaRes) => { previewMedia.value = media }
+const openPreviewVideoModal = (media: AlbumMediaRes) => { previewMedia.value = media }
+const openPreviewDocsModal = (media: AlbumMediaRes) => { previewMedia.value = media }
+const closePreviewImageModal = () => { previewMedia.value = null }
+const closePreviewVideoModal = () => { previewMedia.value = null }
+const closePreviewDocsModal = () => { previewMedia.value = null }
 
-const openPreviewImageModal = (media: AlbumMediaRes) => {
-  previewMedia.value = media
-}
-
-const closePreviewImageModal = () => {
-  previewMedia.value = null
-}
-
-const openPreviewVideoModal = (media: AlbumMediaRes) => {
-  previewMedia.value = media
-}
-
-const closePreviewVideoModal = () => {
-  previewMedia.value = null
-}
-
-const openPreviewDocsModal = (media: AlbumMediaRes) => {
-  previewMedia.value = media
-}
-
-const closePreviewDocsModal = () => {
-  previewMedia.value = null
-}
-
-const handleDeleteMedia = (mediaId: number) => {
-  if (!canManageAlbum.value) {
-    notify.error("Thông báo", 'Bạn không có quyền thực hiện thao tác này ')
-    return
-  }
-
-  if (!mediaId) {
-    notify.error('Thông báo', 'Không tìm thấy media')
-    return
-  }
-
-  const isDelete = window.confirm('Bạn có muốn xóa media này không?')
-
-  if (!isDelete) return
-
+// ==================== Media Actions ====================
+const handleDeleteMedia = withPermission(canManageAlbum, (mediaId: number) => {
+  if (!mediaId || !window.confirm('Bạn có muốn xóa media này không?')) return
   deleteMediaMutation({ mediaId }, {
-    onSuccess: () => {
-      notify.success('Thông báo', 'Xóa media thành công')
-    },
-    onError: () => {
-      notify.error('Thông báo', 'Xóa media không thành công')
-    }
+    onSuccess: () => notify.success('Thông báo', 'Xóa media thành công'),
+    onError: () => notify.error('Thông báo', 'Xóa media không thành công')
   })
-}
-
-const openUploadModal = () => {
-  if (!canManageAlbum.value) {
-    notify.error("Thông báo", 'Bạn không có quyền thực hiện thao tác này ')
-    return
-  }
-
-  isShowUploadModal.value = true
-}
-
-const closeUploadModal = () => {
-  isShowUploadModal.value = false
-}
-
-const handleUploadSuccess = () => {
-  closeUploadModal()
-}
+})
 
 const handleDownloadMedia = async (media: AlbumMediaRes) => {
-  if (!media?.mediaUrl) {
-    notify.error('Thông báo', 'Không tìm thấy tài liệu để tải')
-    return
-  }
-
-  const response = await fetch(media.mediaUrl)
-  const blob = await response.blob()
-
+  if (!media?.mediaUrl) return notify.error('Thông báo', 'Không tìm thấy tài liệu để tải')
+  const blob = await fetch(media.mediaUrl).then(r => r.blob())
   const url = window.URL.createObjectURL(blob)
-
-  const link = document.createElement('a')
-  link.href = url
-  link.download = media.title || `media_${media.albumMediaId}`
-
+  const link = Object.assign(document.createElement('a'), { href: url, download: media.title || `media_${media.albumMediaId}` })
   document.body.appendChild(link)
   link.click()
   document.body.removeChild(link)
-
   window.URL.revokeObjectURL(url)
+}
+
+// ==================== Upload ====================
+const isShowUploadModal = ref(false)
+const isShowUploadLinkModal = ref(false)
+
+const openUploadModal = withPermission(canManageAlbum, () => { isShowUploadModal.value = true })
+const closeUploadModal = () => { isShowUploadModal.value = false }
+const handleUploadSuccess = () => closeUploadModal()
+
+const openUploadLinkModal = withPermission(canManageAlbum, () => { isShowUploadLinkModal.value = true })
+
+const handleUploadLink = async (formData: any) => {
+  if (!selectedAlbumId.value) return
+  await uploadLinkAblumMutation.mutateAsync(
+    { albumId: formData.albumId, url: formData.url, title: formData.title },
+    { onSuccess: () => { notify.success('Thông báo', 'Upload link thành công'); isShowUploadLinkModal.value = false },
+      onError: () => { notify.error('Thông báo', 'Upload link thất bại'); isShowUploadLinkModal.value = false } }
+  )
 }
 </script>
 
@@ -290,6 +171,8 @@ const handleDownloadMedia = async (media: AlbumMediaRes) => {
       @close="closePreviewDocsModal" />
     <UploadMediaForm :show="isShowUploadModal" :album-id="selectedAlbumId" @close="closeUploadModal"
       @success="handleUploadSuccess" />
+    <UploadLinkAlbum :show="isShowUploadLinkModal" :album-id="selectedAlbumId" @close="isShowUploadLinkModal = false"
+      @submit="handleUploadLink" />
 
     <div class="mx-auto max-w-7xl">
       <div v-if="!selectedAlbum" class="animate-in fade-in flex min-h-[calc(100vh-8rem)] flex-col duration-500">
@@ -419,23 +302,33 @@ const handleDownloadMedia = async (media: AlbumMediaRes) => {
               </div>
             </div>
 
-            <div class="flex items-center gap-3 md:min-w-[19rem]">
-              <div class="grid grid-cols-2 gap-3">
-                <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                  <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Dung lượng</p>
-                  <p class="mt-1 text-sm font-black text-slate-900">{{ currentAlbumSize }}</p>
+            <div class="flex flex-col sm:flex-row items-center gap-4">
+              <!-- Stats -->
+              <div class="flex items-center gap-3">
+                <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5">
+                  <p class="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400">Dung lượng</p>
+                  <p class="mt-0.5 text-sm font-black text-slate-900">{{ currentAlbumSize }}</p>
                 </div>
-                <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                  <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Ngày tạo</p>
-                  <p class="mt-1 text-sm font-black text-slate-900">{{ formatDate(selectedAlbum.createdAt) }}</p>
+                <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5">
+                  <p class="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400">Ngày tạo</p>
+                  <p class="mt-0.5 text-sm font-black text-slate-900">{{ formatDate(selectedAlbum.createdAt) }}</p>
                 </div>
               </div>
 
-              <button @click="openUploadModal"
-                class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-bold text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600">
-                <Plus :size="14" />
-                Thêm tài liệu
-              </button>
+              <!-- Actions -->
+              <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                <button @click="openUploadModal"
+                  class="inline-flex flex-1 sm:flex-none items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700">
+                  <Plus :size="14" />
+                  Thêm Media
+                </button>
+
+                <button @click="openUploadLinkModal"
+                  class="inline-flex flex-1 sm:flex-none items-center justify-center gap-2 rounded-xl border border-transparent bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-600/20">
+                  <Link :size="14" />
+                  Thêm Liên kết
+                </button>
+              </div>
             </div>
           </div>
         </section>
@@ -448,7 +341,7 @@ const handleDownloadMedia = async (media: AlbumMediaRes) => {
               <h3 class="mt-2 text-lg font-black text-slate-900">Hiển thị theo từng loại media</h3>
             </div>
 
-            <div class="grid grid-cols-3 gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-1.5 lg:w-[28rem]">
+            <div class="grid grid-cols-4 gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-1.5 lg:w-[34rem]">
               <button @click="activeTab = 'IMAGE'" :class="[
                 'flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold transition-all',
                 activeTab === 'IMAGE' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
@@ -467,6 +360,12 @@ const handleDownloadMedia = async (media: AlbumMediaRes) => {
               ]">
                 <FileText :size="18" /> Tài liệu
               </button>
+              <button @click="activeTab = 'LINK'" :class="[
+                'flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold transition-all',
+                activeTab === 'LINK' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+              ]">
+                <Link :size="18" /> Liên kết
+              </button>
             </div>
           </div>
         </section>
@@ -477,7 +376,7 @@ const handleDownloadMedia = async (media: AlbumMediaRes) => {
             <div>
               <p class="text-[11px] font-bold uppercase tracking-[0.22em] text-slate-400">Nội dung hiển thị</p>
               <h3 class="mt-1 text-lg font-black text-slate-900">
-                {{ activeTab === 'IMAGE' ? 'Bộ ảnh' : activeTab === 'VIDEO' ? 'Kho video' : 'Tài liệu đính kèm' }}
+                {{ activeTab === 'IMAGE' ? 'Bộ ảnh' : activeTab === 'VIDEO' ? 'Kho video' : activeTab === 'DOCUMENT' ? 'Tài liệu đính kèm' : 'Liên kết ngoài' }}
               </h3>
             </div>
             <div class="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-bold text-slate-600">
@@ -606,6 +505,41 @@ const handleDownloadMedia = async (media: AlbumMediaRes) => {
                         class="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-500 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600">
                         <Download :size="16" />
                       </button>
+                      <button @click.stop="handleDeleteMedia(media.albumMediaId)"
+                        class="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-500 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600">
+                        <Trash2 :size="16" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </template>
+
+            <template v-if="activeTab === 'LINK'">
+              <div class="rounded-[1.75rem] border border-slate-200 bg-slate-50/70 p-3">
+                <div class="grid gap-3">
+                  <div v-for="media in safeMedia" :key="media.albumMediaId"
+                    class="group flex items-center justify-between rounded-[1.25rem] border border-slate-200 bg-white px-4 py-3 shadow-sm transition hover:border-slate-300 hover:shadow-md">
+                    <div class="flex min-w-0 items-center gap-4">
+                      <div
+                        class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-indigo-100 bg-indigo-50 text-indigo-600 transition-colors group-hover:bg-indigo-100">
+                        <Link :size="22" />
+                      </div>
+                      <div class="min-w-0">
+                        <h4 class="line-clamp-1 font-black text-slate-800">{{ media.title || 'Liên kết không tên' }}
+                        </h4>
+                        <a :href="media.mediaUrl" target="_blank"
+                          class="mt-1 line-clamp-1 text-xs font-bold text-slate-400 hover:text-indigo-500 transition-colors">
+                          {{ media.mediaUrl }}
+                        </a>
+                      </div>
+                    </div>
+
+                    <div class="flex items-center gap-2 shrink-0">
+                      <a :href="media.mediaUrl" target="_blank"
+                        class="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-500 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600">
+                        <Eye :size="16" />
+                      </a>
                       <button @click.stop="handleDeleteMedia(media.albumMediaId)"
                         class="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-500 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600">
                         <Trash2 :size="16" />

@@ -4,6 +4,7 @@ export interface FamilyCategoryRes {
     createdByAccountId: number | string;
     familyId: number | string;
     familyName: string;
+    totalPerson: number;
     origin: string;
     description: string;
     isPublic: boolean;

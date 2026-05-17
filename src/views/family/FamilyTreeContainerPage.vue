@@ -207,11 +207,13 @@ const viewDetail = (category: FamilyCategoryRes) => {
                                 class="inline-flex items-center rounded-full border border-white/25 bg-red-600/95 px-3 py-0.5 text-[9px] font-black uppercase tracking-[0.12em] text-white shadow-[0_4px_14px_rgba(185,28,28,0.45)] backdrop-blur-sm">
                                 Công khai
                             </span>
+
                             <span v-else
                                 class="inline-flex items-center rounded-full border border-white/20 bg-slate-900/85 px-3 py-0.5 text-[9px] font-black uppercase tracking-[0.12em] text-white/95 shadow-lg backdrop-blur-sm">
                                 Riêng tư
                             </span>
                         </div>
+
                         <div class="absolute bottom-3 left-3 right-3">
                             <h3
                                 class="text-base font-semibold tracking-tight text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.55)]">
@@ -219,6 +221,13 @@ const viewDetail = (category: FamilyCategoryRes) => {
                             </h3>
                             <p class="mt-1 text-[10px] font-medium uppercase tracking-wider text-white/75">Mã danh mục
                                 #{{ family.familyCategoryId }}</p>
+                        </div>
+
+                        <div class="absolute right-3 top-3">
+                            <span class="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-black/45 px-2.5 py-1 text-[9px] font-bold tracking-wide text-white shadow-[0_2px_8px_rgba(0,0,0,0.2)] backdrop-blur-md">
+                                <Users :size="10" class="text-amber-300" />
+                                {{ family.totalPerson }} thành viên
+                            </span>
                         </div>
                     </div>
 

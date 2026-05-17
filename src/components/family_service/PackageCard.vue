@@ -133,15 +133,15 @@ const handleSelect = () => {
                     <div class="w-5 h-5 rounded-full flex items-center justify-center shrink-0" :class="config.bg">
                         <Users :size="10" :class="config.color" />
                     </div>
-                    <span class="text-[11px] font-bold text-slate-700 tracking-tight">{{ plan.maxAdmin }} người quản
-                        lý</span>
+                    <span class="text-[11px] font-bold text-slate-700 tracking-tight">{{ plan.maxAdmin }} quản trị viên
+                    </span>
                 </div>
                 <div class="flex items-center gap-2.5">
                     <div class="w-5 h-5 rounded-full flex items-center justify-center shrink-0" :class="config.bg">
                         <Check :size="10" :class="config.color" />
                     </div>
                     <span class="text-[11px] font-bold text-slate-700 tracking-tight">{{ plan.maxPerson }} thành
-                        viên</span>
+                        viên trong gia phả</span>
                 </div>
                 <div class="flex items-center gap-2.5">
                     <div class="w-5 h-5 rounded-full flex items-center justify-center shrink-0" :class="config.bg">

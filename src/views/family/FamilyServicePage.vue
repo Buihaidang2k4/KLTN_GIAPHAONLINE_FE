@@ -26,7 +26,6 @@ const handleSelectPlan = (plan: SubscriptionPlanRes) => {
         }
     })
 }
-console.log(safeFamilySub.value);
 
 </script>
 
