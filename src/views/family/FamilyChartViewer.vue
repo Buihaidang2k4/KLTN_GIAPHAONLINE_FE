@@ -2,6 +2,7 @@
 import { ref, onMounted, computed, watch, nextTick } from "vue";
 import FamilyTree from "@balkangraph/familytree.js";
 import bg_familytree from "@/assets/images/bg_familyTree.jpg";
+import picture_dragon_frame from "@/assets/images/dragon_picture_frame.png";
 import { notify } from "@/utils/notify";
 import { useFamilyStore } from "@/store/family/useFamilyStore";
 import AddSiblingsModal from "@/components/forms/family_tree/AddSiblingsModal.vue";
@@ -26,7 +27,7 @@ import AddPartnerModel from "@/components/forms/family_tree/AddPartnerModel.vue"
 import EditPersonModal from "@/components/forms/family_tree/EditPersonModal.vue";
 import { useFamilyPermissions } from "@/composables/family/useFamilyPermissions";
 import { useFamilySubscriptionStore } from "@/store/family/useFamilySubscriptionStore";
-import { batchImagesToBase64, imageToBase64 } from "@/utils/convert-img";
+import { imageToBase64 } from "@/utils/convert-img";
 
 const iconMenu = {
   addSiblings:
@@ -295,7 +296,7 @@ onMounted(async () => {
         },
         menu: {
           export_pdf: {
-            text: "Xuất PDF",
+            text: "Xuất PDF (Bản đẹp)",
             icon: FamilyTree.icon.pdf(24, 24, "#7A7A7A"),
             onClick: exportPdf,
           },
@@ -703,21 +704,42 @@ const resetView = async () => {
 // ─────────────────────────────────────────
 //  HELPER: convert 1 URL → base64 via Canvas
 // ─────────────────────────────────────────
-async function urlToBase64(url: string): Promise<string> {
-  if (!url || url.startsWith("data:")) return url;
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      const c = document.createElement("canvas");
-      c.width = img.naturalWidth || 80;
-      c.height = img.naturalHeight || 80;
-      c.getContext("2d")!.drawImage(img, 0, 0);
-      resolve(c.toDataURL("image/jpeg", 0.85));
-    };
-    img.onerror = () => resolve(url); // fallback giữ nguyên URL nếu lỗi
-    img.src = url + (url.includes("?") ? "&" : "?") + "_t=" + Date.now();
-  });
+// async function urlToBase64(url: string): Promise<string> {
+//   if (!url || url.startsWith("data:")) return url;
+//   return new Promise((resolve) => {
+//     const img = new Image();
+//     img.crossOrigin = "anonymous";
+//     img.onload = () => {
+//       const c = document.createElement("canvas");
+//       c.width = img.naturalWidth || 80;
+//       c.height = img.naturalHeight || 80;
+//       c.getContext("2d")!.drawImage(img, 0, 0);
+//       resolve(c.toDataURL("image/jpeg", 0.85));
+//     };
+//     img.onerror = () => resolve(url); // fallback giữ nguyên URL nếu lỗi
+//     img.src = url + (url.includes("?") ? "&" : "?") + "_t=" + Date.now();
+//   });
+// }
+
+
+// Hàm chuyển URL thành base64, nếu lỗi trả về base64 của ảnh mặc định theo giới tính (nếu biết) hoặc ảnh trắng.
+async function urlToBase64(url: string, fallbackBase64?: string): Promise<string> {
+  if (!url || url.startsWith('data:')) return url;
+  try {
+    // fetch() không bị canvas tainted, dùng FileReader để convert sang base64
+    const res = await fetch(url, { mode: 'cors', cache: 'no-cache' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const blob = await res.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => resolve(fallbackBase64 || url);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    // Fallback nếu server không có CORS header
+    return fallbackBase64 || url;
+  }
 }
 
 // ─────────────────────────────────────────
@@ -735,6 +757,14 @@ async function buildSVG(): Promise<{ svg: string; w: number; h: number }> {
   const vbH = (vb?.height && vb.height > 0) ? vb.height : el.scrollHeight || 1500;
 
   const cloned = el.cloneNode(true) as SVGSVGElement;
+
+
+  const linkPaths = cloned.querySelectorAll('.bft-link path, .link path, g[data-link] path');
+  linkPaths.forEach((path: Element) => {
+    path.setAttribute('stroke-width', '10');   // độ dày mong muốn (px)
+    path.setAttribute('stroke', '#858585');     // màu sắc (tuỳ chỉnh)
+  });
+
   // Set width/height = vbW/vbH để canvas render đúng tỉ lệ
   cloned.setAttribute("width", String(vbW));
   cloned.setAttribute("height", String(vbH));
@@ -779,6 +809,268 @@ async function buildSVG(): Promise<{ svg: string; w: number; h: number }> {
 // ─────────────────────────────────────────
 //  EXPORT PDF
 // ─────────────────────────────────────────
+// async function exportPdf() {
+//   if (!family) return;
+//   notify.info('Thông báo', 'Đang xuất PDF, vui lòng chờ...');
+//   family.fit();
+//   await new Promise(r => setTimeout(r, 600));
+//   try {
+//     const { jsPDF } = await import('jspdf');
+//     const { svg, w, h } = await buildSVG();
+
+//     const scale = 2;
+//     const canvas = document.createElement('canvas');
+//     canvas.width = w * scale;
+//     canvas.height = h * scale;
+//     const ctx = canvas.getContext('2d')!;
+//     ctx.fillStyle = '#F2E8CE';
+//     ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+//     const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+//     const url = URL.createObjectURL(blob);
+//     await new Promise<void>((resolve, reject) => {
+//       const img = new Image();
+//       img.onload = () => { ctx.drawImage(img, 0, 0, canvas.width, canvas.height); URL.revokeObjectURL(url); resolve(); };
+//       img.onerror = (e) => { URL.revokeObjectURL(url); reject(e); };
+//       img.src = url;
+//     });
+//     const imgData = canvas.toDataURL('image/jpeg', 0.92);
+
+//     const pdfW = 297;
+//     const pdfH = Math.max(Math.round((h / w) * pdfW), 210);
+//     const orientation = pdfH > pdfW ? 'portrait' : 'landscape';
+//     const pdf = new jsPDF({ orientation, unit: 'mm', format: [pdfW, pdfH] });
+
+//     const now = new Date();
+//     const dateStr = now.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+//     // ── Bảng màu ──
+//     const DARK = [44, 26, 14] as [number, number, number];
+//     const GOLD = [201, 168, 76] as [number, number, number];
+//     const GOLD2 = [232, 204, 128] as [number, number, number];
+//     const BROWN = [139, 105, 20] as [number, number, number];
+//     const IVORY = [242, 232, 206] as [number, number, number];
+
+//     const setFill = (c: [number, number, number]) => pdf.setFillColor(c[0], c[1], c[2]);
+//     const setDraw = (c: [number, number, number]) => pdf.setDrawColor(c[0], c[1], c[2]);
+//     const setColor = (c: [number, number, number]) => pdf.setTextColor(c[0], c[1], c[2]);
+
+//     // ── Nền trang ngà ──
+//     setFill(IVORY);
+//     pdf.rect(0, 0, pdfW, pdfH, 'F');
+
+//     // ── Dải vàng đồng ngoài cùng ──
+//     setFill(GOLD);
+//     pdf.rect(4, 4, pdfW - 8, pdfH - 8, 'F');
+//     setDraw([61, 43, 26] as [number, number, number]); pdf.setLineWidth(1.5);
+//     pdf.rect(4, 4, pdfW - 8, pdfH - 8);
+
+//     // ── Vùng nội dung nền ngà bên trong ──
+//     setFill(IVORY);
+//     pdf.rect(14, 14, pdfW - 28, pdfH - 28, 'F');
+//     setDraw(BROWN); pdf.setLineWidth(0.6);
+//     pdf.rect(14, 14, pdfW - 28, pdfH - 28);
+//     setDraw(GOLD); pdf.setLineWidth(0.3);
+//     pdf.rect(16, 16, pdfW - 32, pdfH - 32);
+
+//     // ════ HOA VĂN SÓNG CUỘN - vẽ bằng bezier lặp ════
+//     const waveStep = 6; // mm mỗi nửa sóng
+
+//     // Sóng ngang (trên & dưới)
+//     const drawHWave = (y: number, x1: number, x2: number, flip: boolean) => {
+//       const amp = 2.5;
+//       const mid = flip ? y - amp : y + amp;
+//       let d = `M ${x1} ${y}`;
+//       let x = x1;
+//       let up = true;
+//       while (x < x2) {
+//         const nx = Math.min(x + waveStep, x2);
+//         const cy1 = up ? (flip ? y - amp * 2 : y + amp * 2) : y;
+//         d += ` Q ${x + waveStep / 2} ${cy1} ${nx} ${y}`;
+//         up = !up;
+//         x = nx;
+//       }
+//       setDraw(BROWN); pdf.setLineWidth(1.2);
+//       pdf.lines([], x1, y); // reset
+//       // jsPDF không có path d trực tiếp, dùng lines zigzag thay thế
+//       const pts: [number, number][] = [];
+//       let cx2 = x1;
+//       let goUp = true;
+//       while (cx2 < x2) {
+//         const nx = Math.min(cx2 + waveStep, x2);
+//         pts.push([nx - cx2, goUp ? (flip ? -amp : amp) : 0]);
+//         pts.push([0, goUp ? 0 : (flip ? amp : -amp)]);
+//         goUp = !goUp;
+//         cx2 = nx;
+//       }
+//     };
+
+//     // Vẽ sóng cuộn bằng vòng lặp circle nhỏ dọc viền vàng
+//     const drawWaveCircles = (
+//       x1: number, y1: number, x2: number, y2: number,
+//       isHoriz: boolean, spacing: number
+//     ) => {
+//       const len = isHoriz ? Math.abs(x2 - x1) : Math.abs(y2 - y1);
+//       const n = Math.floor(len / spacing);
+//       for (let i = 0; i <= n; i++) {
+//         const t = i / n;
+//         const x = isHoriz ? x1 + (x2 - x1) * t : x1;
+//         const y = isHoriz ? y1 : y1 + (y2 - y1) * t;
+
+//         // Hoa thị nhỏ
+//         setFill(BROWN);
+//         pdf.circle(x, y, 0.9, 'F');
+
+//         // Cuộn sóng: vòng nhỏ xen kẽ
+//         if (i % 2 === 0) {
+//           setDraw(BROWN); pdf.setLineWidth(0.5);
+//           setFill(GOLD);
+//           pdf.circle(x, y, 1.8, 'FD');
+//         }
+//       }
+//     };
+
+//     // Sóng uốn lượn dọc dải vàng 4 cạnh
+//     const drawWaveLine = (
+//       x1: number, y1: number, x2: number, y2: number,
+//       isHoriz: boolean
+//     ) => {
+//       const step = 4;
+//       const amp = 1.8;
+//       const len = isHoriz ? x2 - x1 : y2 - y1;
+//       const n = Math.floor(len / step);
+//       const lineCoords: [number, number][] = [];
+
+//       for (let i = 0; i <= n; i++) {
+//         const t = i / n;
+//         const base = isHoriz ? x1 + len * t : y1 + len * t;
+//         const offset = Math.sin(i * Math.PI) * amp;
+//         if (isHoriz) lineCoords.push([base, y1 + offset]);
+//         else lineCoords.push([x1 + offset, base]);
+//       }
+
+//       setDraw(BROWN); pdf.setLineWidth(0.7);
+//       for (let i = 0; i < lineCoords.length - 1; i++) {
+//         pdf.line(lineCoords[i][0], lineCoords[i][1], lineCoords[i + 1][0], lineCoords[i + 1][1]);
+//       }
+//       // Đường song song mỏng hơn
+//       setDraw(GOLD2); pdf.setLineWidth(0.3);
+//       for (let i = 0; i < lineCoords.length - 1; i++) {
+//         const off = isHoriz ? 2 : 2;
+//         pdf.line(
+//           lineCoords[i][0] + (isHoriz ? 0 : off),
+//           lineCoords[i][1] + (isHoriz ? off : 0),
+//           lineCoords[i + 1][0] + (isHoriz ? 0 : off),
+//           lineCoords[i + 1][1] + (isHoriz ? off : 0)
+//         );
+//       }
+//     };
+
+//     // Vẽ sóng 4 cạnh trên dải vàng
+//     drawWaveLine(5, 9, pdfW - 5, 9, true);
+//     drawWaveLine(5, 12, pdfW - 5, 12, true);
+//     drawWaveLine(5, pdfH - 9, pdfW - 5, pdfH - 9, true);
+//     drawWaveLine(5, pdfH - 12, pdfW - 5, pdfH - 12, true);
+//     drawWaveLine(9, 5, 9, pdfH - 5, false);
+//     drawWaveLine(12, 5, 12, pdfH - 5, false);
+//     drawWaveLine(pdfW - 9, 5, pdfW - 9, pdfH - 5, false);
+//     drawWaveLine(pdfW - 12, 5, pdfW - 12, pdfH - 5, false);
+
+//     // Chấm nhụy trên sóng
+//     drawWaveCircles(5, 9, pdfW - 5, 9, true, 8);
+//     drawWaveCircles(5, pdfH - 9, pdfW - 5, pdfH - 9, true, 8);
+//     drawWaveCircles(9, 5, 9, pdfH - 5, false, 8);
+//     drawWaveCircles(pdfW - 9, 5, pdfW - 9, pdfH - 5, false, 8);
+
+//     // ════ GÓC HOA 4 GÓC ════
+//     const drawCornerFlower = (cx: number, cy: number) => {
+//       setFill(GOLD);
+//       pdf.rect(cx - 6, cy - 6, 12, 12, 'F');
+//       setDraw([61, 43, 26] as [number, number, number]); pdf.setLineWidth(0.3);
+//       pdf.rect(cx - 6, cy - 6, 12, 12);
+//       setFill(DARK); setDraw(GOLD); pdf.setLineWidth(0.4);
+//       pdf.circle(cx, cy, 4.5, 'FD');
+//       setFill(GOLD);
+//       pdf.circle(cx, cy, 2.5, 'F');
+//       setFill(IVORY);
+//       pdf.circle(cx, cy, 1, 'F');
+//       for (let a = 0; a < 4; a++) {
+//         const rad = a * Math.PI / 2;
+//         setFill(BROWN);
+//         pdf.circle(cx + Math.cos(rad) * 3.2, cy + Math.sin(rad) * 3.2, 1, 'F');
+//       }
+//     };
+
+//     drawCornerFlower(9, 9);
+//     drawCornerFlower(pdfW - 9, 9);
+//     drawCornerFlower(9, pdfH - 9);
+//     drawCornerFlower(pdfW - 9, pdfH - 9);
+
+//     // ════ HEADER ════
+//     const headerH = 20;
+//     setFill(DARK);
+//     pdf.rect(15, 15, pdfW - 30, headerH, 'F');
+//     setDraw(GOLD); pdf.setLineWidth(0.6);
+//     pdf.rect(15, 15, pdfW - 30, headerH);
+//     setDraw(GOLD2); pdf.setLineWidth(0.25);
+//     pdf.line(20, 18.5, pdfW - 20, 18.5);
+//     pdf.line(20, 32.5, pdfW - 20, 32.5);
+
+//     // Tiêu đề - căn giữa tuyệt đối
+//     pdf.setFont('helvetica', 'bold');
+//     pdf.setFontSize(13);
+//     setColor(GOLD2);
+//     pdf.text('GIA PHA DONG HO', pdfW / 2, 28, { align: 'center', charSpace: 2 });
+
+//     // Kim cương trang trí 2 bên - đo text width để đặt cân xứng
+//     const titleW = 62; // ước tính mm
+//     const leftEdge = pdfW / 2 - titleW / 2 - 10;
+//     const rightEdge = pdfW / 2 + titleW / 2 + 10;
+//     [[leftEdge - 5, 28], [leftEdge, 28], [rightEdge, 28], [rightEdge + 5, 28]].forEach(([bx, by]) => {
+//       setFill(GOLD);
+//       const s = 1.4;
+//       pdf.lines([[s, -s], [s, s], [-s, s], [-s, -s]], bx, by - s, [1, 1], 'F', true);
+//     });
+
+//     // Đường kẻ 2 bên tiêu đề
+//     setDraw(GOLD); pdf.setLineWidth(0.4);
+//     pdf.line(20, 28, leftEdge - 10, 28);
+//     pdf.line(rightEdge + 10, 28, pdfW - 20, 28);
+
+//     // ════ FOOTER ════
+//     const footerY = pdfH - 18;
+//     setFill(DARK);
+//     pdf.rect(15, footerY, pdfW - 30, 14, 'F');
+//     setDraw(GOLD); pdf.setLineWidth(0.6);
+//     pdf.rect(15, footerY, pdfW - 30, 14);
+//     setDraw(GOLD2); pdf.setLineWidth(0.25);
+//     pdf.line(20, footerY + 3, pdfW - 20, footerY + 3);
+//     pdf.line(20, footerY + 11, pdfW - 20, footerY + 11);
+
+//     pdf.setFont('helvetica', 'normal');
+//     pdf.setFontSize(7.5);
+//     setColor(GOLD2);
+//     pdf.text(`Ngay xuat: ${dateStr}`, 22, footerY + 8.5);
+//     pdf.text('GiaPhaOnline.vn', pdfW / 2, footerY + 8.5, { align: 'center' });
+//     pdf.text('Trang 1 / 1', pdfW - 22, footerY + 8.5, { align: 'right' });
+
+//     // ════ NỘI DUNG CÂY ════
+//     const contentY = 37;
+//     const contentH = footerY - contentY - 2;
+//     pdf.addImage(imgData, 'JPEG', 17, contentY, pdfW - 34, contentH);
+
+//     setDraw(GOLD2); pdf.setLineWidth(0.25);
+//     pdf.line(17, contentY, pdfW - 17, contentY);
+//     pdf.line(17, contentY + contentH, pdfW - 17, contentY + contentH);
+
+//     pdf.save(`Gia-pha-${now.getFullYear()}.pdf`);
+//     notify.success('Thông báo', 'Xuất PDF thành công!');
+//   } catch (err) {
+//     console.error('Export PDF lỗi:', err);
+//     notify.error('Thông báo', 'Xuất PDF thất bại');
+//   }
+// }
+
 async function exportPdf() {
   if (!family) return;
   notify.info('Thông báo', 'Đang xuất PDF, vui lòng chờ...');
@@ -788,83 +1080,348 @@ async function exportPdf() {
     const { jsPDF } = await import('jspdf');
     const { svg, w, h } = await buildSVG();
 
-    // Render SVG → Canvas
+    // ── Render cây SVG → canvas ──
     const scale = 2;
-    const canvas = document.createElement('canvas');
-    canvas.width = w * scale;
-    canvas.height = h * scale;
-    const ctx = canvas.getContext('2d')!;
-    ctx.fillStyle = '#f3e5ab';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    const treeCanvas = document.createElement('canvas');
+    treeCanvas.width = w * scale;
+    treeCanvas.height = h * scale;
+    const treeCtx = treeCanvas.getContext('2d')!;
+    treeCtx.fillStyle = '#F2E8CE';
+    treeCtx.fillRect(0, 0, treeCanvas.width, treeCanvas.height);
 
     const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
+    const blobUrl = URL.createObjectURL(blob);
     await new Promise<void>((resolve, reject) => {
       const img = new Image();
-      img.onload = () => { ctx.drawImage(img, 0, 0, canvas.width, canvas.height); URL.revokeObjectURL(url); resolve(); };
-      img.onerror = (e) => { URL.revokeObjectURL(url); reject(e); };
-      img.src = url;
+      img.onload = () => { treeCtx.drawImage(img, 0, 0, treeCanvas.width, treeCanvas.height); URL.revokeObjectURL(blobUrl); resolve(); };
+      img.onerror = (e) => { URL.revokeObjectURL(blobUrl); reject(e); };
+      img.src = blobUrl;
     });
-    const imgData = canvas.toDataURL('image/jpeg', 0.92);
+    const treeImgData = treeCanvas.toDataURL('image/jpeg', 0.92);
 
-    // Kích thước trang
+    // ── Vẽ khung hoa văn → canvas → base64 ──
+    const FRAME_W = 2970; // px, tỉ lệ A4 landscape
+    const FRAME_H = 2100;
+    const fCanvas = document.createElement('canvas');
+    fCanvas.width = FRAME_W;
+    fCanvas.height = FRAME_H;
+    const fc = fCanvas.getContext('2d')!;
+
+    // Màu nền trong suốt — chỉ vẽ phần viền
+    fc.clearRect(0, 0, FRAME_W, FRAME_H);
+
+    const G = '#C9A84C'; // vàng đồng
+    const G2 = '#E8CC80'; // vàng nhạt
+    const G3 = '#A07828'; // vàng tối
+    const DK = '#2C1A0E'; // nâu đen
+    const BR = '#6B4820'; // nâu trung
+
+    // ─── Hàm vẽ pattern hoa văn cuộn acanthus ───
+    const drawAcanthusH = (y: number, x1: number, x2: number, thick: number) => {
+      const step = 60;
+      fc.strokeStyle = G3;
+      fc.lineWidth = thick * 1.4;
+      fc.beginPath();
+      let x = x1;
+      let up = true;
+      fc.moveTo(x, y);
+      while (x < x2) {
+        const nx = Math.min(x + step, x2);
+        const cy1 = up ? y - step * 0.55 : y + step * 0.55;
+        fc.bezierCurveTo(x + step * 0.3, cy1, nx - step * 0.3, cy1, nx, y);
+        up = !up;
+        x = nx;
+      }
+      fc.stroke();
+
+      // Lớp vàng sáng đè lên
+      fc.strokeStyle = G2;
+      fc.lineWidth = thick * 0.6;
+      fc.beginPath();
+      x = x1; up = true;
+      fc.moveTo(x, y);
+      while (x < x2) {
+        const nx = Math.min(x + step, x2);
+        const cy1 = up ? y - step * 0.55 : y + step * 0.55;
+        fc.bezierCurveTo(x + step * 0.3, cy1, nx - step * 0.3, cy1, nx, y);
+        up = !up;
+        x = nx;
+      }
+      fc.stroke();
+
+      // Chấm nhụy hoa tại đỉnh mỗi sóng
+      x = x1; up = true;
+      let idx = 0;
+      while (x < x2) {
+        const nx = Math.min(x + step, x2);
+        const px = (x + nx) / 2;
+        const py = up ? y - step * 0.55 : y + step * 0.55;
+        fc.fillStyle = idx % 3 === 0 ? G2 : G;
+        fc.beginPath();
+        fc.arc(px, py, thick * 2.2, 0, Math.PI * 2);
+        fc.fill();
+        // Lá nhỏ
+        fc.strokeStyle = G3;
+        fc.lineWidth = thick * 0.8;
+        fc.beginPath();
+        fc.ellipse(px, py, thick * 3.5, thick * 1.4, up ? -0.4 : 0.4, 0, Math.PI * 2);
+        fc.stroke();
+        up = !up; x = nx; idx++;
+      }
+    };
+
+    const drawAcanthusV = (x: number, y1: number, y2: number, thick: number) => {
+      const step = 60;
+      fc.strokeStyle = G3;
+      fc.lineWidth = thick * 1.4;
+      fc.beginPath();
+      let y = y1;
+      let left = true;
+      fc.moveTo(x, y);
+      while (y < y2) {
+        const ny = Math.min(y + step, y2);
+        const cx1 = left ? x - step * 0.55 : x + step * 0.55;
+        fc.bezierCurveTo(cx1, y + step * 0.3, cx1, ny - step * 0.3, x, ny);
+        left = !left;
+        y = ny;
+      }
+      fc.stroke();
+
+      fc.strokeStyle = G2;
+      fc.lineWidth = thick * 0.6;
+      fc.beginPath();
+      y = y1; left = true;
+      fc.moveTo(x, y);
+      while (y < y2) {
+        const ny = Math.min(y + step, y2);
+        const cx1 = left ? x - step * 0.55 : x + step * 0.55;
+        fc.bezierCurveTo(cx1, y + step * 0.3, cx1, ny - step * 0.3, x, ny);
+        left = !left;
+        y = ny;
+      }
+      fc.stroke();
+
+      y = y1; left = true; let idx = 0;
+      while (y < y2) {
+        const ny = Math.min(y + step, y2);
+        const py = (y + ny) / 2;
+        const px = left ? x - step * 0.55 : x + step * 0.55;
+        fc.fillStyle = idx % 3 === 0 ? G2 : G;
+        fc.beginPath();
+        fc.arc(px, py, thick * 2.2, 0, Math.PI * 2);
+        fc.fill();
+        fc.strokeStyle = G3;
+        fc.lineWidth = thick * 0.8;
+        fc.beginPath();
+        fc.ellipse(px, py, thick * 1.4, thick * 3.5, left ? -0.4 : 0.4, 0, Math.PI * 2);
+        fc.stroke();
+        left = !left; y = ny; idx++;
+      }
+    };
+
+    // ─── Hàm vẽ hoa tròn tại góc ───
+    const drawCornerRosette = (cx: number, cy: number, r: number) => {
+      // Nền tròn vàng
+      const grd = fc.createRadialGradient(cx, cy, r * 0.1, cx, cy, r);
+      grd.addColorStop(0, G2);
+      grd.addColorStop(0.5, G);
+      grd.addColorStop(1, G3);
+      fc.fillStyle = grd;
+      fc.beginPath(); fc.arc(cx, cy, r, 0, Math.PI * 2); fc.fill();
+
+      // Vòng viền
+      fc.strokeStyle = DK; fc.lineWidth = r * 0.06;
+      fc.beginPath(); fc.arc(cx, cy, r, 0, Math.PI * 2); fc.stroke();
+      fc.strokeStyle = G2; fc.lineWidth = r * 0.03;
+      fc.beginPath(); fc.arc(cx, cy, r * 0.85, 0, Math.PI * 2); fc.stroke();
+
+      // Cánh hoa 8 cánh
+      for (let i = 0; i < 8; i++) {
+        const angle = (i / 8) * Math.PI * 2;
+        const px = cx + Math.cos(angle) * r * 0.55;
+        const py = cy + Math.sin(angle) * r * 0.55;
+        fc.fillStyle = i % 2 === 0 ? G2 : G;
+        fc.beginPath();
+        fc.ellipse(px, py, r * 0.18, r * 0.32, angle, 0, Math.PI * 2);
+        fc.fill();
+        fc.strokeStyle = G3; fc.lineWidth = r * 0.04;
+        fc.stroke();
+      }
+
+      // Vòng giữa
+      fc.fillStyle = DK;
+      fc.beginPath(); fc.arc(cx, cy, r * 0.22, 0, Math.PI * 2); fc.fill();
+      fc.fillStyle = G2;
+      fc.beginPath(); fc.arc(cx, cy, r * 0.12, 0, Math.PI * 2); fc.fill();
+
+      // Cuộn xoắn 4 góc xung quanh hoa
+      for (let i = 0; i < 4; i++) {
+        const a = (i / 4) * Math.PI * 2 + Math.PI / 4;
+        const sx = cx + Math.cos(a) * r * 0.78;
+        const sy = cy + Math.sin(a) * r * 0.78;
+        fc.strokeStyle = G3; fc.lineWidth = r * 0.07;
+        fc.beginPath();
+        fc.arc(sx, sy, r * 0.18, a + Math.PI, a + Math.PI * 2.5);
+        fc.stroke();
+        fc.strokeStyle = G2; fc.lineWidth = r * 0.035;
+        fc.beginPath();
+        fc.arc(sx, sy, r * 0.18, a + Math.PI, a + Math.PI * 2.5);
+        fc.stroke();
+      }
+    };
+
+    // ─── Hàm vẽ dải ngang đa lớp ───
+    const drawBand = (y: number, x1: number, x2: number, bh: number) => {
+      // Lớp nền nâu đen
+      fc.fillStyle = DK;
+      fc.fillRect(x1, y, x2 - x1, bh);
+      // Viền vàng
+      fc.strokeStyle = G; fc.lineWidth = 4;
+      fc.strokeRect(x1, y, x2 - x1, bh);
+      // Chỉ vàng nhạt kép bên trong
+      fc.strokeStyle = G2; fc.lineWidth = 2;
+      fc.strokeRect(x1 + 10, y + 8, x2 - x1 - 20, bh - 16);
+    };
+
+    // ─── Dải ngang dọc ngoài cùng ───
+    const BW = 55;  // độ rộng dải viền (px)
+
+    // Nền dải vàng 4 cạnh
+    fc.fillStyle = G;
+    fc.fillRect(0, 0, FRAME_W, BW);             // trên
+    fc.fillRect(0, FRAME_H - BW, FRAME_W, BW);  // dưới
+    fc.fillRect(0, BW, BW, FRAME_H - BW * 2);   // trái
+    fc.fillRect(FRAME_W - BW, BW, BW, FRAME_H - BW * 2); // phải
+
+    // Viền nâu ngoài cùng
+    fc.strokeStyle = DK; fc.lineWidth = 10;
+    fc.strokeRect(5, 5, FRAME_W - 10, FRAME_H - 10);
+
+    // Viền vàng tối
+    fc.strokeStyle = G3; fc.lineWidth = 5;
+    fc.strokeRect(20, 20, FRAME_W - 40, FRAME_H - 40);
+
+    // Dải nâu đen bên trong dải vàng
+    fc.fillStyle = DK;
+    fc.fillRect(BW, BW, FRAME_W - BW * 2, 28);
+    fc.fillRect(BW, FRAME_H - BW - 28, FRAME_W - BW * 2, 28);
+    fc.fillRect(BW, BW + 28, 28, FRAME_H - BW * 2 - 56);
+    fc.fillRect(FRAME_W - BW - 28, BW + 28, 28, FRAME_H - BW * 2 - 56);
+
+    // Đường kẻ vàng
+    fc.strokeStyle = G2; fc.lineWidth = 3;
+    fc.strokeRect(BW, BW, FRAME_W - BW * 2, FRAME_H - BW * 2);
+    fc.strokeStyle = G; fc.lineWidth = 2;
+    fc.strokeRect(BW + 28, BW + 28, FRAME_W - (BW + 28) * 2, FRAME_H - (BW + 28) * 2);
+
+    // ─── Hoa văn acanthus dọc 4 cạnh ───
+    const PAD = BW / 2;
+    drawAcanthusH(PAD, BW + 60, FRAME_W - BW - 60, 5); // trên
+    drawAcanthusH(FRAME_H - PAD, BW + 60, FRAME_W - BW - 60, 5); // dưới
+    drawAcanthusV(PAD, BW + 60, FRAME_H - BW - 60, 5); // trái
+    drawAcanthusV(FRAME_W - PAD, BW + 60, FRAME_H - BW - 60, 5); // phải
+
+    // ─── Hoa tròn 4 góc ───
+    const CR = 95;
+    drawCornerRosette(BW / 2, BW / 2, CR);
+    drawCornerRosette(FRAME_W - BW / 2, BW / 2, CR);
+    drawCornerRosette(BW / 2, FRAME_H - BW / 2, CR);
+    drawCornerRosette(FRAME_W - BW / 2, FRAME_H - BW / 2, CR);
+
+    const frameBase64 = fCanvas.toDataURL('image/png');
+
+    // ── PDF ──
     const pdfW = 297;
     const pdfH = Math.max(Math.round((h / w) * pdfW), 210);
     const orientation = pdfH > pdfW ? 'portrait' : 'landscape';
     const pdf = new jsPDF({ orientation, unit: 'mm', format: [pdfW, pdfH] });
 
-    const GOLD = '#B89554';
-    const BROWN = '#6B5A3A';
-    const LIGHT = '#F5EEDC';
     const now = new Date();
     const dateStr = now.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
-    // ─── Nền trang ───
-    pdf.setFillColor(253, 250, 240);
+    const DARK = [44, 26, 14] as [number, number, number];
+    const GOLD = [201, 168, 76] as [number, number, number];
+    const GOLD2 = [232, 204, 128] as [number, number, number];
+    const IVORY = [242, 232, 206] as [number, number, number];
+
+    const setFill = (c: [number, number, number]) => pdf.setFillColor(c[0], c[1], c[2]);
+    const setDraw = (c: [number, number, number]) => pdf.setDrawColor(c[0], c[1], c[2]);
+    const setColor = (c: [number, number, number]) => pdf.setTextColor(c[0], c[1], c[2]);
+
+    // Tỉ lệ vùng nội dung (khớp với BW/FRAME_W)
+    const bwRatioH = BW / FRAME_W; // ~1.85%
+    const bwRatioV = BW / FRAME_H; // ~2.6%
+    const innerPad = 3;
+    const innerX = pdfW * bwRatioH + innerPad;
+    const innerY = pdfH * bwRatioV + innerPad;
+    const innerW = pdfW * (1 - bwRatioH * 2) - innerPad * 2;
+    const innerH = pdfH * (1 - bwRatioV * 2) - innerPad * 2;
+
+    // [1] Nền ngà
+    setFill(IVORY);
     pdf.rect(0, 0, pdfW, pdfH, 'F');
 
-    // ─── Viền ngoài ───
-    pdf.setDrawColor(184, 149, 84);
-    pdf.setLineWidth(1.2);
-    pdf.rect(6, 6, pdfW - 12, pdfH - 12);
-    pdf.setLineWidth(0.4);
-    pdf.rect(9, 9, pdfW - 18, pdfH - 18);
+    // [2] Header
+    const headerH2 = 18;
+    setFill(DARK);
+    pdf.rect(innerX, innerY, innerW, headerH2, 'F');
+    setDraw(GOLD); pdf.setLineWidth(0.5);
+    pdf.rect(innerX, innerY, innerW, headerH2);
+    setDraw(GOLD2); pdf.setLineWidth(0.25);
+    pdf.line(innerX + 4, innerY + 3, innerX + innerW - 4, innerY + 3);
+    pdf.line(innerX + 4, innerY + headerH2 - 3, innerX + innerW - 4, innerY + headerH2 - 3);
 
-    // ─── Header band ───
-    pdf.setFillColor(184, 149, 84);
-    pdf.rect(6, 6, pdfW - 12, 18, 'F');
-
-    // Tiêu đề chính
     pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(15);
-    pdf.setTextColor(255, 255, 255);
-    pdf.text('GIA PHA DONG HO', pdfW / 2, 17, { align: 'center' });
+    pdf.setFontSize(13);
+    setColor(GOLD2);
+    const titleText = 'GIA PHA DONG HO';
+    // Không dùng charSpace để getTextWidth tính đúng
+    const titleW = pdf.getTextWidth(titleText);
+    const titleX = pdfW / 2;
+    const titleY = innerY + headerH2 / 2 + 2.5;
+    pdf.text(titleText, titleX, titleY, { align: 'center' });
 
-    // Đường kẻ trang trí dưới header
-    pdf.setDrawColor(245, 238, 220);
-    pdf.setLineWidth(0.5);
-    pdf.line(20, 25, pdfW - 20, 25);
+    const halfTW = titleW / 2;
+    const diamondGap = 5;
+    [
+      [titleX - halfTW - diamondGap - 4, titleY],
+      [titleX - halfTW - diamondGap, titleY],
+      [titleX + halfTW + diamondGap, titleY],
+      [titleX + halfTW + diamondGap + 4, titleY],
+    ].forEach(([bx, by]) => {
+      setFill(GOLD);
+      const s = 1.3;
+      pdf.lines([[s, -s], [s, s], [-s, s], [-s, -s]], bx, by - s, [1, 1], 'F', true);
+    });
+    setDraw(GOLD); pdf.setLineWidth(0.4);
+    pdf.line(innerX + 5, titleY, titleX - halfTW - diamondGap - 8, titleY);
+    pdf.line(titleX + halfTW + diamondGap + 8, titleY, innerX + innerW - 5, titleY);
 
-    // ─── Nội dung cây ───
-    const contentY = 28;
-    const contentH = pdfH - contentY - 18;
-    pdf.addImage(imgData, 'JPEG', 10, contentY, pdfW - 20, contentH);
-
-    // ─── Footer band ───
-    const footerY = pdfH - 14;
-    pdf.setFillColor(245, 238, 220);
-    pdf.rect(6, footerY - 2, pdfW - 12, 10, 'F');
-
-    pdf.setDrawColor(184, 149, 84);
-    pdf.setLineWidth(0.4);
-    pdf.line(10, footerY - 2, pdfW - 10, footerY - 2);
+    // [3] Footer
+    const footerH2 = 12;
+    const footerY = innerY + innerH - footerH2;
+    setFill(DARK);
+    pdf.rect(innerX, footerY, innerW, footerH2, 'F');
+    setDraw(GOLD); pdf.setLineWidth(0.5);
+    pdf.rect(innerX, footerY, innerW, footerH2);
+    setDraw(GOLD2); pdf.setLineWidth(0.25);
+    pdf.line(innerX + 4, footerY + 3, innerX + innerW - 4, footerY + 3);
+    pdf.line(innerX + 4, footerY + footerH2 - 3, innerX + innerW - 4, footerY + footerH2 - 3);
 
     pdf.setFont('helvetica', 'normal');
-    pdf.setFontSize(8);
-    pdf.setTextColor(107, 90, 58);
-    pdf.text(`Ngay xuat: ${dateStr}`, 14, footerY + 4);
-    pdf.text('GiaPhaOnline.vn', pdfW / 2, footerY + 4, { align: 'center' });
-    pdf.text('Trang 1 / 1', pdfW - 14, footerY + 4, { align: 'right' });
+    pdf.setFontSize(7.5);
+    setColor(GOLD2);
+    pdf.text(`Ngay xuat: ${dateStr}`, innerX + 5, footerY + footerH2 / 2 + 2);
+    pdf.text('GiaPhaOnline.vn', pdfW / 2, footerY + footerH2 / 2 + 2, { align: 'center' });
+    pdf.text('Trang 1 / 1', innerX + innerW - 5, footerY + footerH2 / 2 + 2, { align: 'right' });
+
+    // [4] Cây gia phả
+    const treeY2 = innerY + headerH2 + 1;
+    const treeH2 = footerY - treeY2 - 1;
+    pdf.addImage(treeImgData, 'JPEG', innerX, treeY2, innerW, treeH2);
+
+    // [5] Khung đè lên cuối cùng (vùng giữa trong suốt)
+    pdf.addImage(frameBase64, 'PNG', 0, 0, pdfW, pdfH);
 
     pdf.save(`Gia-pha-${now.getFullYear()}.pdf`);
     notify.success('Thông báo', 'Xuất PDF thành công!');
@@ -873,6 +1430,7 @@ async function exportPdf() {
     notify.error('Thông báo', 'Xuất PDF thất bại');
   }
 }
+
 // ─────────────────────────────────────────
 //  EXPORT PNG
 // ─────────────────────────────────────────
@@ -942,9 +1500,7 @@ async function exportSVG() {
   try {
     const { svg, w, h } = await buildSVG();
 
-    // ✅ Thêm rect nền màu trước <image> background để SVG đẹp hơn khi mở trực tiếp
     const bgRect = `<rect x="0" y="0" width="${w}" height="${h}" fill="#f3e5ab"/>`;
-    // Chèn rect vào ngay sau thẻ <svg ...>
     const finalSvg = svg.replace(
       /(<svg[^>]*>)/,
       (match) => match + bgRect
@@ -970,8 +1526,8 @@ async function exportSVG() {
   <div class="flex h-screen flex-col bg-slate-50 font-sans">
     <HeaderFamilyTree v-model="searchQuery" :isMiniMap="isMiniMap" :searchSuggestions="searchSuggestions"
       @toggleMiniMap="toggleMiniMap" @resetView="resetView" @goToRoot="hanldeRootFocus" @search="handleSearch"
-      @clearSearch="clearSearch" @selectSuggestion="selectSuggestion" @exportPDF="exportPdf"
-      @exportPNG="exportPNG" @exportSVG="exportSVG" />
+      @clearSearch="clearSearch" @selectSuggestion="selectSuggestion" @exportPDF="exportPdf" @exportPNG="exportPNG"
+      @exportSVG="exportSVG" />
 
 
     <div class="flex-1 overflow-hidden border-2 border-slate-200 shadow-inner parchment-bg relative">
@@ -1079,8 +1635,8 @@ async function exportSVG() {
 :deep(.bft-link path),
 :deep(.link path),
 :deep(g[data-link] path) {
-  stroke: #6a6a6a !important;
-  stroke-width: 5px !important;
+  stroke: #858585 !important;
+  stroke-width: 10px !important;
 }
 
 /* 2. Ngay lập tức TRẢ LẠI trạng thái cũ cho icon trong node và menu để không bị đỏ/to */
@@ -1137,7 +1693,7 @@ async function exportSVG() {
 /* 3. Chỉ hiệu ứng viền cho khung hình chữ nhật chính (khung ngoài cùng) */
 :deep(.found-node-highlight)> :deep(rect:first-child) {
   stroke: #007bff !important;
-  stroke-width: 4px !important;
+  stroke-width: 8px !important;
   stroke-dasharray: 8;
   animation: dash-draw 5s linear infinite;
   fill: #fffbeb !important;
