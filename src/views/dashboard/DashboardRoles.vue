@@ -1,5 +1,5 @@
-<script setup>
-import { ref, computed } from 'vue'
+<script setup lang="ts">
+import { ref, computed, watch } from 'vue'
 import {
     ShieldCheck,
     Search,
@@ -7,68 +7,157 @@ import {
     Key,
     Edit3,
     Trash2,
-    Eye,
     Filter,
     UserSquare,
-    Download
+    ShieldAlert
 } from 'lucide-vue-next'
+import {
+    useRolesQuery,
+    useCreateRoleMutation,
+    useAddPermissionMutation,
+    useRemovePermissionMutation,
+    useDeleteRoleMutation
+} from '@/hooks/queries/auth/useRoles'
+import { usePagination } from '@/composables/common/usePagination'
+import AppPagination from '@/components/forms/common/AppPagination.vue'
+import CreateRoleModal from '@/components/forms/role/CreateRoleModal.vue'
+import UpdateRoleModal from '@/components/forms/role/UpdateRoleModal.vue'
+import { notify } from '@/utils/notify'
+import type { RoleRes, CreateRoleReq, UpdateRoleReq } from '@/types/auth/role.types'
 
 const searchQuery = ref('')
 const filterScope = ref('ALL')
+const sort = ref('name,asc')
 
-const roles = ref([
-    {
-        "name": "SYSTEM_ADMIN",
-        "scopeType": "SYSTEM",
-        "description": "Quản trị viên hệ thống - Toàn quyền điều hành",
-        "permissions": Array(5).fill({})
-    },
-    {
-        "name": "SYSTEM_CONTENT_MANAGER",
-        "scopeType": "SYSTEM",
-        "description": "Quản lý nội dung hệ thống",
-        "permissions": Array(1).fill({})
-    },
-    {
-        "name": "FAMILY_ADMIN",
-        "scopeType": "SYSTEM",
-        "description": "Quản trị viên dòng họ - Có quyền xóa gia phả và quản lý thành viên",
-        "permissions": Array(12).fill({})
-    },
-    {
-        "name": "FAMILY_EDITOR",
-        "scopeType": "SYSTEM",
-        "description": "Biên tập viên dòng họ - Thêm sửa thông tin cây và bài viết",
-        "permissions": Array(6).fill({})
-    },
-    {
-        "name": "FAMILY_VIEWER",
-        "scopeType": "SYSTEM",
-        "description": "Người xem - Chỉ có quyền xem thông tin công khai",
-        "permissions": Array(2).fill({})
-    },
-    {
-        "name": "FAMILY_USERS",
-        "scopeType": "FAMILY",
-        "description": "Tài khoản user mặc định mới tạo",
-        "permissions": []
-    }
-])
+// Modal state
+const isCreateModalOpen = ref(false)
+const isUpdateModalOpen = ref(false)
+const selectedRole = ref<RoleRes | null>(null)
 
-const filteredRoles = computed(() => {
-    return roles.value.filter(r => {
-        const matchesSearch = r.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-            r.description.toLowerCase().includes(searchQuery.value.toLowerCase())
-        const matchesScope = filterScope.value === 'ALL' || r.scopeType === filterScope.value
-        return matchesSearch && matchesScope
-    })
+const {
+    pagination,
+    currentPage,
+    hasNextPage,
+    hasPrevPage,
+    nextPage,
+    prevPage,
+    setTotalPages
+} = usePagination(10, 0)
+
+const params = computed(() => ({
+    page: pagination.page,
+    size: pagination.size,
+    sort: sort.value
+}))
+
+// Fetch Paged Roles from Backend
+const { data: rolesData, isLoading: isFetching } = useRolesQuery(searchQuery, filterScope, params)
+
+// Fetch All Roles for accurate global statistics
+const { data: allRolesData } = useRolesQuery('', 'ALL', computed(() => ({ page: 0, size: 1000, sort: 'name,asc' })))
+const allRoles = computed(() => allRolesData.value?.data?.items ?? [])
+const globalTotalRoles = computed(() => allRoles.value.length)
+
+const rolesList = computed(() => rolesData.value?.data?.items ?? [])
+const totalElements = computed(() => rolesData.value?.data?.totalElements ?? 0)
+
+watch(
+    () => rolesData.value?.data?.totalPages,
+    (total) => setTotalPages(total || 0),
+    { immediate: true }
+)
+
+// Reset page when searching or changing filter scope
+watch([searchQuery, filterScope], () => {
+    pagination.page = 0
 })
 
-const countScope = (type) => {
-    return roles.value.filter(r => r.scopeType === type).length
+const filteredRoles = computed(() => rolesList.value)
+
+const countScope = (type: 'SYSTEM' | 'FAMILY') => {
+    return allRoles.value.filter(r => r.scopeType === type).length
+}
+
+// Mutations
+const createRoleMutation = useCreateRoleMutation()
+const deleteRoleMutation = useDeleteRoleMutation()
+const addPermissionMutation = useAddPermissionMutation()
+const removePermissionMutation = useRemovePermissionMutation()
+
+const handleCreate = async (data: CreateRoleReq) => {
+    createRoleMutation.mutate(data, {
+        onSuccess: () => {
+            notify.success('Đã tạo vai trò mới thành công', 'Thành công')
+            isCreateModalOpen.value = false
+        },
+        onError: (err: any) => {
+            const msg = err.response?.data?.message || 'Có lỗi xảy ra khi tạo mới'
+            notify.error(msg, 'Lỗi')
+        }
+    })
+}
+
+const handleUpdate = async (data: UpdateRoleReq) => {
+    if (!selectedRole.value) return
+    
+    const roleName = selectedRole.value.name
+    const oldPerms = selectedRole.value.permissions ? selectedRole.value.permissions.map(p => p.name) : []
+    const newPerms = data.permissions
+    
+    const added = newPerms.filter(p => !oldPerms.includes(p))
+    const removed = oldPerms.filter(p => !newPerms.includes(p))
+
+    try {
+        // Execute add permissions
+        if (added.length > 0) {
+            await addPermissionMutation.mutateAsync({
+                roleName,
+                data: {
+                    description: data.description,
+                    permissions: added
+                }
+            })
+        }
+        
+        // Execute remove permissions
+        if (removed.length > 0) {
+            await removePermissionMutation.mutateAsync({
+                roleName,
+                data: {
+                    description: data.description,
+                    permissions: removed
+                }
+            })
+        }
+
+        notify.success('Cập nhật vai trò & Phân quyền thành công', 'Thành công')
+        isUpdateModalOpen.value = false
+        selectedRole.value = null
+    } catch (err: any) {
+        const msg = err.response?.data?.message || 'Có lỗi xảy ra khi cập nhật'
+        notify.error(msg, 'Lỗi')
+    }
+}
+
+const handleDelete = async (roleName: string) => {
+    if (confirm(`Bạn có chắc chắn muốn xóa vai trò "${roleName}" không? Hành động này không thể hoàn tác!`)) {
+        deleteRoleMutation.mutate(roleName, {
+            onSuccess: () => {
+                notify.success('Xóa vai trò thành công', 'Thành công')
+            },
+            onError: (err: any) => {
+                const msg = err.response?.data?.message || 'Có lỗi xảy ra khi xóa'
+                notify.error(msg, 'Lỗi')
+            }
+        })
+    }
+}
+
+const openEditModal = (role: RoleRes) => {
+    selectedRole.value = role
+    isUpdateModalOpen.value = true
 }
 </script>
-
 
 <template>
     <div class="p-6 bg-gray-50 min-h-screen">
@@ -76,19 +165,14 @@ const countScope = (type) => {
         <div class="flex flex-col md:flex-row md:items-center justify-between mb-8">
             <div>
                 <h1 class="text-2xl font-bold text-amber-900 flex items-center gap-2">
-                    <ShieldCheck class="w-8 h-8" />
+                    <ShieldCheck class="w-8 h-8 text-amber-600" />
                     Quản lý Vai trò & Quyền hạn
                 </h1>
                 <p class="text-gray-500 mt-1 text-sm">Thiết lập các nhóm quyền cho hệ thống và dòng họ</p>
             </div>
 
             <div class="flex gap-3 mt-4 md:mt-0">
-                <button
-                    class="flex items-center gap-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg transition-all shadow-sm">
-                    <Download class="w-4 h-4" />
-                    Xuất dữ liệu
-                </button>
-                <button
+                <button @click="isCreateModalOpen = true"
                     class="flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg transition-all shadow-md active:scale-95">
                     <PlusCircle class="w-5 h-5" />
                     Tạo vai trò mới
@@ -96,33 +180,38 @@ const countScope = (type) => {
             </div>
         </div>
 
-        <!-- Stats Cards (Đồng bộ kích thước 4 cột) -->
+        <!-- Stats Cards -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
             <div class="bg-white p-5 rounded-xl shadow-sm border border-amber-100">
-                <div class="text-amber-500 font-semibold mb-1 uppercase text-[10px] tracking-wider text-xs">Tổng số Vai
-                    trò</div>
-                <div class="text-2xl font-bold text-gray-800">{{ roles.length }}</div>
+                <div class="text-amber-500 font-semibold mb-1 uppercase text-[10px] tracking-wider text-xs">Tổng số Vai trò</div>
+                <div class="text-2xl font-bold text-gray-800">
+                    <span v-if="isFetching" class="inline-block w-4 h-4 border-2 border-amber-600 border-t-transparent rounded-full animate-spin"></span>
+                    <span v-else>{{ globalTotalRoles }}</span>
+                </div>
             </div>
             <div class="bg-white p-5 rounded-xl shadow-sm border border-amber-100">
-                <div class="text-blue-500 font-semibold mb-1 uppercase text-[10px] tracking-wider text-xs">Hệ thống
-                    (SYSTEM)</div>
-                <div class="text-2xl font-bold text-gray-800">{{ countScope('SYSTEM') }}</div>
+                <div class="text-blue-500 font-semibold mb-1 uppercase text-[10px] tracking-wider text-xs">Hệ thống (SYSTEM)</div>
+                <div class="text-2xl font-bold text-gray-800">
+                    <span v-if="isFetching" class="inline-block w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></span>
+                    <span v-else>{{ countScope('SYSTEM') }}</span>
+                </div>
             </div>
             <div class="bg-white p-5 rounded-xl shadow-sm border border-amber-100">
-                <div class="text-orange-500 font-semibold mb-1 uppercase text-[10px] tracking-wider text-xs">Dòng họ
-                    (FAMILY)</div>
-                <div class="text-2xl font-bold text-gray-800">{{ countScope('FAMILY') }}</div>
+                <div class="text-orange-500 font-semibold mb-1 uppercase text-[10px] tracking-wider text-xs">Dòng họ (FAMILY)</div>
+                <div class="text-2xl font-bold text-gray-800">
+                    <span v-if="isFetching" class="inline-block w-4 h-4 border-2 border-orange-600 border-t-transparent rounded-full animate-spin"></span>
+                    <span v-else>{{ countScope('FAMILY') }}</span>
+                </div>
             </div>
             <div class="bg-white p-5 rounded-xl shadow-sm border border-amber-100">
-                <div class="text-green-500 font-semibold mb-1 uppercase text-[10px] tracking-wider text-xs">Phạm vi hoạt
-                    động</div>
+                <div class="text-green-500 font-semibold mb-1 uppercase text-[10px] tracking-wider text-xs">Phạm vi hoạt động</div>
                 <div class="text-2xl font-bold text-gray-800">Toàn quốc</div>
             </div>
         </div>
 
         <!-- Main Table Container -->
         <div class="bg-white rounded-xl shadow-sm border border-amber-100 overflow-hidden">
-            <!-- Toolbar (Đồng bộ với Permissions) -->
+            <!-- Toolbar -->
             <div
                 class="p-4 border-b border-gray-100 flex flex-col md:flex-row gap-4 items-center justify-between bg-white">
                 <div class="relative w-full md:w-96">
@@ -142,7 +231,7 @@ const countScope = (type) => {
                 </div>
             </div>
 
-            <!-- Table (Đồng bộ cấu trúc cột) -->
+            <!-- Table -->
             <div class="overflow-x-auto">
                 <table class="w-full text-left">
                     <thead>
@@ -193,17 +282,12 @@ const countScope = (type) => {
                             <td class="px-6 py-4">
                                 <div
                                     class="flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button
+                                    <button @click="openEditModal(role)"
                                         class="p-2 text-gray-400 hover:text-amber-600 hover:bg-white rounded-md border border-transparent hover:border-amber-100 transition-all shadow-sm"
                                         title="Sửa vai trò">
                                         <Edit3 class="w-4 h-4" />
                                     </button>
-                                    <button
-                                        class="p-2 text-gray-400 hover:text-blue-600 hover:bg-white rounded-md border border-transparent hover:border-blue-100 transition-all shadow-sm"
-                                        title="Xem chi tiết">
-                                        <Eye class="w-4 h-4" />
-                                    </button>
-                                    <button v-if="role.name !== 'SYSTEM_ADMIN'"
+                                    <button v-if="role.name !== 'SYSTEM_ADMIN'" @click="handleDelete(role.name)"
                                         class="p-2 text-gray-400 hover:text-red-600 hover:bg-white rounded-md border border-transparent hover:border-red-100 transition-all shadow-sm"
                                         title="Xóa vai trò">
                                         <Trash2 class="w-4 h-4" />
@@ -211,29 +295,42 @@ const countScope = (type) => {
                                 </div>
                             </td>
                         </tr>
+                        <tr v-if="filteredRoles.length === 0">
+                            <td colspan="5" class="px-6 py-20 text-center text-gray-400">
+                                <div class="flex flex-col items-center gap-2">
+                                    <ShieldAlert class="w-12 h-12 text-gray-200" />
+                                    <p>Không tìm thấy vai trò nào phù hợp</p>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
 
-            <!-- Footer (Đồng bộ với Permissions) -->
+            <!-- Pagination Footer -->
             <div
-                class="p-4 border-t border-gray-100 bg-gray-50/30 flex flex-col md:flex-row items-center justify-between text-[11px] text-gray-400 uppercase tracking-widest font-medium">
-                <div class="flex items-center gap-4">
-                    <span>Tổng: {{ roles.length }} vai trò</span>
-                    <span class="text-gray-300">|</span>
-                    <span>Dữ liệu: Hệ thống quản trị nội bộ</span>
-                </div>
-                <div class="mt-2 md:mt-0 italic">
-                    Cập nhật: {{ new Date().toLocaleDateString('vi-VN') }}
-                </div>
+                class="p-4 bg-gray-50 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <p class="text-xs font-medium text-gray-500 italic">
+                    Hiển thị từ {{ totalElements === 0 ? 0 : pagination.page * pagination.size + 1 }} đến
+                    {{ Math.min((pagination.page + 1) * pagination.size, totalElements) }} trong tổng số
+                    {{ totalElements }} vai trò
+                </p>
+                <AppPagination :page="currentPage" :total-pages="pagination.totalPages" :has-next="hasNextPage"
+                    :has-prev="hasPrevPage" @next="nextPage" @prev="prevPage" class="!mt-0" />
             </div>
         </div>
     </div>
+
+    <!-- Modals -->
+    <CreateRoleModal :show="isCreateModalOpen" :is-loading="createRoleMutation.isPending.value"
+        @create="handleCreate" @close="isCreateModalOpen = false" />
+
+    <UpdateRoleModal :show="isUpdateModalOpen" :role="selectedRole"
+        :is-loading="addPermissionMutation.isPending.value || removePermissionMutation.isPending.value"
+        @update="handleUpdate" @close="isUpdateModalOpen = false" />
 </template>
 
-
 <style scoped>
-/* Đồng bộ font code và focus giống Permission page */
 code {
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }

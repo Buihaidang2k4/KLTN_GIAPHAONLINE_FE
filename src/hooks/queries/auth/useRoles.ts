@@ -9,8 +9,19 @@ export const roleKey = {
 
   lists: () => [...roleKey.all, "list"] as const,
 
-  list: (params?: MaybeRefOrGetter<PageParams>) =>
-    [...roleKey.lists(), toValue(params)?.page ?? 0, toValue(params)?.size ?? 10, toValue(params)?.sort ?? ""] as const,
+  list: (
+    keyword?: MaybeRefOrGetter<string | null | undefined>,
+    scopeType?: MaybeRefOrGetter<string | null | undefined>,
+    params?: MaybeRefOrGetter<PageParams>
+  ) =>
+    [
+      ...roleKey.lists(),
+      toValue(keyword) || "",
+      toValue(scopeType) || "",
+      toValue(params)?.page ?? 0,
+      toValue(params)?.size ?? 10,
+      toValue(params)?.sort ?? "name,asc"
+    ] as const,
 
   myRoles: () => [...roleKey.all, "me"] as const,
 
@@ -22,16 +33,25 @@ export const roleKey = {
 
 // ==================== Queries ====================
 
-export const useRolesQuery = (params?: MaybeRefOrGetter<PageParams>) => {
-  const normalizedParams = computed(() => ({
-    page: toValue(params)?.page ?? 0,
-    size: toValue(params)?.size ?? 10,
-    sort: toValue(params)?.sort ?? "name,asc",
-  }));
+export const useRolesQuery = (
+  keyword?: MaybeRefOrGetter<string | null | undefined>,
+  scopeType?: MaybeRefOrGetter<string | null | undefined>,
+  params?: MaybeRefOrGetter<PageParams>
+) => {
+  const resolvedKeyword = computed(() => toValue(keyword));
+  const resolvedScope = computed(() => toValue(scopeType));
+  const resolvedParams = computed(() => {
+    const p = toValue(params);
+    return {
+      page: p?.page ?? 0,
+      size: p?.size ?? 10,
+      sort: p?.sort ?? "name,asc",
+    };
+  });
 
   return useQuery({
-    queryKey: computed(() => roleKey.list(normalizedParams)),
-    queryFn: () => roleService.getAll(normalizedParams),
+    queryKey: computed(() => roleKey.list(resolvedKeyword, resolvedScope, resolvedParams)),
+    queryFn: () => roleService.getAll(resolvedKeyword, resolvedScope, resolvedParams),
   });
 };
 
@@ -70,7 +90,7 @@ export const useCreateRoleMutation = () => {
   return useMutation({
     mutationFn: (data: CreateRoleReq) => roleService.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: roleKey.lists() });
+      queryClient.invalidateQueries({ queryKey: roleKey.all });
     },
   });
 };
@@ -105,7 +125,7 @@ export const useDeleteRoleMutation = () => {
   return useMutation({
     mutationFn: (roleName: string) => roleService.deleteRole(roleName),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: roleKey.lists() });
+      queryClient.invalidateQueries({ queryKey: roleKey.all });
     },
   });
 };

@@ -6,9 +6,27 @@ import { toValue, type MaybeRefOrGetter } from "vue";
 
 export const roleService = {
 
-  getAll: async (params?: MaybeRefOrGetter<PageParams>): Promise<ApiResponse<PageResponse<RoleRes>>> => {
+  getAll: async (
+    keyword?: MaybeRefOrGetter<string | null | undefined>,
+    scopeType?: MaybeRefOrGetter<string | null | undefined>,
+    params?: MaybeRefOrGetter<PageParams>
+  ): Promise<ApiResponse<PageResponse<RoleRes>>> => {
+    const queryParams: Record<string, any> = {
+      ...toValue(params),
+    };
+
+    const resolvedKeyword = toValue(keyword);
+    if (resolvedKeyword) {
+      queryParams.keyword = resolvedKeyword;
+    }
+
+    const resolvedScope = toValue(scopeType);
+    if (resolvedScope && resolvedScope !== "ALL") {
+      queryParams.scopeType = resolvedScope;
+    }
+
     const res = await api.get<ApiResponse<PageResponse<RoleRes>>>("/roles", {
-      params: toValue(params),
+      params: queryParams,
     });
     return res.data;
   },

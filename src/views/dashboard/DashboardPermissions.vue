@@ -1,22 +1,157 @@
+<script setup lang="ts">
+import { ref, computed, watch } from 'vue'
+import {
+    KeyRound,
+    Search,
+    PlusCircle,
+    Filter,
+    Download,
+    Edit3,
+    Trash2,
+    ShieldAlert
+} from 'lucide-vue-next'
+import {
+    usePermissionsQuery,
+    usePermissionsPagedQuery,
+    useCreatePermissionMutation,
+    useUpdatePermissionMutation,
+    useDeletePermissionMutation
+} from '@/hooks/queries/permission/usePermissions'
+import type { PermissionRes, CreatePermissionReq, UpdatePermissionReq } from '@/types/auth/permission.types'
+import { notify } from '@/utils/notify'
+import CreatePermissionModal from '@/components/forms/permission/CreatePermissionModal.vue'
+import UpdatePermissionModal from '@/components/forms/permission/UpdatePermissionModal.vue'
+import { usePagination } from '@/composables/common/usePagination'
+import AppPagination from '@/components/forms/common/AppPagination.vue'
+
+// Modal State
+const isCreateModalOpen = ref(false)
+const isUpdateModalOpen = ref(false)
+const selectedPermission = ref<PermissionRes | null>(null)
+
+// Pagination & Filtering State
+const searchQuery = ref('')
+const filterScope = ref('ALL')
+const sort = ref('name,asc')
+
+const {
+    pagination,
+    currentPage,
+    hasNextPage,
+    hasPrevPage,
+    nextPage,
+    prevPage,
+    setTotalPages
+} = usePagination(10, 0)
+
+const params = computed(() => ({
+    page: pagination.page,
+    size: pagination.size,
+    sort: sort.value
+}))
+
+// Fetch Paged Permissions from Backend
+const { data: permissionsData, isLoading: isFetching } = usePermissionsPagedQuery(searchQuery, filterScope, params)
+
+// Fetch All Permissions for accurate global statistics
+const { data: allPermissionsData } = usePermissionsQuery()
+const allPermissions = computed(() => {
+    const d = allPermissionsData.value?.data as any
+    if (Array.isArray(d)) return d
+    if (d && typeof d === 'object' && 'items' in d && Array.isArray(d.items)) return d.items
+    return []
+})
+
+const permissionsList = computed(() => permissionsData.value?.data?.items ?? [])
+const totalElements = computed(() => permissionsData.value?.data?.totalElements ?? 0)
+
+watch(
+    () => permissionsData.value?.data?.totalPages,
+    (total) => setTotalPages(total || 0),
+    { immediate: true }
+)
+
+// Reset page when searching or changing filter scope
+watch([searchQuery, filterScope], () => {
+    pagination.page = 0
+})
+
+const filteredPermissions = computed(() => permissionsList.value)
+
+const countScope = (type: string) => {
+    return allPermissions.value.filter(p => p.scopeType === type).length
+}
+
+// Mutations
+const createPermissionMutation = useCreatePermissionMutation()
+const updatePermissionMutation = useUpdatePermissionMutation()
+const deletePermissionMutation = useDeletePermissionMutation()
+
+const handleCreate = async (data: CreatePermissionReq) => {
+    createPermissionMutation.mutate(data, {
+        onSuccess: () => {
+            notify.success('Đã thêm quyền mới thành công', 'Thành công')
+            isCreateModalOpen.value = false
+        },
+        onError: (err: any) => {
+            const msg = err.response?.data?.message || 'Có lỗi xảy ra khi thêm mới'
+            notify.error(msg, 'Lỗi')
+        }
+    })
+}
+
+const handleUpdate = async (data: UpdatePermissionReq) => {
+    if (!selectedPermission.value) return
+    updatePermissionMutation.mutate({
+        permissionName: selectedPermission.value.name,
+        data
+    }, {
+        onSuccess: () => {
+            notify.success('Cập nhật quyền thành công', 'Thành công')
+            isUpdateModalOpen.value = false
+            selectedPermission.value = null
+        },
+        onError: (err: any) => {
+            const msg = err.response?.data?.message || 'Có lỗi xảy ra khi cập nhật'
+            notify.error(msg, 'Lỗi')
+        }
+    })
+}
+
+const handleDelete = async (perm: PermissionRes) => {
+    if (confirm(`Bạn có chắc chắn muốn xóa quyền "${perm.name}" không? Hành động này không thể hoàn tác!`)) {
+        deletePermissionMutation.mutate(perm.name, {
+            onSuccess: () => {
+                notify.success('Xóa quyền thành công', 'Thành công')
+            },
+            onError: (err: any) => {
+                const msg = err.response?.data?.message || 'Có lỗi xảy ra khi xóa'
+                notify.error(msg, 'Lỗi')
+            }
+        })
+    }
+}
+
+const openEditModal = (perm: PermissionRes) => {
+    selectedPermission.value = perm
+    isUpdateModalOpen.value = true
+}
+</script>
+
 <template>
     <div class="p-6 bg-gray-50 min-h-screen">
         <!-- Header Section -->
         <div class="flex flex-col md:flex-row md:items-center justify-between mb-8">
             <div>
                 <h1 class="text-2xl font-bold text-amber-900 flex items-center gap-2">
-                    <KeyRound class="w-8 h-8" />
+                    <KeyRound class="w-8 h-8 text-amber-600" />
                     Danh mục Quyền hạn
                 </h1>
                 <p class="text-gray-500 mt-1">Danh sách các hành động thô được định nghĩa trong hệ thống</p>
             </div>
 
             <div class="flex gap-3 mt-4 md:mt-0">
-                <button
-                    class="flex items-center gap-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg transition-all shadow-sm">
-                    <Download class="w-4 h-4" />
-                    Xuất dữ liệu
-                </button>
-                <button
+                <button @click="isCreateModalOpen = true"
                     class="flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg transition-all shadow-md active:scale-95">
                     <PlusCircle class="w-5 h-5" />
                     Thêm quyền mới
@@ -28,15 +163,27 @@
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
             <div class="bg-white p-5 rounded-xl shadow-sm border border-amber-100">
                 <div class="text-amber-500 font-semibold mb-1 uppercase text-[10px] tracking-wider">Tổng số Quyền</div>
-                <div class="text-2xl font-bold text-gray-800">{{ permissions.length }}</div>
+                <div class="text-2xl font-bold text-gray-800">
+                    <span v-if="isFetching"
+                        class="inline-block w-4 h-4 border-2 border-amber-600 border-t-transparent rounded-full animate-spin"></span>
+                    <span v-else>{{ totalElements }}</span>
+                </div>
             </div>
             <div class="bg-white p-5 rounded-xl shadow-sm border border-amber-100">
                 <div class="text-blue-500 font-semibold mb-1 uppercase text-[10px] tracking-wider">Quyền Hệ thống</div>
-                <div class="text-2xl font-bold text-gray-800">{{ countScope('SYSTEM') }}</div>
+                <div class="text-2xl font-bold text-gray-800">
+                    <span v-if="isFetching"
+                        class="inline-block w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></span>
+                    <span v-else>{{ countScope('SYSTEM') }}</span>
+                </div>
             </div>
             <div class="bg-white p-5 rounded-xl shadow-sm border border-amber-100">
                 <div class="text-orange-500 font-semibold mb-1 uppercase text-[10px] tracking-wider">Quyền Dòng họ</div>
-                <div class="text-2xl font-bold text-gray-800">{{ countScope('FAMILY') }}</div>
+                <div class="text-2xl font-bold text-gray-800">
+                    <span v-if="isFetching"
+                        class="inline-block w-4 h-4 border-2 border-orange-600 border-t-transparent rounded-full animate-spin"></span>
+                    <span v-else>{{ countScope('FAMILY') }}</span>
+                </div>
             </div>
             <div class="bg-white p-5 rounded-xl shadow-sm border border-amber-100">
                 <div class="text-green-500 font-semibold mb-1 uppercase text-[10px] tracking-wider">Mới cập nhật</div>
@@ -87,7 +234,8 @@
                                 </code>
                             </td>
                             <td class="px-6 py-4">
-                                <span class="text-sm text-gray-700 leading-relaxed">{{ perm.description }}</span>
+                                <span
+                                    class="text-sm text-gray-700 leading-relaxed">{{ perm.description || 'Không có mô tả' }}</span>
                             </td>
                             <td class="px-6 py-4">
                                 <span :class="[
@@ -102,11 +250,11 @@
                             <td class="px-6 py-4">
                                 <div
                                     class="flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button
+                                    <button @click="openEditModal(perm)"
                                         class="p-2 text-gray-400 hover:text-amber-600 hover:bg-white rounded-md border border-transparent hover:border-amber-100 transition-all shadow-sm">
                                         <Edit3 class="w-4 h-4" />
                                     </button>
-                                    <button
+                                    <button @click="handleDelete(perm)"
                                         class="p-2 text-gray-400 hover:text-red-600 hover:bg-white rounded-md border border-transparent hover:border-red-100 transition-all shadow-sm">
                                         <Trash2 class="w-4 h-4" />
                                     </button>
@@ -125,78 +273,28 @@
                 </table>
             </div>
 
-            <!-- Footer Info -->
+            <!-- Pagination Footer -->
             <div
-                class="p-4 border-t border-gray-100 bg-gray-50/30 flex flex-col md:flex-row items-center justify-between text-[11px] text-gray-400 uppercase tracking-widest font-medium">
-                <div class="flex items-center gap-4">
-                    <span>Tổng: {{ permissions.length }} bản ghi</span>
-                    <span class="text-gray-300">|</span>
-                    <span>Hiển thị: {{ filteredPermissions.length }} bản ghi</span>
-                </div>
-                <div class="mt-2 md:mt-0 italic">
-                    Timestamp: {{ timestamp }}
-                </div>
+                class="p-4 bg-gray-50 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <p class="text-xs font-medium text-gray-500 italic">
+                    Hiển thị từ {{ totalElements === 0 ? 0 : pagination.page * pagination.size + 1 }} đến
+                    {{ Math.min((pagination.page + 1) * pagination.size, totalElements) }} trong tổng số
+                    {{ totalElements }} bản ghi
+                </p>
+                <AppPagination :page="currentPage" :total-pages="pagination.totalPages" :has-next="hasNextPage"
+                    :has-prev="hasPrevPage" @next="nextPage" @prev="prevPage" class="!mt-0" />
             </div>
         </div>
     </div>
+
+    <!-- Modals -->
+    <CreatePermissionModal :show="isCreateModalOpen" :is-loading="createPermissionMutation.isPending.value"
+        @create="handleCreate" @close="isCreateModalOpen = false" />
+
+    <UpdatePermissionModal :show="isUpdateModalOpen" :permission="selectedPermission"
+        :is-loading="updatePermissionMutation.isPending.value" @update="handleUpdate"
+        @close="isUpdateModalOpen = false" />
 </template>
-
-<script setup>
-import { ref, computed } from 'vue'
-import {
-    KeyRound,
-    Search,
-    PlusCircle,
-    Filter,
-    Download,
-    Edit3,
-    Trash2,
-    ShieldAlert
-} from 'lucide-vue-next'
-
-const timestamp = ref("2026-03-30T22:09:57.2343638")
-const searchQuery = ref('')
-const filterScope = ref('ALL')
-
-// Dữ liệu từ JSON Permissions bạn cung cấp
-const permissions = ref([
-    { "name": "SYS_DASHBOARD_VIEW", "scopeType": "SYSTEM", "description": "Xem thống kê hệ thống" },
-    { "name": "SYS_PLAN_MANAGE", "scopeType": "SYSTEM", "description": "Quản lý gói cước" },
-    { "name": "SYS_PAYMENT_MANAGE", "scopeType": "SYSTEM", "description": "Quản lý thanh toán" },
-    { "name": "SYS_ACCOUNT_MANAGE", "scopeType": "SYSTEM", "description": "Quản lý tài khoản người dùng" },
-    { "name": "SYS_CONTENT_MANAGE", "scopeType": "SYSTEM", "description": "Quản lý bài viết trang chủ" },
-    { "name": "FAM_DELETE", "scopeType": "SYSTEM", "description": "Xóa gia phả" },
-    { "name": "FAM_SETTINGS_EDIT", "scopeType": "SYSTEM", "description": "Chỉnh sửa thông tin dòng họ" },
-    { "name": "FAM_MEMBER_MANAGE", "scopeType": "SYSTEM", "description": "Quản lý thành viên trong họ" },
-    { "name": "FAM_SUBSCRIPTION_MANAGE", "scopeType": "SYSTEM", "description": "Quản lý gói cước dòng họ" },
-    { "name": "FAM_EXPORT", "scopeType": "SYSTEM", "description": "Xuất dữ liệu gia phả" },
-    { "name": "NODE_WRITE", "scopeType": "SYSTEM", "description": "Thêm/Sửa thành viên cây" },
-    { "name": "NODE_DELETE", "scopeType": "SYSTEM", "description": "Xóa thành viên cây" },
-    { "name": "RELATIONSHIP_MANAGE", "scopeType": "SYSTEM", "description": "Quản lý quan hệ" },
-    { "name": "POST_MANAGE", "scopeType": "SYSTEM", "description": "Quản lý bài đăng dòng họ" },
-    { "name": "EVENT_MANAGE", "scopeType": "SYSTEM", "description": "Quản lý sự kiện/ngày giỗ" },
-    { "name": "ALBUM_MANAGE", "scopeType": "SYSTEM", "description": "Quản lý album ảnh" },
-    { "name": "POST_VIEW_PUBLIC", "scopeType": "SYSTEM", "description": "Xem bài viết công khai" },
-    { "name": "FAM_VIEW_PUBLIC", "scopeType": "SYSTEM", "description": "Xem gia phả công khai" },
-    { "name": "FAM_SUBSCRIPTION_VIEW", "scopeType": "FAMILY", "description": "Xem thông tin gói cước dòng họ" },
-    { "name": "FAM_SUBSCRIPTION_UPGRADE_REQUEST", "scopeType": "FAMILY", "description": "Yêu cầu nâng cấp gói cước" },
-    { "name": "FAM_PAYMENT_VIEW", "scopeType": "FAMILY", "description": "Xem lịch sử thanh toán dòng họ" }
-])
-
-// Logic tìm kiếm và lọc
-const filteredPermissions = computed(() => {
-    return permissions.value.filter(p => {
-        const matchesSearch = p.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-            p.description.toLowerCase().includes(searchQuery.value.toLowerCase())
-        const matchesScope = filterScope.value === 'ALL' || p.scopeType === filterScope.value
-        return matchesSearch && matchesScope
-    })
-})
-
-const countScope = (type) => {
-    return permissions.value.filter(p => p.scopeType === type).length
-}
-</script>
 
 <style scoped>
 /* Hiệu ứng focus nhẹ cho input */
