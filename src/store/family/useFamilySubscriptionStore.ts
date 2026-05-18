@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { computed, type ComputedRef, type MaybeRefOrGetter } from 'vue'
+import { computed, type MaybeRefOrGetter } from 'vue'
 import {
   useFamilySubscriptionByFamilyQuery,
   useFamilySubscriptionCheckQuotaQuery
@@ -67,8 +67,10 @@ export const useFamilySubscriptionStore = defineStore('familySubscription', () =
     return true
   }
 
-  const guardUploadStorage = (fileSizeMb: ComputedRef<number>): boolean => {
-    if (!canUploadStorage(fileSizeMb.value)) {
+  const guardUploadStorage = (fileSizeMb: number): boolean => {
+    // Nếu chưa load xong subscription thì cho phép upload
+    if (isLoading.value || !subscription.value) return true
+    if (!canUploadStorage(fileSizeMb)) {
       notify.error('Thông báo', `Dung lượng lưu trữ đã đầy (${maxStorageMb.value} MB)`)
       return false
     }

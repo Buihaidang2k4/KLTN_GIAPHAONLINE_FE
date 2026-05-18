@@ -73,7 +73,7 @@ const menuGroups: MenuGroup[] = [
     items: [
       { name: "Tài khoản", path: "/family/tai-khoan", icon: UserPen },
       { name: "Lịch sử hoạt động", path: "/family/lich-su-hoat-dong", icon: History },
-      { name: "Cài đặt", path: "/family/cau-hinh", icon: Settings },
+      // { name: "Cài đặt", path: "/family/cau-hinh", icon: Settings },
     ],
   },
 ]

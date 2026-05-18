@@ -8,6 +8,8 @@ import { authService } from "@/services/auth.service";
 import { hasAnyPermission } from "@/composables/auth/auth.permission.helper";
 import { roleService } from "@/services/role.service";
 
+export const clearRouterCache = () => { _cachedProfile = null; }
+
 // router
 const routes: RouteRecordRaw[] = [
     ...publicRoutes,
@@ -46,6 +48,9 @@ const router = createRouter({
     }
 })
 
+// Cache profile trong memory để tránh gọi API mỗi lần navigate
+let _cachedProfile: any = null;
+
 router.beforeEach(async (to, from, next) => {
     const isGuestOnly = !!to.meta.guestOnly;
     const requiresAuth = !!to.meta.requiresAuth;
@@ -57,10 +62,18 @@ router.beforeEach(async (to, from, next) => {
 
     try {
         const currentAccount = getCurrentUser();
-        if (currentAccount) profileRes = { data: currentAccount };
-        else profileRes = await authService.getMyInfo();
+        if (currentAccount) {
+            profileRes = { data: currentAccount };
+            _cachedProfile = profileRes;
+        } else if (_cachedProfile) {
+            profileRes = _cachedProfile;
+        } else {
+            profileRes = await authService.getMyInfo();
+            _cachedProfile = profileRes;
+        }
     } catch (error) {
         profileRes = null;
+        _cachedProfile = null;
     }
 
     const currentAccount = profileRes?.data ?? null;

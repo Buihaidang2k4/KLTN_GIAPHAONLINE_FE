@@ -23,7 +23,7 @@ const menuGroups = [
     {
         label: 'Bảng điều khiển', // Hoặc 'Tổng quan'
         items: [
-            { icon: LayoutDashboard, label: 'Thống kê hệ thống', to: '/system/dashboard' },
+            { icon: LayoutDashboard, label: 'Thống kê hệ thống', to: '/system' },
         ]
     },
     {

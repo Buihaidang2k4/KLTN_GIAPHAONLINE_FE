@@ -12,11 +12,6 @@ export default [
                 component: () => import("@/views/dashboard/SystemDashboard.vue"),
             },
             {
-                path: "dashboard",
-                name: "Dashboard",
-                component: () => import("@/views/dashboard/DashboardView.vue"),
-            },
-            {
                 path: "accounts",
                 name: "Accounts",
                 component: () => import("@/views/dashboard/DashboardAccounts.vue"),
