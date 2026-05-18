@@ -5,8 +5,13 @@ import api from "./api.base";
 import { toValue, type MaybeRefOrGetter } from "vue";
 
 export const permissionService = {
-    getAll: async (): Promise<ApiResponse<PermissionRes[]>> => {
-        const res = await api.get<ApiResponse<PermissionRes[]>>('/permissions');
+    getAllByScope: async (scopeType?: MaybeRefOrGetter<string | null | undefined>): Promise<ApiResponse<PermissionRes[]>> => {
+        const resolvedScope = toValue(scopeType);
+        const params: Record<string, any> = {};
+        if (resolvedScope && resolvedScope !== "ALL") {
+            params.scopeType = resolvedScope;
+        }
+        const res = await api.get<ApiResponse<PermissionRes[]>>('/permissions/list', { params });
         return res.data;
     },
 
@@ -17,7 +22,7 @@ export const permissionService = {
     ): Promise<ApiResponse<PageResponse<PermissionRes>>> => {
         const resolvedParams = toValue(params);
         const resolvedScope = toValue(scopeType);
-        
+
         // If resolvedScope is "ALL" or empty, don't pass it to the backend (takes all)
         const scope = resolvedScope && resolvedScope !== "ALL" ? resolvedScope : undefined;
 

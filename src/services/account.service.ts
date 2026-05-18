@@ -2,13 +2,34 @@ import api from "./api.base"
 import type { ApiResponse } from "@/types/api-response.types"
 import type { AccountDetailsRes, AccountRes, ChangePasswordAccountReq, ChangeStatusLockReq, CreateAccountReq, UpdateAccountReq } from "@/types/account/account.types"
 import type { PageParams, PageResponse } from "@/types/page-response.types"
+import { toValue, type MaybeRefOrGetter } from "vue"
 
 export const accountService = {
 
     getAccounts: async (
-        params?: PageParams
+        keyword?: MaybeRefOrGetter<string | null | undefined>,
+        status?: MaybeRefOrGetter<string | null | undefined>,
+        params?: MaybeRefOrGetter<PageParams>
     ): Promise<ApiResponse<PageResponse<AccountRes>>> => {
-        const res = await api.get<ApiResponse<PageResponse<AccountRes>>>("/accounts", { params })
+        const resolvedParams = toValue(params);
+        const resolvedKeyword = toValue(keyword);
+        const resolvedStatus = toValue(status);
+
+        const queryParams: Record<string, any> = {
+            ...resolvedParams,
+        };
+
+        if (resolvedKeyword) {
+            queryParams.keyword = resolvedKeyword;
+        }
+
+        if (resolvedStatus && resolvedStatus !== "ALL") {
+            queryParams.status = resolvedStatus;
+        }
+
+        const res = await api.get<ApiResponse<PageResponse<AccountRes>>>("/accounts", {
+            params: queryParams
+        });
         return res.data
     },
 

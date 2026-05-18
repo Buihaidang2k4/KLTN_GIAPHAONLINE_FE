@@ -18,27 +18,22 @@ const emit = defineEmits<{
     close: []
 }>()
 
+console.log(props.role?.scopeType);
 // Search permissions query
 const permSearch = ref('')
 
 // Load all permissions to select from
-const { data: allPermsData, isLoading: isPermsLoading } = usePermissionsQuery()
 const scopeType = computed(() => {
     return props.role?.scopeType
 })
-// Safely extract permissions array and filter by role scopeType
+const { data: allPermsData, isLoading: isPermsLoading } = usePermissionsQuery(scopeType);
+
+// Safely extract flat array of permissions from backend
 const allPermissions = computed(() => {
-    const d = allPermsData.value?.data as any
-    let arr: any[] = []
-    if (Array.isArray(d)) {
-        arr = d
-    } else if (d && typeof d === 'object' && 'items' in d && Array.isArray(d.items)) {
-        arr = d.items
-    }
-
-
-    return arr.filter((p: any) => p.scopeType === scopeType.value)
+    const d = allPermsData.value?.data
+    return Array.isArray(d) ? d : []
 })
+
 
 // Filter permissions based on user search input
 const filteredPermissionsList = computed(() => {
@@ -71,9 +66,9 @@ const { resetForm, handleSubmit, meta, values, setFieldValue } = useForm({
 })
 
 watch(
-    () => props.role,
-    (val) => {
-        if (val) {
+    () => [props.role, allPermsData.value] as const,
+    ([val]) => {
+        if (val && !isPermsLoading.value) {
             resetForm({
                 values: {
                     description: val.description ?? '',
@@ -82,7 +77,7 @@ watch(
             })
         }
     },
-    { immediate: true }
+    { immediate: true, deep: true }
 )
 
 const handleClose = () => {

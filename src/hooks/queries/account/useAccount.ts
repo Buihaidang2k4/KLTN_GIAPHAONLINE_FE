@@ -7,10 +7,33 @@ import { computed, toValue, type MaybeRefOrGetter } from "vue"
 import { notify } from "@/utils/notify"
 import type { ChangePasswordAccountReq, UpdateAccountReq } from "@/types/account/account.types"
 
-export function useAccountsQuery(params?: PageParams) {
+export function useAccountsQuery(
+    keyword?: MaybeRefOrGetter<string | null | undefined>,
+    status?: MaybeRefOrGetter<string | null | undefined>,
+    params?: MaybeRefOrGetter<PageParams>
+) {
+    const resolvedKeyword = computed(() => toValue(keyword));
+    const resolvedStatus = computed(() => toValue(status));
+    const resolvedParams = computed(() => {
+        const p = toValue(params);
+        return {
+            page: p?.page ?? 0,
+            size: p?.size ?? 10,
+            sort: p?.sort ?? "createdAt,desc",
+        };
+    });
+
     return useQuery({
-        queryKey: QUERY_KEYS.ACCOUNT.LIST(params),
-        queryFn: () => accountService.getAccounts(params),
+        queryKey: computed(() => [
+            ...QUERY_KEYS.ACCOUNT.ALL,
+            "list",
+            resolvedKeyword.value || "",
+            resolvedStatus.value || "",
+            resolvedParams.value.page,
+            resolvedParams.value.size,
+            resolvedParams.value.sort
+        ]),
+        queryFn: () => accountService.getAccounts(resolvedKeyword, resolvedStatus, resolvedParams),
         staleTime: 1000 * 30
     })
 }

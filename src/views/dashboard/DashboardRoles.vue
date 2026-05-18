@@ -99,11 +99,11 @@ const handleCreate = async (data: CreateRoleReq) => {
 
 const handleUpdate = async (data: UpdateRoleReq) => {
     if (!selectedRole.value) return
-    
+
     const roleName = selectedRole.value.name
     const oldPerms = selectedRole.value.permissions ? selectedRole.value.permissions.map(p => p.name) : []
     const newPerms = data.permissions
-    
+
     const added = newPerms.filter(p => !oldPerms.includes(p))
     const removed = oldPerms.filter(p => !newPerms.includes(p))
 
@@ -118,7 +118,7 @@ const handleUpdate = async (data: UpdateRoleReq) => {
                 }
             })
         }
-        
+
         // Execute remove permissions
         if (removed.length > 0) {
             await removePermissionMutation.mutateAsync({
@@ -139,9 +139,16 @@ const handleUpdate = async (data: UpdateRoleReq) => {
     }
 }
 
-const handleDelete = async (roleName: string) => {
-    if (confirm(`Bạn có chắc chắn muốn xóa vai trò "${roleName}" không? Hành động này không thể hoàn tác!`)) {
-        deleteRoleMutation.mutate(roleName, {
+const handleDelete = async (role: RoleRes) => {
+
+
+    if (confirm(`Bạn có chắc chắn muốn xóa vai trò "${role.name}" không? Hành động này không thể hoàn tác!`)) {
+        if (role.permissions?.length > 0) {
+            notify.error('Thông báo', 'Vai trò này có quyền hạn hoặc đang được sử dụng, không thể xóa')
+            return
+        }
+
+        deleteRoleMutation.mutate(role.name, {
             onSuccess: () => {
                 notify.success('Xóa vai trò thành công', 'Thành công')
             },
@@ -183,29 +190,36 @@ const openEditModal = (role: RoleRes) => {
         <!-- Stats Cards -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
             <div class="bg-white p-5 rounded-xl shadow-sm border border-amber-100">
-                <div class="text-amber-500 font-semibold mb-1 uppercase text-[10px] tracking-wider text-xs">Tổng số Vai trò</div>
+                <div class="text-amber-500 font-semibold mb-1 uppercase text-[10px] tracking-wider text-xs">Tổng số Vai
+                    trò</div>
                 <div class="text-2xl font-bold text-gray-800">
-                    <span v-if="isFetching" class="inline-block w-4 h-4 border-2 border-amber-600 border-t-transparent rounded-full animate-spin"></span>
+                    <span v-if="isFetching"
+                        class="inline-block w-4 h-4 border-2 border-amber-600 border-t-transparent rounded-full animate-spin"></span>
                     <span v-else>{{ globalTotalRoles }}</span>
                 </div>
             </div>
             <div class="bg-white p-5 rounded-xl shadow-sm border border-amber-100">
-                <div class="text-blue-500 font-semibold mb-1 uppercase text-[10px] tracking-wider text-xs">Hệ thống (SYSTEM)</div>
+                <div class="text-blue-500 font-semibold mb-1 uppercase text-[10px] tracking-wider text-xs">Hệ thống
+                    (SYSTEM)</div>
                 <div class="text-2xl font-bold text-gray-800">
-                    <span v-if="isFetching" class="inline-block w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></span>
+                    <span v-if="isFetching"
+                        class="inline-block w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></span>
                     <span v-else>{{ countScope('SYSTEM') }}</span>
                 </div>
             </div>
             <div class="bg-white p-5 rounded-xl shadow-sm border border-amber-100">
-                <div class="text-orange-500 font-semibold mb-1 uppercase text-[10px] tracking-wider text-xs">Dòng họ (FAMILY)</div>
+                <div class="text-orange-500 font-semibold mb-1 uppercase text-[10px] tracking-wider text-xs">Dòng họ
+                    (FAMILY)</div>
                 <div class="text-2xl font-bold text-gray-800">
-                    <span v-if="isFetching" class="inline-block w-4 h-4 border-2 border-orange-600 border-t-transparent rounded-full animate-spin"></span>
+                    <span v-if="isFetching"
+                        class="inline-block w-4 h-4 border-2 border-orange-600 border-t-transparent rounded-full animate-spin"></span>
                     <span v-else>{{ countScope('FAMILY') }}</span>
                 </div>
             </div>
             <div class="bg-white p-5 rounded-xl shadow-sm border border-amber-100">
-                <div class="text-green-500 font-semibold mb-1 uppercase text-[10px] tracking-wider text-xs">Phạm vi hoạt động</div>
-                <div class="text-2xl font-bold text-gray-800">Toàn quốc</div>
+                <div class="text-green-500 font-semibold mb-1 uppercase text-[10px] tracking-wider text-xs">Phạm vi hoạt
+                    động</div>
+                <div class="text-2xl font-bold text-gray-800"></div>
             </div>
         </div>
 
@@ -287,7 +301,7 @@ const openEditModal = (role: RoleRes) => {
                                         title="Sửa vai trò">
                                         <Edit3 class="w-4 h-4" />
                                     </button>
-                                    <button v-if="role.name !== 'SYSTEM_ADMIN'" @click="handleDelete(role.name)"
+                                    <button v-if="role.name !== 'SYSTEM_ADMIN'" @click="handleDelete(role)"
                                         class="p-2 text-gray-400 hover:text-red-600 hover:bg-white rounded-md border border-transparent hover:border-red-100 transition-all shadow-sm"
                                         title="Xóa vai trò">
                                         <Trash2 class="w-4 h-4" />
@@ -322,8 +336,8 @@ const openEditModal = (role: RoleRes) => {
     </div>
 
     <!-- Modals -->
-    <CreateRoleModal :show="isCreateModalOpen" :is-loading="createRoleMutation.isPending.value"
-        @create="handleCreate" @close="isCreateModalOpen = false" />
+    <CreateRoleModal :show="isCreateModalOpen" :is-loading="createRoleMutation.isPending.value" @create="handleCreate"
+        @close="isCreateModalOpen = false" />
 
     <UpdateRoleModal :show="isUpdateModalOpen" :role="selectedRole"
         :is-loading="addPermissionMutation.isPending.value || removePermissionMutation.isPending.value"

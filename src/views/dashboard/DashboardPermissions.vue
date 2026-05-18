@@ -124,9 +124,8 @@ const handleDelete = async (perm: PermissionRes) => {
             onSuccess: () => {
                 notify.success('Xóa quyền thành công', 'Thành công')
             },
-            onError: (err: any) => {
-                const msg = err.response?.data?.message || 'Có lỗi xảy ra khi xóa'
-                notify.error(msg, 'Lỗi')
+            onError: () => {
+                notify.error("Thông báo", 'Quyền này đang được sử dụng, không thể xóa')
             }
         })
     }

@@ -27,10 +27,12 @@ export const permissionKey = {
         ] as const
 };
 
-export const usePermissionsQuery = () => {
+export const usePermissionsQuery = (scopeType?: MaybeRefOrGetter<string | null | undefined>) => {
+    const resolvedScope = computed(() => toValue(scopeType));
+
     return useQuery({
-        queryKey: permissionKey.lists(),
-        queryFn: () => permissionService.getAll()
+        queryKey: computed(() => [...permissionKey.lists(), resolvedScope.value || ''] as const),
+        queryFn: () => permissionService.getAllByScope(resolvedScope)
     });
 };
 
