@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import {
-  Search, Filter, Download, ExternalLink,
+  Search, Filter, Download,
   CheckCircle2, Clock, ArrowUpRight,
-  CreditCard, Calendar, RefreshCcw, Eye
+  CreditCard, RefreshCcw, Eye
 } from 'lucide-vue-next'
 import AppPagination from '@/components/forms/common/AppPagination.vue'
 import { usePagination } from '@/composables/common/usePagination'
 import { usePaymentsQuery } from '@/hooks/queries/payments/usePayments'
 import ViewPaymentModal from '@/components/forms/payment/ViewPaymentModal.vue'
+import ExcelJS from 'exceljs'
 
 const searchQuery = ref('')
 const selectedStatus = ref('all')
@@ -124,6 +125,168 @@ const formatDateTime = (value: string) => {
     time: date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
   }
 }
+
+const handleExport = async () => {
+  const dataToExport = filteredPayments.value.length > 0 ? filteredPayments.value : payments.value
+  const now = new Date()
+  const dateStr = now.toLocaleDateString('vi-VN')
+  const timeStr = now.toLocaleTimeString('vi-VN')
+  const fileName = `Bao_cao_giao_dich_${now.toISOString().slice(0, 10)}.xlsx`
+
+  const successCount = dataToExport.filter(p => p.status === 'SUCCESS').length
+  const pendingCount = dataToExport.filter(p => p.status === 'PENDING').length
+  const failedCount = dataToExport.filter(p => p.status === 'FAILED' || p.status === 'EXPIRED').length
+  const refundedCount = dataToExport.filter(p => p.status === 'REFUNDED').length
+  const totalRevenue = dataToExport.filter(p => p.status === 'SUCCESS').reduce((s, p) => s + p.amount, 0)
+
+  const wb = new ExcelJS.Workbook()
+  wb.creator = 'Gia Phả Online'
+  const ws = wb.addWorksheet('Giao dịch')
+
+  // ── Độ rộng cột ───────────
+  ws.columns = [
+    { width: 20 },  // STT
+    { width: 30 }, // Mã giao dịch
+    { width: 26 }, // Gói dịch vụ
+    { width: 20 }, // Số tiền
+    { width: 10 }, // Tiền tệ
+    { width: 14 }, // Ngân hàng
+    { width: 14 }, // Nhà cung cấp
+    { width: 16 }, // Trạng thái
+    { width: 32 }, // Mã GD nhà cung cấp
+    { width: 24 }, // Thời gian thanh toán
+    { width: 24 }, // Ngày tạo
+  ]
+
+  // ── Helper styles ─────────────────────────────────────────────
+  const headerFill: ExcelJS.Fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } }
+  const evenFill: ExcelJS.Fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } }
+  const oddFill: ExcelJS.Fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } }
+  const titleFill: ExcelJS.Fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEEF2FF' } }
+  const summaryFill: ExcelJS.Fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } }
+
+  const thinBorder: Partial<ExcelJS.Borders> = {
+    top: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+    bottom: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+    left: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+    right: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+  }
+  const mediumBorder: Partial<ExcelJS.Borders> = {
+    top: { style: 'medium', color: { argb: 'FF1E293B' } },
+    bottom: { style: 'medium', color: { argb: 'FF1E293B' } },
+    left: { style: 'medium', color: { argb: 'FF1E293B' } },
+    right: { style: 'medium', color: { argb: 'FF1E293B' } },
+  }
+
+  const applyToRow = (row: ExcelJS.Row, fill: ExcelJS.Fill, fontColor: string, bold: boolean, border: Partial<ExcelJS.Borders>) => {
+    row.eachCell({ includeEmpty: true }, (cell, colIdx) => {
+      if (colIdx > 11) return
+      cell.fill = fill
+      cell.font = { name: 'Arial', size: 10, bold, color: { argb: fontColor } }
+      cell.border = border
+      cell.alignment = {
+        vertical: 'middle',
+        horizontal: colIdx === 4 ? 'right' : colIdx === 1 ? 'center' : 'left',
+        wrapText: false
+      }
+    })
+  }
+
+  // ── Dòng 1: Tiêu đề lớn ──────────────────────────────────────
+  ws.mergeCells('A1:K1')
+  const titleRow = ws.getRow(1)
+  titleRow.height = 40
+  const titleCell = ws.getCell('A1')
+  titleCell.value = 'GIA PHẢ ONLINE – BÁO CÁO GIAO DỊCH'
+  titleCell.font = { name: 'Arial', size: 18, bold: true, color: { argb: 'FF1E293B' } }
+  titleCell.fill = titleFill
+  titleCell.alignment = { horizontal: 'center', vertical: 'middle' }
+
+  // ── Dòng 2: Trống ─────────────────────────────────────────────
+  ws.addRow([])
+
+  // ── Dòng 3-4: Meta info ───────────────────────────────────────
+  const metaStyle = { font: { name: 'Arial', size: 10, color: { argb: 'FF475569' } } }
+  const r3 = ws.addRow(['Ngày xuất:', `${dateStr} lúc ${timeStr}`])
+  r3.getCell(1).font = { ...metaStyle.font, bold: true }
+  r3.getCell(2).font = metaStyle.font
+
+  const r4 = ws.addRow(['Người xuất:', 'Quản trị viên hệ thống'])
+  r4.getCell(1).font = { ...metaStyle.font, bold: true }
+  r4.getCell(2).font = metaStyle.font
+
+  // ── Dòng 5: Trống ─────────────────────────────────────────────
+  ws.addRow([])
+
+  // ── Dòng 6: TÓM TẮT ──────────────────────────────────────────
+  ws.mergeCells('A6:K6')
+  const summaryTitle = ws.getCell('A6')
+  summaryTitle.value = 'TÓM TẮT BÁO CÁO'
+  summaryTitle.font = { name: 'Arial', size: 12, bold: true, color: { argb: 'FF4F46E5' } }
+  summaryTitle.fill = summaryFill
+  ws.getRow(6).height = 24
+
+  // ── Dòng 7-12: Summary rows ───────────────────────────────────
+  const summaryRows = [
+    ['Tổng giao dịch:', dataToExport.length],
+    ['Thành công:', successCount],
+    ['Chờ xử lý:', pendingCount],
+    ['Thất bại / Hết hạn:', failedCount],
+    ['Hoàn tiền:', refundedCount],
+    ['Tổng doanh thu thực tế:', formatCurrency(totalRevenue)],
+  ]
+  summaryRows.forEach(([label, val]) => {
+    const row = ws.addRow([label, val])
+    row.getCell(1).font = { name: 'Arial', size: 10, bold: true, color: { argb: 'FF475569' } }
+    row.getCell(2).font = { name: 'Arial', size: 10, color: { argb: 'FF1E293B' } }
+    row.getCell(2).alignment = { horizontal: 'left' }
+  })
+
+  // ── Dòng 13: Trống ────────────────────────────────────────────
+  ws.addRow([])
+
+  // ── Dòng 14: Header bảng ─────────────────────────────────────
+  const headerRow = ws.addRow([
+    'STT', 'Mã giao dịch', 'Gói dịch vụ', 'Số tiền (VNĐ)', 'Tiền tệ',
+    'Ngân hàng', 'Nhà cung cấp', 'Trạng thái', 'Mã GD nhà cung cấp',
+    'Thời gian thanh toán', 'Ngày tạo'
+  ])
+  headerRow.height = 30
+  applyToRow(headerRow, headerFill, 'FFFFFFFF', true, mediumBorder)
+
+  // ── Dòng data ─────────────────────────────────────────────────
+  dataToExport.forEach((p, i) => {
+    const row = ws.addRow([
+      i + 1,
+      p.merchantTransactionId,
+      p.planName,
+      p.amount,
+      p.currency,
+      p.bankCode || '---',
+      p.provider,
+      getStatusLabel(p.status),
+      p.providerTransactionId || '---',
+      p.paidAt ? new Date(p.paidAt).toLocaleString('vi-VN') : '---',
+      new Date(p.createdAt).toLocaleString('vi-VN')
+    ])
+    row.height = 22
+    const fill = i % 2 === 0 ? evenFill : oddFill
+    applyToRow(row, fill, 'FF1E293B', false, thinBorder)
+
+    // Format số tiền
+    row.getCell(4).numFmt = '#,##0'
+  })
+
+  // ── Xuất file ───
+  const buffer = await wb.xlsx.writeBuffer()
+  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = fileName
+  a.click()
+  URL.revokeObjectURL(url)
+}
 </script>
 
 <template>
@@ -144,11 +307,7 @@ const formatDateTime = (value: string) => {
         </div>
 
         <div class="flex items-center gap-3">
-          <button
-            class="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all shadow-sm">
-            <Calendar :size="18" /> Chọn khoảng ngày
-          </button>
-          <button
+          <button @click="handleExport"
             class="flex items-center gap-2 px-4 py-2.5 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-slate-800 transition-all shadow-lg shadow-slate-200">
             <Download :size="18" /> Xuất Excel
           </button>
@@ -257,8 +416,7 @@ const formatDateTime = (value: string) => {
                   </td>
                   <td class="px-6 py-4 text-right">
                     <div class="flex items-center justify-end gap-2">
-                      <button
-                        @click="openDetail(payment)"
+                      <button @click="openDetail(payment)"
                         class="p-2 hover:bg-slate-100 text-slate-400 hover:text-slate-600 rounded-lg transition-all"
                         title="Xem chi tiết Log">
                         <Eye :size="18" />
@@ -282,11 +440,7 @@ const formatDateTime = (value: string) => {
         :has-prev="hasPrevPage" @next="nextPage" @prev="prevPage" />
 
       <!-- View transaction details modal -->
-      <ViewPaymentModal
-        :show="showDetailModal"
-        :payment="selectedPayment"
-        @close="showDetailModal = false"
-      />
+      <ViewPaymentModal :show="showDetailModal" :payment="selectedPayment" @close="showDetailModal = false" />
 
     </div>
   </div>

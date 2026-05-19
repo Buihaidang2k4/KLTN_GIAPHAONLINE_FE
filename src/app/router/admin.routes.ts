@@ -29,7 +29,7 @@ export default [
             {
                 path: "posts",
                 name: "Posts",
-                component: () => import("@/views/dashboard/DashboardPosts.vue"),
+                component: () => import("@/views/dashboard/DashboardArticle.vue"),
             },
             {
                 path: "categories",

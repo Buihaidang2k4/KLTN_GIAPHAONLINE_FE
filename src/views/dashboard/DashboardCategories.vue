@@ -1,3 +1,98 @@
+<script setup>
+import { computed, ref, watch } from 'vue'
+import {
+    FolderTree, Plus, Search, Filter, Hash, Pencil, Trash2,
+} from 'lucide-vue-next'
+import {
+    useArticleCategoriesQuery,
+    useDeleteArticleCategoryMutation
+} from '@/hooks/queries/article_category/useArticleCategory'
+import { usePagination } from '@/composables/common/usePagination'
+import AppPagination from '@/components/forms/common/AppPagination.vue'
+import CreateArticleCategoryModal from '@/components/forms/article_category/CreateArticleCategoryModal.vue'
+import UpdateArticleCategoryModal from '@/components/forms/article_category/UpdateArticleCategoryModal.vue'
+import { refDebounced } from '@vueuse/core'
+
+const keyword = ref('')
+
+const {
+    pagination,
+    currentPage,
+    hasNextPage,
+    hasPrevPage,
+    nextPage,
+    prevPage,
+    setTotalPages
+} = usePagination(10, 0)
+const debouncedKeyword = refDebounced(keyword, 500);
+
+const queryParams = computed(() => ({
+    page: pagination.page,
+    size: pagination.size,
+    sort: 'displayOrder,asc',
+    keyword: debouncedKeyword.value
+}))
+
+
+const { data: categoryData, isFetching } = useArticleCategoriesQuery(queryParams)
+const { mutate: deleteCategory } = useDeleteArticleCategoryMutation()
+
+const categories = computed(() => categoryData.value?.data ?? {
+    page: pagination.page,
+    size: pagination.size,
+    totalElements: 0,
+    totalPages: 0,
+    first: true,
+    last: true,
+    hasNext: false,
+    hasPrevious: false,
+    sortBy: 'displayOrder',
+    sortDirection: 'ASC',
+    items: []
+})
+const totalElements = computed(() => categories.value.totalElements || 0)
+
+watch(
+    () => categoryData.value?.data?.totalPages,
+    (total) => setTotalPages(total || 0),
+    { immediate: true }
+)
+
+watch(debouncedKeyword, () => {
+    pagination.page = 0
+})
+
+const isCreateModalOpen = ref(false)
+const isUpdateModalOpen = ref(false)
+const selectedCategory = ref(null)
+
+const formatDate = (dateStr) => {
+    const d = new Date(dateStr)
+    return d.toLocaleDateString('vi-VN')
+}
+
+const openCreateModal = () => {
+    isCreateModalOpen.value = true
+}
+
+const openUpdateModal = (category) => {
+    selectedCategory.value = category
+    isUpdateModalOpen.value = true
+}
+
+const closeUpdateModal = () => {
+    isUpdateModalOpen.value = false
+    selectedCategory.value = null
+}
+
+const confirmDelete = (cat) => {
+    if (confirm(`Bạn có chắc chắn muốn xóa danh mục "${cat.name}"?`)) {
+        deleteCategory(cat.articleCategoryId)
+    }
+}
+</script>
+
+
 <template>
     <div class="p-6 bg-slate-50 min-h-screen font-sans text-slate-900">
         <!-- Header Page -->
@@ -9,7 +104,7 @@
                 </h1>
                 <p class="text-slate-500 text-sm mt-1">Tạo và cấu hình các nhóm tin tức cho hệ thống gia phả</p>
             </div>
-            <button @click="openModal('create')"
+            <button @click="openCreateModal"
                 class="bg-amber-600 hover:bg-amber-700 text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all shadow-md shadow-amber-100">
                 <Plus class="w-5 h-5" />
                 Thêm danh mục
@@ -21,7 +116,7 @@
             class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-6 flex flex-col md:flex-row gap-4 items-center">
             <div class="relative flex-1 w-full">
                 <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <input type="text" placeholder="Tìm kiếm tên danh mục hoặc slug..."
+                <input v-model="keyword" type="text" placeholder="Tìm kiếm tên danh mục hoặc slug..."
                     class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none text-sm" />
             </div>
             <div class="flex items-center gap-2 w-full md:w-auto">
@@ -57,7 +152,7 @@
                             class="hover:bg-slate-50/50 transition-colors group">
                             <td class="px-6 py-4 text-center">
                                 <span class="text-xs font-mono font-bold text-slate-400">#{{ cat.articleCategoryId
-                                    }}</span>
+                                }}</span>
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-3">
@@ -87,7 +182,7 @@
                             <td class="px-6 py-4 text-right">
                                 <div
                                     class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button @click="openModal('edit', cat)"
+                                    <button @click="openUpdateModal(cat)"
                                         class="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all"
                                         title="Chỉnh sửa">
                                         <Pencil class="w-4 h-4" />
@@ -100,6 +195,11 @@
                                 </div>
                             </td>
                         </tr>
+                        <tr v-if="!categories.items.length">
+                            <td colspan="6" class="px-6 py-10 text-center text-sm font-medium text-slate-400">
+                                {{ isFetching ? 'Đang tải danh mục...' : 'Chưa có danh mục bài viết' }}
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -108,155 +208,22 @@
             <div
                 class="p-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <p class="text-xs font-medium text-slate-500 italic">
-                    Hiển thị từ 1 đến {{ categories.items.length }} trong tổng số {{ categories.totalElements }} bản ghi
+                    Hiển thị từ {{ totalElements === 0 ? 0 : pagination.page * pagination.size + 1 }} đến
+                    {{ Math.min((pagination.page + 1) * pagination.size, totalElements) }} trong tổng số
+                    {{ totalElements }} bản ghi
                 </p>
-                <div class="flex items-center gap-1">
-                    <button
-                        class="p-2 border border-slate-300 rounded bg-white text-slate-400 disabled:opacity-50 hover:bg-slate-50"
-                        :disabled="categories.first">
-                        <ChevronLeft class="w-4 h-4" />
-                    </button>
-                    <button class="px-3 py-1 bg-amber-600 text-white rounded font-bold shadow-sm">1</button>
-                    <button
-                        class="px-3 py-1 bg-white border border-slate-300 text-slate-600 rounded hover:bg-slate-50 transition-colors">2</button>
-                    <button
-                        class="p-2 border border-slate-300 rounded bg-white text-slate-400 disabled:opacity-50 hover:bg-slate-50"
-                        :disabled="categories.last">
-                        <ChevronRight class="w-4 h-4" />
-                    </button>
-                </div>
+                <AppPagination :page="currentPage" :total-pages="pagination.totalPages" :has-next="hasNextPage"
+                    :has-prev="hasPrevPage" @next="nextPage" @prev="prevPage" class="!mt-0" />
             </div>
         </div>
 
-        <!-- Modal Create/Edit (Giả lập) -->
-        <div v-if="isModalOpen"
-            class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-            <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all">
-                <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-                    <h3 class="font-black text-slate-800 uppercase tracking-tight text-lg">
-                        {{ modalMode === 'create' ? 'Thêm danh mục mới' : 'Cập nhật danh mục' }}
-                    </h3>
-                    <button @click="isModalOpen = false" class="text-slate-400 hover:text-slate-600">
-                        <X class="w-6 h-6" />
-                    </button>
-                </div>
+        <CreateArticleCategoryModal :show="isCreateModalOpen" :default-display-order="categories.items.length + 1"
+            @close="isCreateModalOpen = false" @success="isCreateModalOpen = false" />
 
-                <div class="p-6 space-y-4">
-                    <div>
-                        <label class="block text-xs font-black text-slate-500 uppercase mb-1.5">Tên danh mục <span
-                                class="text-rose-500">*</span></label>
-                        <input v-model="form.name" type="text" placeholder="VD: Tin tức dòng họ"
-                            class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none text-sm font-medium" />
-                    </div>
-                    <div>
-                        <label class="block text-xs font-black text-slate-500 uppercase mb-1.5">Đường dẫn (Slug)</label>
-                        <div class="relative">
-                            <span
-                                class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">giapha/</span>
-                            <input v-model="form.slug" type="text"
-                                class="w-full p-3 pl-16 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none text-sm font-mono text-blue-600 bg-slate-50" />
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-black text-slate-500 uppercase mb-1.5">Thứ tự hiển thị</label>
-                        <input v-model="form.displayOrder" type="number"
-                            class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none text-sm font-bold" />
-                    </div>
-                </div>
-
-                <div class="p-6 bg-slate-50 border-t border-slate-100 flex gap-3">
-                    <button @click="isModalOpen = false"
-                        class="flex-1 px-4 py-3 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-white transition-all">
-                        Hủy bỏ
-                    </button>
-                    <button @click="saveForm"
-                        class="flex-2 px-8 py-3 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-slate-800 transition-all shadow-lg">
-                        Xác nhận lưu
-                    </button>
-                </div>
-            </div>
-        </div>
+        <UpdateArticleCategoryModal :show="isUpdateModalOpen" :category="selectedCategory" @close="closeUpdateModal"
+            @success="closeUpdateModal" />
     </div>
 </template>
-
-<script setup>
-import { ref, reactive } from 'vue'
-import {
-    FolderTree, Plus, Search, Filter, Hash, Pencil, Trash2,
-    ChevronLeft, ChevronRight, X
-} from 'lucide-vue-next'
-
-// Initial Data from your JSON
-const categories = ref({
-    page: 0,
-    size: 20,
-    totalElements: 2,
-    totalPages: 1,
-    first: true,
-    last: true,
-    items: [
-        {
-            articleCategoryId: 2,
-            name: "Tin tức 1",
-            slug: "tin-tuc-1",
-            description: null,
-            displayOrder: 1,
-            createdAt: "2026-03-29T16:43:39.251347Z"
-        },
-        {
-            articleCategoryId: 3,
-            name: "Tin tức 2",
-            slug: "tin-tuc-2",
-            description: null,
-            displayOrder: 2,
-            createdAt: "2026-03-29T16:44:42.445855Z"
-        }
-    ]
-})
-
-// Modal State
-const isModalOpen = ref(false)
-const modalMode = ref('create') // 'create' or 'edit'
-const form = reactive({
-    id: null,
-    name: '',
-    slug: '',
-    displayOrder: 0
-})
-
-const formatDate = (dateStr) => {
-    const d = new Date(dateStr)
-    return d.toLocaleDateString('vi-VN')
-}
-
-const openModal = (mode, data = null) => {
-    modalMode.value = mode
-    if (mode === 'edit' && data) {
-        form.id = data.articleCategoryId
-        form.name = data.name
-        form.slug = data.slug
-        form.displayOrder = data.displayOrder
-    } else {
-        form.id = null
-        form.name = ''
-        form.slug = ''
-        form.displayOrder = categories.value.items.length + 1
-    }
-    isModalOpen.value = true
-}
-
-const saveForm = () => {
-    // Logic xử lý lưu dữ liệu ở đây
-    console.log('Saving data:', form)
-    isModalOpen.value = false
-}
-
-const confirmDelete = (cat) => {
-    if (confirm(`Bạn có chắc chắn muốn xóa danh mục "${cat.name}"?`)) {
-        console.log('Deleting ID:', cat.articleCategoryId)
-    }
-}
-</script>
 
 <style scoped>
 /* Custom style for clean table borders */
