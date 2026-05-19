@@ -13,9 +13,9 @@ const familyStore = useFamilyStore();
 const familyId = computed(() => familyStore.currentFamilyId);
 
 const { data: familySubData } = useFamilySubscriptionByFamilyQuery(familyId);
-const { data: plansData } = useSubscriptionPlansQuery();
+const { data: plansData } = useSubscriptionPlansQuery({ isActive: true });
 
-const safePlan = computed(() => plansData.value?.data || []);
+const safePlan = computed(() => plansData.value?.data?.items || []);
 const safeFamilySub = computed(() => familySubData.value?.data || null);
 
 const handleSelectPlan = (plan: SubscriptionPlanRes) => {

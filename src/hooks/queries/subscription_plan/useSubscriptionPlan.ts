@@ -1,4 +1,4 @@
-import { subscriptionService } from "@/services/subscription_plan.service"
+import { subscriptionService, type SubscriptionPlanParams } from "@/services/subscription_plan.service"
 import type { SubscriptionPlanReq } from "@/types/family/subscription.types"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/vue-query"
 import { computed, toValue, type MaybeRefOrGetter } from "vue"
@@ -8,7 +8,10 @@ export const subscriptionPlanKey = {
 
     lists: () => [...subscriptionPlanKey.all, 'list'] as const,
 
-    list: () => [...subscriptionPlanKey.lists(), 'all'] as const,
+    list: (params?: MaybeRefOrGetter<SubscriptionPlanParams>) => [
+        ...subscriptionPlanKey.lists(),
+        toValue(params)
+    ] as const,
 
     active: () => [...subscriptionPlanKey.all, 'active'] as const,
 
@@ -20,10 +23,12 @@ export const subscriptionPlanKey = {
     ] as const
 }
 
-export const useSubscriptionPlansQuery = () => {
+export const useSubscriptionPlansQuery = (
+    params?: MaybeRefOrGetter<SubscriptionPlanParams>
+) => {
     return useQuery({
-        queryKey: computed(() => subscriptionPlanKey.list()),
-        queryFn: () => subscriptionService.getAllPlans()
+        queryKey: computed(() => subscriptionPlanKey.list(params)),
+        queryFn: () => subscriptionService.getAllPlans(params)
     })
 }
 
@@ -75,6 +80,17 @@ export const useDeleteSubscriptionPlanMutation = () => {
 
     return useMutation({
         mutationFn: (planId: number) => subscriptionService.deletePlan(planId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: subscriptionPlanKey.all })
+        }
+    })
+}
+
+export const useToggleActiveSubscriptionPlanMutation = () => {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: (planId: number) => subscriptionService.toggleActivePlan(planId),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: subscriptionPlanKey.all })
         }

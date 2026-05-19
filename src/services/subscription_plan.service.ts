@@ -1,12 +1,23 @@
 
+import { toValue, type MaybeRefOrGetter } from "vue"
 import api from "./api.base"
 import type { ApiResponse } from "@/types/api-response.types"
 import type { SubscriptionPlanReq, SubscriptionPlanRes } from "@/types/family/subscription.types"
+import type { PageParams, PageResponse } from "@/types/page-response.types"
+
+export interface SubscriptionPlanParams extends PageParams {
+    keyword?: string
+    isActive?: boolean
+}
 
 export const subscriptionService = {
 
-    getAllPlans: async (): Promise<ApiResponse<SubscriptionPlanRes[]>> => {
-        const res = await api.get<ApiResponse<SubscriptionPlanRes[]>>("/subscription-plans")
+    getAllPlans: async (
+        params?: MaybeRefOrGetter<SubscriptionPlanParams>
+    ): Promise<ApiResponse<PageResponse<SubscriptionPlanRes>>> => {
+        const res = await api.get<ApiResponse<PageResponse<SubscriptionPlanRes>>>("/subscription-plans", {
+            params: toValue(params)
+        })
         return res.data
     },
 
@@ -41,6 +52,13 @@ export const subscriptionService = {
         planId: number
     ): Promise<ApiResponse<void>> => {
         const res = await api.delete<ApiResponse<void>>(`/subscription-plans/${planId}`)
+        return res.data
+    },
+
+    toggleActivePlan: async (
+        planId: number
+    ): Promise<ApiResponse<SubscriptionPlanRes>> => {
+        const res = await api.patch<ApiResponse<SubscriptionPlanRes>>(`/subscription-plans/${planId}/toggle-active`)
         return res.data
     }
 }

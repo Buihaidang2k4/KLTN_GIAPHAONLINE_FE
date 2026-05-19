@@ -8,9 +8,18 @@ import {
 import AppPagination from '@/components/forms/common/AppPagination.vue'
 import { usePagination } from '@/composables/common/usePagination'
 import { usePaymentsQuery } from '@/hooks/queries/payments/usePayments'
+import ViewPaymentModal from '@/components/forms/payment/ViewPaymentModal.vue'
 
 const searchQuery = ref('')
 const selectedStatus = ref('all')
+
+const selectedPayment = ref<any>(null)
+const showDetailModal = ref(false)
+
+const openDetail = (payment: any) => {
+  selectedPayment.value = payment
+  showDetailModal.value = true
+}
 
 const {
   pagination,
@@ -249,14 +258,10 @@ const formatDateTime = (value: string) => {
                   <td class="px-6 py-4 text-right">
                     <div class="flex items-center justify-end gap-2">
                       <button
+                        @click="openDetail(payment)"
                         class="p-2 hover:bg-slate-100 text-slate-400 hover:text-slate-600 rounded-lg transition-all"
                         title="Xem chi tiết Log">
                         <Eye :size="18" />
-                      </button>
-                      <button
-                        class="p-2 hover:bg-slate-100 text-slate-400 hover:text-slate-600 rounded-lg transition-all"
-                        title="Mở cổng VNPay">
-                        <ExternalLink :size="18" />
                       </button>
                       <button v-if="payment.status === 'SUCCESS'"
                         class="p-2 hover:bg-red-50 text-slate-300 hover:text-red-500 rounded-lg transition-all"
@@ -275,6 +280,13 @@ const formatDateTime = (value: string) => {
 
       <AppPagination :page="currentPage" :total-pages="pagination.totalPages" :has-next="hasNextPage"
         :has-prev="hasPrevPage" @next="nextPage" @prev="prevPage" />
+
+      <!-- View transaction details modal -->
+      <ViewPaymentModal
+        :show="showDetailModal"
+        :payment="selectedPayment"
+        @close="showDetailModal = false"
+      />
 
     </div>
   </div>

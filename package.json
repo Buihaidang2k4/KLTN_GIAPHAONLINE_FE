@@ -15,10 +15,13 @@
     "@tanstack/vue-query-devtools": "^6.1.16",
     "@vee-validate/yup": "^4.15.1",
     "@vee-validate/zod": "^4.15.1",
+    "@vitalets/google-translate-api": "^9.2.1",
     "@vueuse/core": "^14.2.1",
     "@wangeditor/editor": "^5.1.23",
     "@wangeditor/editor-for-vue": "^5.1.12",
     "axios": "^1.13.2",
+    "chart.js": "^4.5.1",
+    "franc": "^6.2.0",
     "jspdf": "^4.2.1",
     "lucide-vue-next": "^0.562.0",
     "pinia": "^3.0.4",
@@ -26,10 +29,12 @@
     "tailwindcss": "^4.1.18",
     "vee-validate": "^4.15.1",
     "vue": "^3.5.24",
+    "vue-chartjs": "^5.3.3",
     "vue-router": "^4.6.4",
     "vue-sonner": "^2.0.9",
+    "xlsx": "^0.18.5",
     "yup": "^1.7.1",
-    "zod": "^4.4.2"
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/node": "^24.10.1",
