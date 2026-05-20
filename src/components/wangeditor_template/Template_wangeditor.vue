@@ -94,8 +94,12 @@ const editorConfig = {
             maxNumberOfFiles: 10,
             allowedFileTypes: ['image/*'],
             timeout: 15000,
-            // Nếu dùng Base64 cho nhanh khi chưa có API
-            base64LimitSize: 5 * 1024, // Dưới 5kb sẽ tự chuyển base64
+            base64LimitSize: 512 * 1024, // Ảnh dưới 512KB tự convert base64, không cần upload
+            // Map response từ server về đúng format WangEditor cần
+            customInsert(res: any, insertFn: any) {
+                const url = res?.data?.url || res?.url || res?.data
+                if (url) insertFn(url)
+            },
         },
 
         // Cấu hình Video

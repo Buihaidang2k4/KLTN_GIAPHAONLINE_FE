@@ -159,3 +159,10 @@ export const useToggleFeaturedArticleMutation = () => {
         }
     })
 }
+
+export const useUploadArticleImageMutation = () => {
+    return useMutation({
+        mutationFn: (file: File) => articleService.uploadImage(file)
+    })
+}
+

@@ -151,7 +151,6 @@ const handleUpload = () => {
     }
 
     isUploading.value = true
-
     uploadMediaMutation(
         {
             albumId: props.albumId,
@@ -165,7 +164,7 @@ const handleUpload = () => {
                 emit('close')
             },
             onError: () => {
-                notify.error('Thông báo', 'Tải lên tệp thất bại')
+                notify.error('Thông báo', 'Video/Ảnh/Tài liệu dung lượng quá lớn')
             },
             onSettled: () => {
                 isUploading.value = false

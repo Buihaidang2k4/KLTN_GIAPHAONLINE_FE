@@ -18,6 +18,12 @@ export default [
                 component: () => import("@/views/home/HomePostPage.vue"),
                 meta: { public: true }
             },
+            {
+                path: "post/:slug",
+                name: "HomePostDetails",
+                component: () => import("@/views/home/HomePostPageDetails.vue"),
+                meta: { public: true }
+            },
         ]
     },
 ]

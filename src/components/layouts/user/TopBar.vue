@@ -185,7 +185,8 @@ const selectFamily = (familyId: number) => {
 
     <div class="relative z-10 flex shrink-0 items-center gap-3 md:gap-6">
 
-      <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-emerald-50/80 border border-emerald-200/50 rounded-full">
+      <div
+        class="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-emerald-50/80 border border-emerald-200/50 rounded-full">
         <span class="relative flex h-2 w-2">
           <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
           <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
@@ -213,8 +214,6 @@ const selectFamily = (familyId: number) => {
             <p class="text-sm font-bold text-amber-950 leading-none mb-1 group-hover:text-amber-700 transition-colors">
               {{ currentUser.name }}
             </p>
-            <span
-              class="text-[10px] text-amber-700/50 font-semibold tracking-tighter uppercase">{{ currentUser.role }}</span>
           </div>
 
           <div class="relative">
@@ -222,7 +221,8 @@ const selectFamily = (familyId: number) => {
               class="w-10 h-10 rounded-xl bg-amber-200 overflow-hidden ring-2 ring-amber-100/60 shadow-md group-hover:ring-amber-300/60 transition-all">
               <img :src="currentUser.avatar" alt="User Avatar" class="w-full h-full object-cover" />
             </div>
-            <div class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 border-2 border-amber-50 rounded-full">
+            <div
+              class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 border-2 border-amber-50 rounded-full">
             </div>
           </div>
 
@@ -287,13 +287,11 @@ const selectFamily = (familyId: number) => {
 .topbar-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    90deg,
-    rgba(254, 249, 235, 0.96) 0%,
-    rgba(252, 243, 214, 0.94) 30%,
-    rgba(248, 235, 195, 0.88) 70%,
-    rgba(254, 249, 235, 0.96) 100%
-  );
+  background: linear-gradient(90deg,
+      rgba(254, 249, 235, 0.96) 0%,
+      rgba(252, 243, 214, 0.94) 30%,
+      rgba(248, 235, 195, 0.88) 70%,
+      rgba(254, 249, 235, 0.96) 100%);
   backdrop-filter: blur(2px);
   z-index: 1;
   pointer-events: none;
@@ -308,16 +306,14 @@ const selectFamily = (familyId: number) => {
   height: 3px;
   z-index: 2;
   pointer-events: none;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(120, 53, 15, 0.15) 10%,
-    rgba(180, 83, 9, 0.3) 30%,
-    rgba(180, 83, 9, 0.35) 50%,
-    rgba(180, 83, 9, 0.3) 70%,
-    rgba(120, 53, 15, 0.15) 90%,
-    transparent 100%
-  );
+  background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(120, 53, 15, 0.15) 10%,
+      rgba(180, 83, 9, 0.3) 30%,
+      rgba(180, 83, 9, 0.35) 50%,
+      rgba(180, 83, 9, 0.3) 70%,
+      rgba(120, 53, 15, 0.15) 90%,
+      transparent 100%);
 }
 
 .topbar-ornament-bottom::after {
@@ -327,11 +323,9 @@ const selectFamily = (familyId: number) => {
   left: 15%;
   right: 15%;
   height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(120, 53, 15, 0.1),
-    transparent
-  );
+  background: linear-gradient(90deg,
+      transparent,
+      rgba(120, 53, 15, 0.1),
+      transparent);
 }
 </style>

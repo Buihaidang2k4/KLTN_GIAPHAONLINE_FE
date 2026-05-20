@@ -49,10 +49,10 @@ const menuGroups = [
         ]
     },
     {
-        label: 'Cấu hình hệ thống',
-        items: [
-            { icon: Settings, label: 'Cấu hình Website', to: '/system/web-config' }, // Dùng Settings icon chuẩn hơn TreePine
-        ]
+        // label: 'Cấu hình hệ thống',
+        // items: [
+        //     { icon: Settings, label: 'Cấu hình Website', to: '/system/web-config' }, // Dùng Settings icon chuẩn hơn TreePine
+        // ]
     }
 ];
 

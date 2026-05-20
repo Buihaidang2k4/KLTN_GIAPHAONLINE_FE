@@ -1,5 +1,6 @@
 <script setup>
 import { ref, shallowRef, watch, onBeforeUnmount } from 'vue'
+import { articleService } from '@/services/article.service'
 import '@wangeditor/editor/dist/css/style.css'
 import { Editor, Toolbar } from '@wangeditor/editor-for-vue'
 import { i18nChangeLanguage } from '@wangeditor/editor'
@@ -34,7 +35,6 @@ watch(() => props.readOnly, (val) => {
     else editorRef.value?.enable()
 })
 
-// ✅ Toolbar tối ưu cho Tutorial - chỉ giữ những gì thực sự dùng
 const toolbarConfig = {
     toolbarKeys: [
         // Heading & text style
@@ -139,34 +139,27 @@ const editorConfig = {
             ],
         },
 
-        // ✅ Upload ảnh screenshot - config kỹ
         uploadImage: {
-            server: props.uploadImageUrl,
-            fieldName: 'file',
-            maxFileSize: 8 * 1024 * 1024,      // 8MB cho screenshot độ phân giải cao
+            maxFileSize: 8 * 1024 * 1024,
             maxNumberOfFiles: 20,
             allowedFileTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
-            headers: props.uploadHeaders,
-            meta: props.uploadMeta,
-            base64LimitSize: 10 * 1024,         // ảnh nhỏ dưới 10KB thì dùng base64 luôn
             timeout: 20000,
-
-            // Callback khi upload thành công
-            onSuccess(file, res) {
-                emit('imageUploaded', { file, res })
-            },
-            // Callback khi lỗi
-            onError(file, err, res) {
-                console.error('[Editor] Upload ảnh thất bại:', file.name, err)
-                emit('uploadError', { file, err, res })
-            },
-            // Nếu API trả cấu trúc riêng thì map ở đây
-            customInsert(res, insertFn) {
-                const url = res?.data?.url || res?.url
-                const alt = res?.data?.name || ''
-                if (url) insertFn(url, alt, url)
-                else console.error('[Editor] Không tìm thấy URL ảnh trong response:', res)
-            },
+            async customUpload(file, insertFn) {
+                try {
+                    const res = await articleService.uploadImage(file)
+                    const url = res?.data?.url || res?.url
+                    if (url) {
+                        insertFn(url, file.name, url)
+                        emit('imageUploaded', { file, res })
+                    } else {
+                        console.error('[Editor] Không tìm thấy URL ảnh trong response:', res)
+                        emit('uploadError', { file, err: new Error('Không tìm thấy URL ảnh trong response'), res })
+                    }
+                } catch (err) {
+                    console.error('[Editor] Upload ảnh thất bại:', err)
+                    emit('uploadError', { file, err })
+                }
+            }
         },
     },
 }
@@ -210,7 +203,7 @@ defineExpose({
     <div class="editor-wrapper">
         <Toolbar class="toolbar" :editor="editorRef" :defaultConfig="toolbarConfig" mode="default" />
 
-        <Editor style="min-height: 600px; max-height: 900px; overflow-y: auto;" v-model="valueHtml"
+        <Editor style="min-height: 400px; max-height: 600px; overflow-y: auto;" v-model="valueHtml"
             :defaultConfig="editorConfig" mode="default" @onCreated="handleCreated" @onChange="handleChange"
             @onFocus="() => emit('focus')" @onBlur="() => emit('blur')" />
 

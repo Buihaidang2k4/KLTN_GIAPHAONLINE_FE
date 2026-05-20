@@ -16,6 +16,10 @@ defineProps<{
     plans: Plan[]
 }>()
 
+const emit = defineEmits<{
+    (e: 'select', plan: Plan): void
+}>()
+
 </script>
 
 <template>
@@ -34,7 +38,7 @@ defineProps<{
         </div>
 
         <div class="grid md:grid-cols-3 gap-8 items-stretch">
-            <PricingCard v-for="plan in plans" :key="plan.id" :plan="plan" />
+            <PricingCard v-for="plan in plans" :key="plan.id" :plan="plan" @select="emit('select', $event)" />
         </div>
 
     </section>

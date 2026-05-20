@@ -1,61 +1,44 @@
 <script setup lang="ts">
-
+import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 import PricingSection from '@/components/home_ui/price/PricingSection.vue'
+import { useSubscriptionPlansQuery } from '@/hooks/queries/subscription_plan/useSubscriptionPlan'
 
-const plans = [
+const router = useRouter()
 
-    {
-        id: "basic",
-        name: "Basic",
-        price: 0,
-        description: "Perfect for getting started with your personal tree",
-        buttonText: "Get Started",
-        features: [
-            "Up to 50 Family Members",
-            "Basic Tree View",
-            "Standard Community Support",
-            "Cloud Document Storage"
+// Lấy danh sách các gói dịch vụ đang hoạt động
+const { data: plansData } = useSubscriptionPlansQuery({ isActive: true })
+
+const plans = computed(() => {
+    const rawPlans = plansData.value?.data?.items ?? []
+    return rawPlans.map((plan) => {
+        // Tự tạo các tính năng dựa trên thông số gói dịch vụ
+        const features = [
+            `Tối đa ${plan.maxPerson} thành viên`,
+            `Tối đa ${plan.maxAdmin} quản trị viên`,
+            `Dung lượng ${plan.maxStorageMb >= 1024 ? (plan.maxStorageMb / 1024).toFixed(0) + ' GB' : plan.maxStorageMb + ' MB'}`,
+            `Thời gian ${plan.durationMonth} tháng`
         ]
-    },
+        
+        return {
+            id: String(plan.subscriptionPlanId),
+            name: plan.namePlan,
+            price: plan.price,
+            description: plan.description || `Gói dịch vụ ${plan.namePlan} chất lượng cao.`,
+            buttonText: plan.price === 0 ? 'Bắt đầu miễn phí' : 'Đăng ký ngay',
+            highlighted: plan.code.toUpperCase().includes('PREMIUM'),
+            features: features
+        }
+    })
+})
 
-    {
-        id: "premium",
-        name: "Premium",
-        price: 19,
-        description: "The ultimate toolkit for dedicated family historians.",
-        highlighted: true,
-        buttonText: "Upgrade Now",
-        features: [
-            "Unlimited Family Members",
-            "Cloud Storage for Documents",
-            "Advanced Tree Visualization",
-            "Priority Email Support",
-            "Smart Historical Hints"
-        ]
-    },
-
-    {
-        id: "legacy",
-        name: "Legacy",
-        price: 49,
-        description: "Comprehensive suite for genealogy professionals",
-        buttonText: "Upgrade Now",
-        features: [
-            "Everything in Premium",
-            "24/7 Priority Support",
-            "DNA Data Analysis Tools",
-            "Professional Research Suite"
-        ]
-    }
-
-]
-
+const handleSelect = () => {
+    router.push('/login')
+}
 </script>
 
 <template>
     <div class="bg-stone-50">
-
-        <PricingSection :plans="plans" />
+        <PricingSection :plans="plans" @select="handleSelect" />
     </div>
-
 </template>

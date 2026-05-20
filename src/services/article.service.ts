@@ -117,5 +117,12 @@ export const articleService = {
     ): Promise<ApiResponse<ArticleRes>> => {
         const res = await api.patch<ApiResponse<ArticleRes>>(`/articles/${toValue(articleId)}/toggle-featured`);
         return res.data;
+    },
+
+    uploadImage: async (file: File): Promise<ApiResponse<{ url: string }>> => {
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await api.post<ApiResponse<{ url: string }>>('/articles/upload-image', formData);
+        return res.data;
     }
 }

@@ -15,6 +15,18 @@ defineProps<{
     plan: Plan
 }>()
 
+const emit = defineEmits<{
+    (e: 'select', plan: Plan): void
+}>()
+
+const formatPrice = (price: number) => {
+    if (price === 0) return 'Miễn phí'
+    if (price >= 1000) {
+        return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price).replace('₫', 'đ')
+    }
+    return `$${price}`
+}
+
 </script>
 
 <template>
@@ -38,9 +50,9 @@ defineProps<{
 
             <!-- Price -->
             <div class="mt-4 flex items-end gap-1">
-                <span class="text-5xl font-extrabold tracking-tight"
+                <span class="text-3xl font-extrabold tracking-tight"
                     :class="plan.highlighted ? 'text-white' : 'text-stone-800'">
-                    {{ plan.price === 0 ? 'Miễn phí' : `$${plan.price}` }}
+                    {{ formatPrice(plan.price) }}
                 </span>
                 <span v-if="plan.price > 0" class="text-sm mb-1.5"
                     :class="plan.highlighted ? 'text-stone-400' : 'text-stone-400'">
@@ -71,8 +83,7 @@ defineProps<{
             </ul>
         </div>
 
-        <!-- Button -->
-        <button class="mt-10 w-full py-3.5 rounded-xl font-bold text-sm tracking-wide transition-all duration-300"
+        <button @click="emit('select', plan)" class="mt-10 w-full py-3.5 rounded-xl font-bold text-sm tracking-wide transition-all duration-300"
             :class="plan.highlighted
                 ? 'bg-amber-400 text-stone-900 hover:bg-amber-300 shadow-lg shadow-amber-400/20'
                 : 'bg-stone-800 text-white hover:bg-stone-700'">

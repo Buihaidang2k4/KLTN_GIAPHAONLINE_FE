@@ -2,21 +2,24 @@
 import { computed, ref, watch } from 'vue'
 import { refDebounced } from '@vueuse/core'
 import {
-  BadgeCheck,
-  CalendarDays,
-  FileText,
-  Filter,
-  ImageOff,
-  Pencil,
-  Plus,
-  Search,
-  Star,
-  Trash2
+  BadgeCheck, CalendarDays, FileText, Filter,
+  ImageOff, Pencil, Plus, Search, Star, Trash2
 } from 'lucide-vue-next'
-import { useArticlesQuery } from '@/hooks/queries/article/useArticles'
+import {
+  useArticlesQuery,
+  useCreateArticleMutation,
+  useUpdateArticleMutation,
+  useDeleteArticleMutation,
+  usePublishArticleMutation,
+  useUnpublishArticleMutation,
+  useToggleFeaturedArticleMutation
+} from '@/hooks/queries/article/useArticles'
 import { usePagination } from '@/composables/common/usePagination'
 import AppPagination from '@/components/forms/common/AppPagination.vue'
-import type { ArticleRes, ArticleStatus } from '@/types/article/article.types'
+import CreateArticleModal from '@/components/forms/article/CreateArticleModal.vue'
+import UpdateArticleModal from '@/components/forms/article/UpdateArticleModal.vue'
+import type { ArticleRes, ArticleReq, ArticleStatus } from '@/types/article/article.types'
+import { notify } from '@/utils/notify'
 
 const keyword = ref('')
 const debouncedKeyword = refDebounced(keyword, 500)
@@ -24,13 +27,8 @@ const status = ref<ArticleStatus | ''>('')
 const categoryId = ref<number | null>(null)
 
 const {
-  pagination,
-  currentPage,
-  hasNextPage,
-  hasPrevPage,
-  nextPage,
-  prevPage,
-  setTotalPages
+  pagination, currentPage, hasNextPage, hasPrevPage,
+  nextPage, prevPage, setTotalPages
 } = usePagination(10, 0)
 
 const queryParams = computed(() => ({
@@ -43,20 +41,121 @@ const queryParams = computed(() => ({
 }))
 
 const { data: articlesData, isFetching } = useArticlesQuery(queryParams)
-
 const articles = computed<ArticleRes[]>(() => articlesData.value?.data?.items ?? [])
 const totalElements = computed(() => articlesData.value?.data?.totalElements ?? 0)
 
-watch(
-  () => articlesData.value?.data?.totalPages,
-  (total) => setTotalPages(total || 0),
-  { immediate: true }
-)
+watch(() => articlesData.value?.data?.totalPages, (total) => setTotalPages(total || 0), { immediate: true })
+watch([debouncedKeyword, status, categoryId], () => { pagination.page = 0 })
 
-watch([debouncedKeyword, status, categoryId], () => {
-  pagination.page = 0
-})
+// ==================== Mutations ====================
+const createMutation = useCreateArticleMutation()
+const updateMutation = useUpdateArticleMutation()
+const deleteMutation = useDeleteArticleMutation()
+const publishMutation = usePublishArticleMutation()
+const unpublishMutation = useUnpublishArticleMutation()
+const toggleFeaturedMutation = useToggleFeaturedArticleMutation()
 
+// ==================== Modal state ====================
+const isCreateOpen = ref(false)
+const isUpdateOpen = ref(false)
+const selectedArticle = ref<ArticleRes | null>(null)
+
+const openCreate = () => { isCreateOpen.value = true }
+
+const openUpdate = (article: ArticleRes) => {
+  selectedArticle.value = article
+  isUpdateOpen.value = true
+}
+
+const closeCreate = () => { isCreateOpen.value = false }
+const closeUpdate = () => { isUpdateOpen.value = false; selectedArticle.value = null }
+
+// ==================== Handlers ====================
+const handleCreate = (formData: any) => {
+  const payload: ArticleReq = {
+    title: formData.title,
+    summary: formData.summary || null,
+    content: formData.content,
+    contentFormat: 'HTML',
+    articleCategoryId: formData.categoryId || null,
+    isFeatured: formData.isFeatured,
+  }
+  createMutation.mutate(payload, {
+    onSuccess: (res) => {
+      const articleId = res.data.articleId
+      if (formData.status === 'PUBLISHED') {
+        publishMutation.mutate(articleId)
+      }
+      notify.success('Thông báo', 'Tạo bài viết thành công')
+      closeCreate()
+    },
+    onError: () => notify.error('Thông báo', 'Tạo bài viết thất bại')
+  })
+}
+
+const handleUpdate = (formData: any) => {
+  if (!selectedArticle.value) return
+  const articleId = selectedArticle.value.articleId
+  const oldArticle = selectedArticle.value
+
+  const payload: ArticleReq = {
+    title: formData.title,
+    summary: formData.summary || null,
+    content: formData.content,
+    contentFormat: 'HTML',
+    articleCategoryId: formData.categoryId || null,
+    isFeatured: oldArticle.isFeatured,
+  }
+  
+  updateMutation.mutate({ articleId, data: payload }, {
+    onSuccess: () => {
+      if (formData.isFeatured !== oldArticle.isFeatured) {
+        toggleFeaturedMutation.mutate(articleId)
+      }
+      if (formData.status !== oldArticle.status) {
+        if (formData.status === 'PUBLISHED') {
+          publishMutation.mutate(articleId)
+        } else {
+          unpublishMutation.mutate(articleId)
+        }
+      }
+      notify.success('Thông báo', 'Cập nhật bài viết thành công')
+      closeUpdate()
+    },
+    onError: () => notify.error('Thông báo', 'Cập nhật bài viết thất bại')
+  })
+}
+
+const handleTogglePublish = (article: ArticleRes) => {
+  if (article.status === 'PUBLISHED') {
+    unpublishMutation.mutate(article.articleId, {
+      onSuccess: () => notify.success('Thông báo', 'Đã chuyển thành bản nháp'),
+      onError: () => notify.error('Thông báo', 'Chuyển trạng thái thất bại')
+    })
+  } else {
+    publishMutation.mutate(article.articleId, {
+      onSuccess: () => notify.success('Thông báo', 'Đã xuất bản bài viết'),
+      onError: () => notify.error('Thông báo', 'Chuyển trạng thái thất bại')
+    })
+  }
+}
+
+const handleToggleFeatured = (article: ArticleRes) => {
+  toggleFeaturedMutation.mutate(article.articleId, {
+    onSuccess: () => notify.success('Thông báo', 'Đã cập nhật trạng thái nổi bật'),
+    onError: () => notify.error('Thông báo', 'Cập nhật thất bại')
+  })
+}
+
+const handleDelete = (article: ArticleRes) => {
+  if (!confirm(`Xóa bài viết "${article.title}"?`)) return
+  deleteMutation.mutate(article.articleId, {
+    onSuccess: () => notify.success('Thông báo', 'Xóa bài viết thành công'),
+    onError: () => notify.error('Thông báo', 'Xóa bài viết thất bại')
+  })
+}
+
+// ==================== Helpers ====================
 const formatDate = (date?: string | null) => {
   if (!date) return 'Chưa có'
   return new Date(date).toLocaleDateString('vi-VN')
@@ -64,11 +163,8 @@ const formatDate = (date?: string | null) => {
 
 const getStatusLabel = (value: ArticleStatus) => {
   const labels: Record<string, string> = {
-    DRAFT: 'Bản nháp',
-    PUBLISHED: 'Đã xuất bản',
-    ARCHIVED: 'Lưu trữ'
+    DRAFT: 'Bản nháp', PUBLISHED: 'Đã xuất bản', ARCHIVED: 'Lưu trữ'
   }
-
   return labels[value] ?? value
 }
 
@@ -78,7 +174,6 @@ const getStatusClass = (value: ArticleStatus) => {
     PUBLISHED: 'bg-emerald-50 text-emerald-700 border-emerald-100',
     ARCHIVED: 'bg-amber-50 text-amber-700 border-amber-100'
   }
-
   return classes[value] ?? 'bg-slate-100 text-slate-600 border-slate-200'
 }
 </script>
@@ -96,6 +191,7 @@ const getStatusClass = (value: ArticleStatus) => {
 
       <button
         type="button"
+        @click="openCreate"
         class="flex items-center gap-2 rounded-xl bg-amber-600 px-5 py-2.5 font-bold text-white shadow-md shadow-amber-100 transition-all hover:bg-amber-700"
       >
         <Plus class="h-5 w-5" />
@@ -180,8 +276,10 @@ const getStatusClass = (value: ArticleStatus) => {
 
               <td class="px-6 py-4">
                 <span
-                  class="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-bold"
+                  @click="handleTogglePublish(article)"
+                  class="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-bold cursor-pointer hover:opacity-80 transition-opacity"
                   :class="getStatusClass(article.status)"
+                  title="Click để đổi trạng thái"
                 >
                   <BadgeCheck class="h-3.5 w-3.5" />
                   {{ getStatusLabel(article.status) }}
@@ -190,8 +288,10 @@ const getStatusClass = (value: ArticleStatus) => {
 
               <td class="px-6 py-4 text-center">
                 <Star
-                  class="mx-auto h-4 w-4"
+                  @click="handleToggleFeatured(article)"
+                  class="mx-auto h-4 w-4 cursor-pointer hover:scale-110 transition-transform"
                   :class="article.isFeatured ? 'fill-amber-400 text-amber-500' : 'text-slate-300'"
+                  title="Click để bật/tắt nổi bật"
                 />
               </td>
 
@@ -205,12 +305,14 @@ const getStatusClass = (value: ArticleStatus) => {
               <td class="px-6 py-4 text-right">
                 <div class="flex justify-end gap-2 opacity-0 transition-opacity group-hover:opacity-100">
                   <button
+                    @click="openUpdate(article)"
                     class="rounded-lg p-2 text-slate-400 transition-all hover:bg-amber-50 hover:text-amber-600"
                     title="Chỉnh sửa"
                   >
                     <Pencil class="h-4 w-4" />
                   </button>
                   <button
+                    @click="handleDelete(article)"
                     class="rounded-lg p-2 text-slate-400 transition-all hover:bg-rose-50 hover:text-rose-600"
                     title="Xóa"
                   >
@@ -248,6 +350,21 @@ const getStatusClass = (value: ArticleStatus) => {
       </div>
     </div>
   </div>
+
+  <CreateArticleModal
+    :show="isCreateOpen"
+    :is-loading="createMutation.isPending.value"
+    @close="closeCreate"
+    @create="handleCreate"
+  />
+
+  <UpdateArticleModal
+    :show="isUpdateOpen"
+    :article="selectedArticle"
+    :is-loading="updateMutation.isPending.value"
+    @close="closeUpdate"
+    @update="handleUpdate"
+  />
 </template>
 
 <style scoped>
