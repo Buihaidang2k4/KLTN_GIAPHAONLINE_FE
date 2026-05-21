@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, reactive, watch, computed } from 'vue'
-import { X, Sparkles, FileText, Tag, Image, AlignLeft } from 'lucide-vue-next'
+import { X, Sparkles, FileText, Tag, Image, AlignLeft, Upload, Trash2 } from 'lucide-vue-next'
 import WangEditor from '@/components/forms/article/templateEditor.vue'
 import { useArticleCategoriesQuery } from '@/hooks/queries/article_category/useArticleCategory'
 
@@ -21,7 +21,6 @@ interface ArticleForm {
     summary: string
     content: string
     categoryId: number | null
-    thumbnailUrl: string
     tags: string
     status: 'DRAFT' | 'PUBLISHED'
     isFeatured: boolean
@@ -35,7 +34,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     close: []
-    update: [data: ArticleForm]
+    update: [data: ArticleForm & { thumbnailFile?: File | null }]
 }>()
 
 const form = reactive<ArticleForm>({
@@ -43,11 +42,28 @@ const form = reactive<ArticleForm>({
     summary: '',
     content: '<p><br></p>',
     categoryId: null,
-    thumbnailUrl: '',
     tags: '',
     status: 'DRAFT',
     isFeatured: false,
 })
+
+const thumbnailFile = ref<File | null>(null)
+const thumbnailPreview = ref<string | null>(null)
+const fileInputRef = ref<HTMLInputElement | null>(null)
+
+const handleFileChange = (e: Event) => {
+    const target = e.target as HTMLInputElement
+    const file = target.files?.[0]
+    if (!file) return
+    thumbnailFile.value = file
+    thumbnailPreview.value = URL.createObjectURL(file)
+}
+
+const removeThumbnail = () => {
+    thumbnailFile.value = null
+    thumbnailPreview.value = null
+    if (fileInputRef.value) fileInputRef.value.value = ''
+}
 
 const { data: categoriesData } = useArticleCategoriesQuery({ size: 100 })
 const categories = computed(() => categoriesData.value?.data?.items ?? [])
@@ -62,10 +78,13 @@ watch(() => props.article, (val) => {
     form.summary = val.summary ?? ''
     form.content = val.content ?? '<p><br></p>'
     form.categoryId = val.categoryId ?? null
-    form.thumbnailUrl = val.thumbnailUrl ?? ''
     form.tags = val.tags ?? ''
     form.status = val.status ?? 'DRAFT'
     form.isFeatured = val.isFeatured ?? false
+    // Reset file, hiển ảnh cũ nếu có
+    thumbnailFile.value = null
+    thumbnailPreview.value = val.thumbnailUrl || null
+    if (fileInputRef.value) fileInputRef.value.value = ''
     // Đồng bộ vào editor sau khi DOM render
     setTimeout(() => editorRef.value?.setHtml(form.content), 50)
 }, { immediate: true })
@@ -80,7 +99,7 @@ const validate = () => {
 const handleSubmit = () => {
     form.content = editorRef.value?.getHtml() ?? form.content
     if (!validate()) return
-    emit('update', { ...form })
+    emit('update', { ...form, thumbnailFile: thumbnailFile.value })
 }
 
 const handleClose = () => {
@@ -166,10 +185,21 @@ const handleClose = () => {
                         <div class="space-y-1.5">
                             <label
                                 class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                                <Image :size="13" class="text-blue-500" /> Ảnh thumbnail (URL)
+                                <Image :size="13" class="text-blue-500" /> Ảnh thumbnail
                             </label>
-                            <input v-model="form.thumbnailUrl" type="text" placeholder="https://..."
-                                class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-500/5 transition-all" />
+                            <div v-if="thumbnailPreview" class="relative w-fit">
+                                <img :src="thumbnailPreview" alt="Preview" class="h-32 w-auto rounded-xl border border-slate-200 object-cover" />
+                                <button type="button" @click="removeThumbnail"
+                                    class="absolute -top-2 -right-2 p-1 rounded-full bg-red-500 text-white shadow hover:bg-red-600 transition-colors">
+                                    <Trash2 :size="12" />
+                                </button>
+                            </div>
+                            <div v-else @click="fileInputRef?.click()"
+                                class="flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-200 px-4 py-6 text-sm text-slate-400 transition-all hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50/30">
+                                <Upload :size="18" />
+                                <span class="font-semibold">Nhấn để chọn ảnh thumbnail</span>
+                            </div>
+                            <input ref="fileInputRef" type="file" accept="image/*" class="hidden" @change="handleFileChange" />
                         </div>
 
                         <!-- Trạng thái & Nổi bật -->

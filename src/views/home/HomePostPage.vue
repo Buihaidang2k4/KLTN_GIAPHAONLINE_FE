@@ -38,7 +38,6 @@ const { data: categoriesData } = useArticleCategoriesQuery({ size: 100 })
 
 const articles = computed<ArticleRes[]>(() => articlesData.value?.data?.items ?? [])
 const categories = computed(() => categoriesData.value?.data?.items ?? [])
-const totalElements = computed(() => articlesData.value?.data?.totalElements ?? 0)
 
 watch(
     () => articlesData.value?.data?.totalPages,

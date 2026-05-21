@@ -376,11 +376,14 @@ const scrollToTimelineStep = (timelineId: number) => {
                         <div class="space-y-8">
 
                             <!-- HEADER CARD -->
-                            <div class="relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                            <div
+                                class="relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
 
-                                <div class="absolute left-0 top-0 h-full w-1.5" :class="selectedCeremonyTheme.dot"></div>
+                                <div class="absolute left-0 top-0 h-full w-1.5" :class="selectedCeremonyTheme.dot">
+                                </div>
 
-                                <div class="pointer-events-none absolute inset-0 opacity-[0.04] bg-[radial-gradient(circle_at_18%_20%,#000,transparent_58%)]">
+                                <div
+                                    class="pointer-events-none absolute inset-0 opacity-[0.04] bg-[radial-gradient(circle_at_18%_20%,#000,transparent_58%)]">
                                 </div>
 
                                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 p-6 pl-8">
@@ -394,8 +397,10 @@ const scrollToTimelineStep = (timelineId: number) => {
                                         </div>
 
                                         <div>
-                                            <div class="mb-2 flex flex-wrap items-center gap-2">
-                                                <span class="inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-[11px] font-bold"
+                                            <div 
+                                                class="mb-2 flex flex-wrap items-center gap-2">
+                                                <span
+                                                    class="inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-[11px] font-bold"
                                                     :class="[selectedCeremonyTheme.bg, selectedCeremonyTheme.text, selectedCeremonyTheme.border]">
                                                     <span class="h-1.5 w-1.5 rounded-full"
                                                         :class="selectedCeremonyTheme.dot"></span>

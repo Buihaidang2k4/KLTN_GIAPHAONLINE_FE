@@ -28,11 +28,11 @@ const anhAnhEm = 'https://images.unsplash.com/photo-1471286174890-9c112ffca5b4?q
                 </p>
 
                 <div class="flex flex-col sm:flex-row gap-4">
-                    <button
+                    <RouterLink to="/login"
                         class="flex items-center justify-center gap-2 rounded-lg bg-[#5e4632] px-8 py-4 text-lg font-bold text-[#f4ecd8] shadow-xl hover:bg-[#2c1e12] transition-all transform hover:-translate-y-1">
                         Bắt đầu
                         <span class="material-symbols-outlined">tạo gia phả đầu tiên</span>
-                    </button>
+                    </RouterLink>
                 </div>
             </div>
 

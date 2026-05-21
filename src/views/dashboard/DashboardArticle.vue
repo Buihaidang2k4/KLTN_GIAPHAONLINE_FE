@@ -79,6 +79,7 @@ const handleCreate = (formData: any) => {
     contentFormat: 'HTML',
     articleCategoryId: formData.categoryId || null,
     isFeatured: formData.isFeatured,
+    thumbnail: formData.thumbnailFile || null,
   }
   createMutation.mutate(payload, {
     onSuccess: (res) => {
@@ -105,6 +106,7 @@ const handleUpdate = (formData: any) => {
     contentFormat: 'HTML',
     articleCategoryId: formData.categoryId || null,
     isFeatured: oldArticle.isFeatured,
+    thumbnail: formData.thumbnailFile || null,
   }
   
   updateMutation.mutate({ articleId, data: payload }, {

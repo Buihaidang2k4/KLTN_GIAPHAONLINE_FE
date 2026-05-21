@@ -25,7 +25,7 @@ const accountId = computed(() => profileData?.value?.accountId ?? null)
 const { account } = useAccount(accountId);
 const currentUser = computed(() => ({
   name: account.value?.fullName || "User",
-  role: account.value?.roles[0] || "Quản trị viên",
+  roles: account.value?.roles?.map((role: any) => role.name) || [],
   avatar: account.value?.avatarUrl || "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
 }))
 
@@ -227,13 +227,7 @@ const selectFamily = (familyId: number) => {
       <!-- User Profile -->
       <div ref="profileMenuRef" class="relative">
         <button type="button" @click="toggleProfileMenu"
-          class="flex items-center gap-3 pl-1 cursor-pointer group relative rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/40">
-          <div class="flex flex-col items-end md:flex">
-            <p class="text-sm font-bold text-amber-950 leading-none mb-1 group-hover:text-amber-700 transition-colors">
-              {{ currentUser.name }}
-            </p>
-          </div>
-
+          class="flex items-center gap-2 pl-1 cursor-pointer group relative rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/40">
           <div class="relative">
             <div
               class="w-10 h-10 rounded-xl bg-amber-200 overflow-hidden ring-2 ring-amber-100/60 shadow-md group-hover:ring-amber-300/60 transition-all">
@@ -253,18 +247,22 @@ const selectFamily = (familyId: number) => {
           :class="isProfileMenuOpen
             ? 'opacity-100 translate-y-0 pointer-events-auto'
             : 'opacity-0 translate-y-4 pointer-events-none'">
-          <div class="px-3 py-2 mb-1">
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tài khoản</p>
+          <!-- User info -->
+          <div class="flex items-center gap-3 px-3 py-2.5 mb-1">
+            <div class="w-9 h-9 rounded-lg bg-amber-200 overflow-hidden ring-1 ring-amber-100/60 shrink-0">
+              <img :src="currentUser.avatar" alt="User Avatar" class="w-full h-full object-cover" />
+            </div>
+            <div class="min-w-0">
+              <p class="text-sm font-bold text-slate-800 truncate">{{ currentUser.name }}</p>
+              <p class="text-[11px] text-slate-400 truncate">{{ currentUser.roles.length ? currentUser.roles.join(', ') : 'Quản trị viên' }}</p>
+            </div>
           </div>
+          <div class="h-px bg-slate-100 my-1 mx-2"></div>
           <button
             class="w-full flex items-center gap-3 px-3 py-2 hover:bg-slate-50 rounded-xl text-sm text-slate-700 transition-colors">
             <Settings :size="16" class="text-slate-400" /> Cấu hình hệ thống
           </button>
-          <button
-            class="w-full flex items-center gap-3 px-3 py-2 hover:bg-slate-50 rounded-xl text-sm text-slate-700 transition-colors">
-            <Info :size="16" class="text-slate-400" /> Trung tâm trợ giúp
-          </button>
-          <div class="h-px bg-slate-100 my-2 mx-2"></div>
+          <div class="h-px bg-slate-100 my-1 mx-2"></div>
           <button @click="confirmLogout"
             class="w-full flex items-center gap-3 px-3 py-2 hover:bg-rose-50 rounded-xl text-sm text-rose-600 transition-colors font-semibold">
             <LogOut :size="16" /> Đăng xuất

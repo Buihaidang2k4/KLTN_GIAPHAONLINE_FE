@@ -141,7 +141,7 @@ const handleCreateOrUpdateAchievement = withPermission(canManageAchievement, (pa
 
                 <!-- Add button -->
                 <button @click="openCreateForm"
-                    class="flex items-center gap-2 bg-amber-700 hover:bg-amber-800 text-white px-5 py-3 rounded-xl shadow-sm hover:shadow-md transition font-medium">
+                    class="flex items-center gap-2 cursor-pointer bg-amber-700 hover:bg-amber-800 text-white px-5 py-3 rounded-xl shadow-sm hover:shadow-md transition font-medium">
                     <Plus class="w-4 h-4" />
                     Thêm thành tích
                 </button>
@@ -223,13 +223,13 @@ const handleCreateOrUpdateAchievement = withPermission(canManageAchievement, (pa
                         <div class="flex items-center gap-3">
 
                             <button @click="openUpdateForm(achievement)"
-                                class="flex items-center gap-1 text-sm text-amber-700 hover:text-amber-800 font-medium transition">
+                                class="flex items-center cursor-pointer gap-1 text-sm text-amber-700 hover:text-amber-800 font-medium transition">
                                 <Eye class="w-4 h-4" />
                                 Chi tiết
                             </button>
 
                             <button @click="hanldeDeleteAchievement(achievement.achievementId)"
-                                class="text-red-500 hover:text-red-600 transition">
+                                class="text-red-500 cursor-pointer hover:text-red-600 transition">
                                 <Trash2 class="w-4 h-4" />
                             </button>
 

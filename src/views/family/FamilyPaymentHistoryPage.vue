@@ -118,14 +118,6 @@ const currentMonthTransactions = computed(() => {
                     <p class="text-slate-500 text-sm font-medium">Theo dõi và quản lý tất cả các giao dịch nâng cấp gói
                         dịch vụ của gia đình.</p>
                 </div>
-
-                <div class="flex items-center gap-3 w-full md:w-auto">
-                    <button
-                        class="w-full md:w-auto justify-center flex items-center gap-2 px-5 md:px-6 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-600 font-bold text-xs hover:bg-slate-50 transition-all shadow-sm active:scale-95">
-                        <Download :size="16" />
-                        Xuất báo cáo
-                    </button>
-                </div>
             </div>
 
             <!-- Stats Overview -->

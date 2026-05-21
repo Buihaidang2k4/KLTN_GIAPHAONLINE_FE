@@ -126,21 +126,21 @@ const handleDelete = () => {
                 <div class="flex items-center gap-1">
 
                     <button type="button" @click="emit('select', ceremony.ceremonyId)"
-                        class="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-indigo-50 hover:text-indigo-600">
+                        class="flex h-8 w-8 items-center cursor-pointer justify-center rounded-lg text-slate-400 transition hover:bg-indigo-50 hover:text-indigo-600">
 
                         <Eye class="h-4 w-4" />
 
                     </button>
 
                     <button type="button" @click="emit('listener', ceremony.ceremonyId)"
-                        class="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-amber-50 hover:text-amber-600">
+                        class="flex h-8 w-8 items-center cursor-pointer justify-center rounded-lg text-slate-400 transition hover:bg-amber-50 hover:text-amber-600">
 
                         <Pencil class="h-4 w-4" />
 
                     </button>
 
                     <button type="button" @click="handleDelete"
-                        class="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600">
+                        class="flex h-8 w-8 items-center cursor-pointer justify-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600">
 
                         <Trash2 class="h-4 w-4" />
 
