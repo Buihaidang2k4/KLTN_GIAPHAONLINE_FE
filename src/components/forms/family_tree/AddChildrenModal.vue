@@ -11,11 +11,11 @@ const props = defineProps<{
     isOpen: boolean;
     member: any;
 }>();
-
 const emit = defineEmits<{ close: []; save: [data: PersonReq] }>();
 
-const { data: partnersResponse } = usePartnersQuery(() => props.member?.id);
+const parentId = computed(() => props.member?.id);
 
+const { data: partnersResponse } = usePartnersQuery(parentId);
 const partners = computed(() => partnersResponse.value?.data || []);
 
 const isMaleParent = computed(() => props.member?.gender === 'male' || props.member?.gender === 'MALE');

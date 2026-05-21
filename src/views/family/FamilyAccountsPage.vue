@@ -258,7 +258,7 @@ function handleChangePassword() {
                                 <Shield :size="18" class="mt-0.5 text-slate-400" />
                                 <div>
                                     <p class="text-slate-500">Vai trò</p>
-                                    <p class="font-medium text-slate-800">{{ account?.roles[0] }}</p>
+                                    <p class="font-medium text-slate-800">{{ account?.roles[0]?.name }}</p>
                                 </div>
                             </div>
 

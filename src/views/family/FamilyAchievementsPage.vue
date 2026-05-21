@@ -105,128 +105,168 @@ const handleCreateOrUpdateAchievement = withPermission(canManageAchievement, (pa
 </script>
 
 <template>
-    <main class="texture-parchment min-h-screen py-10 px-4 md:px-8">
+    <main class="texture-parchment min-h-screen py-12 px-6">
         <div class="max-w-7xl mx-auto">
 
-            <!-- Header Section -->
-            <div class="mb-12 text-center">
+            <!-- Header -->
+            <div class="text-center mb-14">
                 <div
-                    class="inline-flex items-center gap-2 bg-[#ebe8de] px-4 py-2 rounded-full mb-4 border border-[#d4c3b8]">
-                    <Trophy class="w-5 h-5 text-[#775a19]" />
-                    <span class="text-[10px] font-bold uppercase tracking-widest text-[#775a19]">Bảng vàng dòng
-                        họ</span>
+                    class="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 px-4 py-2 rounded-full mb-4">
+                    <Trophy class="w-5 h-5 text-amber-700" />
+                    <span class="text-xs font-semibold tracking-widest uppercase text-amber-700">
+                        Bảng vàng dòng họ
+                    </span>
                 </div>
-                <h1 class="font-serif text-4xl md:text-5xl text-[#432406] mb-3 font-bold">Thành tích dòng họ</h1>
-                <p class="text-lg text-[#50453c] max-w-2xl mx-auto italic font-medium">
-                    Danh sách thành tích được trình bày trang trọng, ghi nhận những cống hiến và vinh quang của các
-                    thành viên qua các thế hệ.
+
+                <h1 class="text-4xl md:text-5xl font-bold text-[#2d1c0c] mb-3 font-serif">
+                    Thành tích dòng họ
+                </h1>
+
+                <p class="text-stone-600 max-w-2xl mx-auto text-base">
+                    Ghi nhận những thành tựu nổi bật của các thành viên qua các thế hệ,
+                    góp phần làm rạng danh truyền thống và giá trị của dòng họ.
                 </p>
             </div>
 
-            <!-- Search and Actions Bar -->
-            <div
-                class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-md border border-amber-100 p-4 md:p-5 mb-10 flex flex-col md:flex-row gap-4 items-center justify-between transition-all">
 
-                <!-- Ô tìm kiếm -->
-                <div class="relative w-full md:w-2/3">
-                    <Search class="absolute left-3 top-1/2 -translate-y-1/2 text-amber-500 w-5 h-5" />
-                    <input v-model="keyword"
-                        class="w-full pl-10 pr-4 py-2.5 bg-amber-50/30 rounded-xl border border-amber-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-200 focus:outline-none text-stone-700 placeholder:text-stone-400 transition-all duration-200"
-                        placeholder="🔍 Tìm theo tên, giải thưởng, tổ chức..." type="text" />
+            <!-- Toolbar -->
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4 mb-10">
+
+                <!-- Search -->
+                <div class="relative w-full md:w-[420px]">
+                    <Search class="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 w-4 h-4" />
+
+                    <input v-model="keyword" type="text" placeholder="Tìm theo tên, giải thưởng, tổ chức..."
+                        class="w-full pl-10 pr-4 py-3 rounded-xl border border-stone-200 bg-white shadow-sm focus:ring-2 focus:ring-amber-300 focus:border-amber-300 outline-none transition" />
                 </div>
 
-                <!-- Nút thêm -->
+                <!-- Add button -->
                 <button @click="openCreateForm"
-                    class="w-full md:w-auto bg-gradient-to-r from-amber-800 to-amber-700 text-amber-50 px-5 py-2.5 rounded-xl font-semibold tracking-wide hover:from-amber-900 hover:to-amber-800 transition-all duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2 group">
-                    <Plus class="w-5 h-5 group-hover:rotate-90 transition-transform duration-200" />
-                    <span>Thêm thành tích</span>
+                    class="flex items-center gap-2 bg-amber-700 hover:bg-amber-800 text-white px-5 py-3 rounded-xl shadow-sm hover:shadow-md transition font-medium">
+                    <Plus class="w-4 h-4" />
+                    Thêm thành tích
                 </button>
+
             </div>
 
-            <!-- Grid -->
-            <div v-if="safeAchievements.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <div v-for="achievement in safeAchievements" :key="achievement.achievementId"
-                    class="parchment-card rounded-2xl p-6 flex flex-col h-full relative group hover:shadow-[0_15px_35px_rgba(58,37,18,0.15)] transition-all duration-300">
-                    <!-- Trang trí góc -->
-                    <Flower2
-                        class="absolute top-2 right-2 w-12 h-12 text-[#775a19] opacity-[0.05] group-hover:opacity-10 transition-opacity" />
 
-                    <div class="flex justify-between items-start mb-4 relative z-10">
+            <!-- Grid -->
+            <div v-if="safeAchievements.length" class="grid gap-7 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+
+                <div v-for="achievement in safeAchievements" :key="achievement.achievementId"
+                    class="group bg-white rounded-2xl border border-stone-200 p-6 flex flex-col shadow-sm hover:shadow-xl transition-all duration-300">
+
+                    <!-- Card header -->
+                    <div class="flex items-start justify-between mb-5">
+
                         <div class="flex items-center gap-3">
+
                             <div
-                                class="w-12 h-12 bg-[#f1eee4] rounded-full flex items-center justify-center border border-[#d4c3b8]">
-                                <User class="w-6 h-6 text-[#50453c]" />
+                                class="w-11 h-11 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center">
+                                <User class="w-5 h-5 text-amber-700" />
                             </div>
+
                             <div>
-                                <h3 class="font-serif text-xl text-[#432406] font-bold">{{ achievement.personName }}
+                                <h3 class="font-semibold text-stone-800">
+                                    {{ achievement.personName }}
                                 </h3>
-                                <div class="flex items-center gap-1 text-[#50453c] text-xs">
+
+                                <div class="flex items-center gap-1 text-xs text-stone-500 mt-0.5">
                                     <CalendarDays class="w-3 h-3" />
-                                    <span>{{ formatDate(achievement.achievedDate) }}</span>
+                                    {{ formatDate(achievement.achievedDate) }}
                                 </div>
                             </div>
                         </div>
-                        <!-- Badge Loại -->
-                        <div class="px-2.5 py-1 rounded border flex items-center gap-1"
+
+
+                        <!-- Type badge -->
+                        <div class="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border"
                             :class="getTypeStyle(achievement.achievementType).badge">
                             <component :is="getTypeStyle(achievement.achievementType).icon" class="w-3 h-3" />
-                            <span
-                                class="text-[10px] font-bold uppercase tracking-tight">{{ getTypeStyle(achievement.achievementType).label }}</span>
+
+                            {{ getTypeStyle(achievement.achievementType).label }}
                         </div>
+
                     </div>
 
-                    <div class="flex-grow mb-4 relative z-10">
-                        <h4 class="font-serif text-lg text-[#1c1c16] mb-2 font-semibold line-clamp-1 italic">
-                            {{ achievement.name }}
-                        </h4>
-                        <div class="flex flex-wrap gap-2 mb-3">
-                            <span
-                                class="bg-[#f1eee4] px-2 py-0.5 border border-[#d4c3b8] text-[#50453c] text-[10px] font-bold uppercase">
-                                {{ achievement.rank }}
-                            </span>
-                            <div
-                                class="flex items-center gap-1 text-[#50453c] bg-[#f1eee4] px-2 py-0.5 border border-[#d4c3b8] max-w-[180px]">
-                                <Building2 class="w-3 h-3 flex-shrink-0" />
-                                <span class="text-[10px] font-medium truncate">{{ achievement.organization }}</span>
-                            </div>
-                        </div>
-                        <p class="text-sm text-[#50453c] line-clamp-2 leading-relaxed">
-                            {{ achievement.description }}
-                        </p>
+
+                    <!-- Achievement title -->
+                    <h4 class="font-semibold text-lg text-stone-800 mb-3 leading-snug line-clamp-2">
+                        {{ achievement.name }}
+                    </h4>
+
+
+                    <!-- Tags -->
+                    <div class="flex flex-wrap gap-2 mb-3">
+
+                        <span class="text-xs bg-stone-100 border border-stone-200 px-2.5 py-1 rounded-md">
+                            {{ achievement.rank }}
+                        </span>
+
+                        <span
+                            class="flex items-center gap-1 text-xs bg-stone-100 border border-stone-200 px-2.5 py-1 rounded-md max-w-[170px]">
+                            <Building2 class="w-3 h-3 flex-shrink-0" />
+                            <span class="truncate">{{ achievement.organization }}</span>
+                        </span>
+
                     </div>
 
-                    <div
-                        class="border-t border-[#d4c3b8] pt-4 flex justify-between items-center mt-auto relative z-10 border-dashed">
-                        <div class="flex items-center gap-4">
+
+                    <!-- Description -->
+                    <p class="text-sm text-stone-600 line-clamp-2 mb-5">
+                        {{ achievement.description }}
+                    </p>
+
+
+                    <!-- Footer -->
+                    <div class="flex items-center justify-between mt-auto pt-4 border-t border-stone-100">
+
+                        <div class="flex items-center gap-3">
+
                             <button @click="openUpdateForm(achievement)"
-                                class="flex items-center gap-1.5 text-[#775a19] hover:text-[#432406] transition-colors text-xs font-bold uppercase">
+                                class="flex items-center gap-1 text-sm text-amber-700 hover:text-amber-800 font-medium transition">
                                 <Eye class="w-4 h-4" />
                                 Chi tiết
                             </button>
+
                             <button @click="hanldeDeleteAchievement(achievement.achievementId)"
-                                class="text-[#ba1a1a] hover:opacity-70 transition-opacity">
+                                class="text-red-500 hover:text-red-600 transition">
                                 <Trash2 class="w-4 h-4" />
                             </button>
+
                         </div>
-                        <span class="text-[10px] text-[#82746b] font-mono italic">Mã:
-                            {{ achievement.achievementId }}</span>
+
+                        <span class="text-[11px] text-stone-400 font-mono">
+                            #{{ achievement.achievementId }}
+                        </span>
+
                     </div>
+
                 </div>
             </div>
 
-            <!-- Empty -->
-            <div v-else class="text-center py-20 bg-[#f1eee4] rounded-2xl border-2 border-dashed border-[#d4c3b8]">
-                <Search class="w-16 h-16 text-[#d4c3b8] mx-auto mb-4" />
-                <h3 class="text-[#82746b] font-serif text-xl italic">Không tìm thấy kết quả</h3>
-                <p class="mt-1 text-sm text-[#82746b]">Không có dữ liệu phù hợp với từ khóa "{{ keyword }}"</p>
+
+            <!-- Empty state -->
+            <div v-else class="text-center py-20 border border-dashed border-stone-300 rounded-2xl bg-white">
+                <Search class="w-14 h-14 mx-auto text-stone-300 mb-4" />
+
+                <h3 class="text-lg font-semibold text-stone-600">
+                    Không tìm thấy kết quả
+                </h3>
+
+                <p class="text-sm text-stone-500 mt-1">
+                    Không có dữ liệu phù hợp với từ khóa "{{ keyword }}"
+                </p>
             </div>
 
-            <!-- Form Modal -->
+
+            <!-- Modal -->
             <CreateOrUpdateAchievementForm v-if="isOpenForm" :show="isOpenForm" :achievement="selectedAchievement"
                 :mode="formMode" @close="closeForm" @submit="handleCreateOrUpdateAchievement($event)" />
 
+
             <!-- Pagination -->
-            <div class="mt-10">
+            <div class="mt-12">
                 <AppPagination :total-pages="pagination.totalPages" :page="currentPage" :has-prev="hasPrevPage"
                     :has-next="hasNextPage" @next="nextPage" @prev="prevPage" />
             </div>

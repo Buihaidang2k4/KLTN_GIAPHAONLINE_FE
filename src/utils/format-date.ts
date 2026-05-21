@@ -11,7 +11,12 @@ export const formatDate = (dateStr: string | null | undefined): string => {
     // Nếu là định dạng DD/MM/YYYY (Thường gặp từ dữ liệu Balkan hoặc Backend cũ)
     const parts = dateStr.split("/");
     if (parts.length === 3) {
-        const [day, month, year] = parts;
+        const day = parts[0] ?? "";
+        const month = parts[1] ?? "";
+        const year = parts[2] ?? "";
+
+        if (!day || !month || !year) return "";
+
         // Đảm bảo đủ 2 chữ số cho tháng và ngày
         const formattedDay = day.padStart(2, '0');
         const formattedMonth = month.padStart(2, '0');
@@ -19,4 +24,20 @@ export const formatDate = (dateStr: string | null | undefined): string => {
     }
     
     return "";
+};
+
+export const formatDateTime = (dateStr: string | null | undefined): string => {
+    if (!dateStr || dateStr === "-" || dateStr === "") return "";
+
+    const date = new Date(dateStr);
+    if (Number.isNaN(date.getTime())) return "";
+
+    return new Intl.DateTimeFormat("vi-VN", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false
+    }).format(date);
 };
