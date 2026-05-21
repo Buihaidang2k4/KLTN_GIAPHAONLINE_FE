@@ -11,7 +11,6 @@ import {
     User,
     Trash2,
     Plus,
-    Flower2
 } from 'lucide-vue-next'
 import { formatDate } from '@/utils/format-date'
 import { useFamilyStore } from '@/store/family/useFamilyStore';

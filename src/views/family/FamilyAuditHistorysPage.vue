@@ -107,16 +107,14 @@ function getEntries(data: AuditDataMap) {
                             <col class="w-[170px]" />
                             <col class="w-[220px]" />
                             <col class="w-[160px]" />
-                            <col class="w-[140px]" />
-                            <col class="w-[245px]" />
-                            <col class="w-[245px]" />
+                            <col class="w-[315px]" />
+                            <col class="w-[315px]" />
                         </colgroup>
                         <thead class="bg-slate-50 text-sm text-slate-600">
                             <tr>
                                 <th class="px-5 py-4 font-semibold">Thời gian</th>
                                 <th class="px-5 py-4 font-semibold">Người thực hiện</th>
                                 <th class="px-5 py-4 font-semibold">Hành động</th>
-                                <th class="px-5 py-4 font-semibold">Đối tượng</th>
                                 <th class="px-5 py-4 font-semibold">Dữ liệu cũ</th>
                                 <th class="px-5 py-4 font-semibold">Dữ liệu mới</th>
                             </tr>
@@ -140,11 +138,6 @@ function getEntries(data: AuditDataMap) {
                                         :class="getActionClass(item.action)">
                                         {{ getActionLabel(item.action) }}
                                     </span>
-                                </td>
-
-                                <td class="px-5 py-4 text-slate-700">
-                                    <div class="font-medium">{{ item.entityType }}</div>
-                                    <div class="text-xs text-slate-500">ID: {{ item.entityId }}</div>
                                 </td>
 
                                 <!-- oldData -->
@@ -175,7 +168,7 @@ function getEntries(data: AuditDataMap) {
                             </tr>
 
                             <tr v-if="auditItems.length === 0">
-                                <td colspan="6" class="px-5 py-10 text-center text-sm text-slate-500">
+                                <td colspan="5" class="px-5 py-10 text-center text-sm text-slate-500">
                                     {{ isFetching ? 'Đang tải lịch sử hoạt động...' : 'Chưa có lịch sử hoạt động nào.' }}
                                 </td>
                             </tr>

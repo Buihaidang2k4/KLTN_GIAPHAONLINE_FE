@@ -7,10 +7,13 @@ import { useSubscriptionPlansQuery } from '@/hooks/queries/subscription_plan/use
 import { useRouter } from 'vue-router';
 import { useFamilyStore } from '@/store/family/useFamilyStore';
 import { useFamilySubscriptionByFamilyQuery } from '@/hooks/queries/family/family_subscription/useFamilySubscription';
+import { useFamilyPermissions } from '@/composables/family/useFamilyPermissions';
 
 const router = useRouter();
 const familyStore = useFamilyStore();
 const familyId = computed(() => familyStore.currentFamilyId);
+const { canManageSubscription, withPermission } = useFamilyPermissions(familyId);
+
 
 const { data: familySubData } = useFamilySubscriptionByFamilyQuery(familyId);
 const { data: plansData } = useSubscriptionPlansQuery({ isActive: true });
@@ -18,14 +21,14 @@ const { data: plansData } = useSubscriptionPlansQuery({ isActive: true });
 const safePlan = computed(() => plansData.value?.data?.items || []);
 const safeFamilySub = computed(() => familySubData.value?.data || null);
 
-const handleSelectPlan = (plan: SubscriptionPlanRes) => {
+const handleSelectPlan = withPermission(canManageSubscription, (plan: SubscriptionPlanRes) => {
     router.push({
         name: 'FamilyPaymentDetails',
         params: {
             planId: plan.subscriptionPlanId
         }
     })
-}
+})
 
 </script>
 

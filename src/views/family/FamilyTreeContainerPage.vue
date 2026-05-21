@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { Users, GitBranch, BookOpen, Pencil, Trash2, Plus, Database, Archive } from 'lucide-vue-next';
 import TreeBanner from '@/assets/images/TreeBanner.png';
 import router from '@/app/router';
@@ -83,6 +83,21 @@ const showToast = (msg: string) => {
     setTimeout(() => toast.value.show = false, 3000);
 };
 
+const preloadFamilyChart = () => import('@/views/family/FamilyChartViewer.vue');
+
+onMounted(() => {
+    const preload = () => {
+        void preloadFamilyChart();
+    };
+
+    if ('requestIdleCallback' in window) {
+        (window as any).requestIdleCallback(preload);
+        return;
+    }
+
+    window.setTimeout(preload, 500);
+});
+
 const saveFamily = (payload: FamilyCategoryReq) => {
     if (!payload.familyName || !familyId.value) return;
 
@@ -136,6 +151,8 @@ const viewDetail = async (category: FamilyCategoryRes) => {
     if (!categoryId) return;
 
     showToast(`Đang mở danh mục: ${category.familyName}`);
+
+    await preloadFamilyChart();
 
     await router.push({
         name: "FamilyChart",

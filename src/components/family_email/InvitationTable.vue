@@ -149,7 +149,19 @@ const canCancel = (status: FamilyInvitationStatus) => status === "PENDING"
         </div>
 
         <div v-else class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
+            <table class="w-full min-w-[1280px] table-fixed text-left border-collapse">
+                <colgroup>
+                    <col class="w-[120px]" />
+                    <col class="w-[230px]" />
+                    <col class="w-[210px]" />
+                    <col class="w-[130px]" />
+                    <col class="w-[125px]" />
+                    <col class="w-[210px]" />
+                    <col class="w-[110px]" />
+                    <col class="w-[150px]" />
+                    <col class="w-[145px]" />
+                    <col class="w-[145px]" />
+                </colgroup>
                 <thead>
                     <tr class="bg-slate-50 border-b border-slate-100">
                         <th
@@ -211,21 +223,25 @@ const canCancel = (status: FamilyInvitationStatus) => status === "PENDING"
                         <td class="px-5 py-4">
                             <div class="flex items-center gap-3">
                                 <div
-                                    class="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                                    class="w-8 h-8 shrink-0 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
                                     <Mail :size="14" />
                                 </div>
-                                <span class="text-sm font-medium text-slate-700">
+                                <span class="min-w-0 truncate text-sm font-medium text-slate-700" :title="invite.invitedEmail">
                                     {{ invite.invitedEmail }}
                                 </span>
                             </div>
                         </td>
 
                         <td class="px-5 py-4 text-sm text-slate-600">
-                            {{ invite.invitedByEmail || '--' }}
+                            <span class="block truncate" :title="invite.invitedByEmail || '--'">
+                                {{ invite.invitedByEmail || '--' }}
+                            </span>
                         </td>
 
                         <td class="px-5 py-4 text-sm text-slate-600">
-                            {{ invite.familyName }}
+                            <span class="block truncate" :title="invite.familyName">
+                                {{ invite.familyName }}
+                            </span>
                         </td>
 
                         <td class="px-5 py-4">
@@ -237,29 +253,39 @@ const canCancel = (status: FamilyInvitationStatus) => status === "PENDING"
                         </td>
 
                         <td class="px-5 py-4 text-sm text-slate-500">
-                            {{ invite.inviteToken }}
+                            <span class="block break-all font-mono text-xs leading-5" :title="invite.inviteToken">
+                                {{ invite.inviteToken }}
+                            </span>
                         </td>
 
                         <td class="px-5 py-4 text-sm text-slate-500">
-                            {{ getRoleName(invite.roleName) }}
+                            <span class="block truncate" :title="getRoleName(invite.roleName)">
+                                {{ getRoleName(invite.roleName) }}
+                            </span>
                         </td>
 
                         <td class="px-5 py-4 text-sm text-slate-500">
-                            {{ invite.message }}
+                            <span class="line-clamp-3 break-words" :title="invite.message">
+                                {{ invite.message || '--' }}
+                            </span>
                         </td>
 
                         <td class="px-5 py-4 text-sm text-slate-500">
-                            {{ invite.createdAt }}
+                            <span class="block break-words text-xs leading-5">
+                                {{ invite.createdAt }}
+                            </span>
                         </td>
 
                         <td class="px-5 py-4 text-sm text-slate-500">
-                            {{ invite.expiredAt }}
+                            <span class="block break-words text-xs leading-5">
+                                {{ invite.expiredAt }}
+                            </span>
                         </td>
 
                     </tr>
 
                     <tr v-if="filteredItems.length === 0">
-                        <td colspan="9" class="px-5 py-12 text-center text-sm text-slate-500">
+                        <td colspan="10" class="px-5 py-12 text-center text-sm text-slate-500">
                             Không có lời mời nào phù hợp.
                         </td>
                     </tr>
@@ -270,3 +296,18 @@ const canCancel = (status: FamilyInvitationStatus) => status === "PENDING"
         </div>
     </div>
 </template>
+
+<style scoped>
+.overflow-x-auto::-webkit-scrollbar {
+    height: 8px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 999px;
+}
+</style>

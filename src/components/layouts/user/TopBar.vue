@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import {
   Info,
   Globe,
@@ -87,8 +87,26 @@ const familyStore = useFamilyStore();
 const isFamilyDropdownOpen = ref(false)
 const familyDropdownRef = ref<HTMLElement | null>(null)
 
-const selectedFamily = computed(() =>
-  safeFamilies.value.find(family => family.familyId === familyStore.currentFamilyId) ?? null
+const selectedFamily = computed(() => {
+  return safeFamilies.value.find(family => family.familyId === familyStore.currentFamilyId)
+    ?? safeFamilies.value[0]
+    ?? null
+})
+
+const hasInitializedDefaultFamily = ref(false)
+
+watch(
+  safeFamilies,
+  (families) => {
+    if (hasInitializedDefaultFamily.value || !families.length) return
+
+    const firstFamily = families[0]
+    if (!firstFamily?.familyId) return
+
+    familyStore.setFamily(firstFamily.familyId)
+    hasInitializedDefaultFamily.value = true
+  },
+  { immediate: true }
 )
 
 const toggleFamilyDropdown = () => {

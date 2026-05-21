@@ -8,6 +8,7 @@ import type {
 } from "@/types/family/family-invitation.types"
 import type { ApiResponse } from "@/types/api-response.types"
 import { notify } from "@/utils/notify"
+import { QUERY_KEYS } from "@/hooks/keys/query-keys"
 
 // ==================== Query Keys ====================
 
@@ -103,6 +104,10 @@ export function useAcceptInvitationMutation() {
         onSuccess: () => {
             queryClient.invalidateQueries({
                 queryKey: invitationKey.receiveds()
+            })
+
+            queryClient.invalidateQueries({
+                queryKey: QUERY_KEYS.FAMILY.all
             })
 
             notify.success("Thông báo", "Chấp nhận lời mời thành công")

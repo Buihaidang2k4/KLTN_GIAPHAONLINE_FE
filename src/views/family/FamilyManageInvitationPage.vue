@@ -60,7 +60,7 @@ const prevPage = () => { if (hasPrevPage.value) pagination[activeTab.value].page
 
 <template>
   <div class="min-h-screen bg-[#f7f4ec]">
-    <div class="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
+    <div class="mx-auto w-full max-w-[1600px] px-3 py-5 sm:px-5 lg:px-8 xl:px-10">
       <!-- Tabs -->
       <div class="mb-5">
         <div class="inline-flex rounded-2xl border border-slate-200 bg-white p-1 shadow-sm">
@@ -100,8 +100,10 @@ const prevPage = () => { if (hasPrevPage.value) pagination[activeTab.value].page
           :items="sentItems" :loading="sentQuery.isLoading.value" mode="sent" @cancel="handleCancel" />
       </div>
       <!-- panagtion -->
-      <AppPagination :page="currentPage" :total-pages="currentTotalPages" :has-next="hasNextPage"
-        :has-prev="hasPrevPage" @next="nextPage" @prev="prevPage" />
+      <div class="flex justify-end">
+        <AppPagination :page="currentPage" :total-pages="currentTotalPages" :has-next="hasNextPage"
+          :has-prev="hasPrevPage" @next="nextPage" @prev="prevPage" />
+      </div>
     </div>
   </div>
 </template>
