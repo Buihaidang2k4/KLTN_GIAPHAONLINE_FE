@@ -234,7 +234,7 @@ const getStatusClass = (value: ArticleStatus) => {
           <thead>
             <tr class="border-b border-slate-200 bg-slate-50 text-[11px] font-black uppercase tracking-widest text-slate-400">
               <th class="w-16 px-6 py-4 text-center">ID</th>
-              <th class="px-6 py-4">Bài viết</th>
+              <th class="px-6 py-4 max-w-[200px] sm:max-w-[300px] md:max-w-[400px] truncate">Bài viết</th>
               <th class="px-6 py-4">Danh mục</th>
               <th class="px-6 py-4">Trạng thái</th>
               <th class="px-6 py-4 text-center">Nổi bật</th>
@@ -249,7 +249,7 @@ const getStatusClass = (value: ArticleStatus) => {
                 <span class="font-mono text-xs font-bold text-slate-400">#{{ article.articleId }}</span>
               </td>
 
-              <td class="px-6 py-4">
+              <td class="px-6 py-4 max-w-[200px] sm:max-w-[300px] md:max-w-[400px]">
                 <div class="flex items-center gap-3">
                   <div class="flex h-12 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100">
                     <img
@@ -260,10 +260,10 @@ const getStatusClass = (value: ArticleStatus) => {
                     />
                     <ImageOff v-else class="h-5 w-5 text-slate-400" />
                   </div>
-                  <div class="min-w-0">
-                    <p class="truncate text-sm font-bold text-slate-800">{{ article.title }}</p>
-                    <p class="mt-1 truncate text-xs text-slate-400">{{ article.slug }}</p>
-                    <p v-if="article.summary" class="mt-1 line-clamp-1 text-xs text-slate-500">
+                  <div class="min-w-0 flex-1">
+                    <p class="truncate text-sm font-bold text-slate-800" :title="article.title">{{ article.title }}</p>
+                    <p class="mt-1 truncate text-xs text-slate-400" :title="article.slug">{{ article.slug }}</p>
+                    <p v-if="article.summary" class="mt-1 line-clamp-1 text-xs text-slate-500" :title="article.summary">
                       {{ article.summary }}
                     </p>
                   </div>

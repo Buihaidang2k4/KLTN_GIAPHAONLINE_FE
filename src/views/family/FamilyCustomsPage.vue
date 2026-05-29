@@ -267,7 +267,7 @@ const scrollToTimelineStep = (timelineId: number) => {
                 <div v-if="!selectedCeremonyId" class="flex items-center gap-4">
 
                     <div class="w-11 h-11 flex items-center justify-center
-      bg-slate-900 rounded-xl shadow-md">
+                        bg-slate-900 rounded-xl shadow-md">
                         <BookOpen class="w-6 h-6 text-white" />
                     </div>
 
@@ -287,9 +287,9 @@ const scrollToTimelineStep = (timelineId: number) => {
                 <div v-else class="flex items-center gap-4 flex-1">
 
                     <button @click="goBack" class="flex items-center gap-2 px-4 py-2 rounded-lg
-        border border-slate-200 bg-white
-        text-sm font-medium text-slate-600
-        hover:bg-slate-50 transition">
+                    border border-slate-200 bg-white
+                    text-sm font-medium text-slate-600
+                    hover:bg-slate-50 transition">
 
                         <ArrowLeft class="w-4 h-4" />
                         Quay lại
@@ -317,25 +317,25 @@ const scrollToTimelineStep = (timelineId: number) => {
                         <Search class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
 
                         <input v-model="keyword" placeholder="Tìm nghi lễ..." class="w-full pl-9 pr-3 py-2.5
-          border border-slate-200
-          rounded-lg
-          text-sm
-          bg-slate-50
-          focus:bg-white
-          focus:border-indigo-500
-          focus:ring-2 focus:ring-indigo-200
-          outline-none transition" />
+                            border border-slate-200
+                            rounded-lg
+                            text-sm
+                            bg-slate-50
+                            focus:bg-white
+                            focus:border-indigo-500
+                            focus:ring-2 focus:ring-indigo-200
+                            outline-none transition" />
 
                     </div>
 
                     <!-- CREATE BUTTON -->
                     <button @click="openCreateForm" class="flex items-center gap-2
-        bg-slate-900 text-white
-        px-4 py-2.5
-        rounded-lg
-        text-sm font-semibold
-        shadow hover:bg-slate-800
-        transition">
+                    bg-slate-900 text-white
+                    px-4 py-2.5
+                    rounded-lg
+                    text-sm font-semibold
+                    shadow hover:bg-slate-800
+                    transition">
 
                         <Plus class="w-4 h-4" />
                         Thêm nghi lễ
@@ -397,8 +397,7 @@ const scrollToTimelineStep = (timelineId: number) => {
                                         </div>
 
                                         <div>
-                                            <div 
-                                                class="mb-2 flex flex-wrap items-center gap-2">
+                                            <div class="mb-2 flex flex-wrap items-center gap-2">
                                                 <span
                                                     class="inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-[11px] font-bold"
                                                     :class="[selectedCeremonyTheme.bg, selectedCeremonyTheme.text, selectedCeremonyTheme.border]">

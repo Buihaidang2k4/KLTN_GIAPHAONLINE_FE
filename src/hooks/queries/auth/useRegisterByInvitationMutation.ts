@@ -5,8 +5,8 @@ import { useMutation } from "@tanstack/vue-query";
 
 export function useRegisterByInvitationMutation() {
     const mutation = useMutation({
-        mutationFn: (data: RegisterByInvitationReq) =>
-            authService.registerByInvitation(data),
+        mutationFn: ({ token, data }: { token: string; data: RegisterByInvitationReq }) =>
+            authService.registerByInvitation(token, data),
 
         onSuccess: () => {
             notify.success("REGISTER_SUCCESS");

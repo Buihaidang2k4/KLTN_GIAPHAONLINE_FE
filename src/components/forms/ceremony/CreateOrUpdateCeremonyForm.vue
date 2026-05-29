@@ -116,19 +116,24 @@ const onSubmit = handleSubmit((values) => {
                 <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]" @click="handleClose"></div>
 
                 <!-- Modal Container -->
-                <div class="relative w-full max-w-lg overflow-hidden rounded-[2rem] bg-[#fefaf6] shadow-2xl border border-amber-200/30 animate-in fade-in zoom-in duration-200">
-                    
+                <div
+                    class="relative w-full max-w-lg overflow-hidden rounded-[2rem] bg-[#fefaf6] shadow-2xl border border-amber-200/30 animate-in fade-in zoom-in duration-200">
+
                     <!-- Subtle Ornaments -->
-                    <div class="absolute top-0 right-0 w-24 h-24 bg-[radial-gradient(circle_at_top_right,rgba(180,83,9,0.03),transparent)] pointer-events-none"></div>
+                    <div
+                        class="absolute top-0 right-0 w-24 h-24 bg-[radial-gradient(circle_at_top_right,rgba(180,83,9,0.03),transparent)] pointer-events-none">
+                    </div>
                     <div class="absolute top-6 left-6 text-amber-900/[0.03] pointer-events-none">
                         <Scroll :size="80" />
                     </div>
 
                     <!-- Header Section -->
                     <div class="relative px-6 pt-8 pb-4 text-center">
-                        <div class="inline-flex items-center gap-1.5 mb-2 px-2.5 py-0.5 bg-amber-50 rounded-full border border-amber-100/50">
+                        <div
+                            class="inline-flex items-center gap-1.5 mb-2 px-2.5 py-0.5 bg-amber-50 rounded-full border border-amber-100/50">
                             <Sparkles :size="12" class="text-amber-600" />
-                            <span class="text-[9px] font-bold text-amber-700 uppercase tracking-widest">Số hóa truyền thống</span>
+                            <span class="text-[9px] font-bold text-amber-700 uppercase tracking-widest">Số hóa truyền
+                                thống</span>
                         </div>
                         <h2 class="text-xl font-black text-slate-900 tracking-tight">
                             {{ titleText }}
@@ -137,22 +142,23 @@ const onSubmit = handleSubmit((values) => {
                             Điền thông tin để lưu giữ nét đẹp văn hóa cho thế hệ mai sau.
                         </p>
 
-                        <button @click="handleClose" 
+                        <button @click="handleClose"
                             class="absolute top-5 right-5 p-1.5 rounded-full hover:bg-amber-50 text-slate-400 hover:text-amber-600 transition-all active:scale-90">
                             <X :size="18" />
                         </button>
                     </div>
 
                     <!-- Form Body -->
-                    <form :key="mode + (ceremony?.ceremonyId ?? 'new')" 
-                        class="relative px-6 pb-8" @submit.prevent="onSubmit">
-                        
+                    <form :key="mode + (ceremony?.ceremonyId ?? 'new')" class="relative px-6 pb-8"
+                        @submit.prevent="onSubmit">
+
                         <div class="space-y-5">
                             <!-- Vertical Stack for focus -->
                             <div class="space-y-4">
                                 <!-- Loại nghi lễ -->
                                 <div class="space-y-1.5">
-                                    <label class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
+                                    <label
+                                        class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
                                         <BookmarkCheck :size="14" class="text-amber-600/70" />
                                         Loại nghi lễ <span class="text-red-400">*</span>
                                     </label>
@@ -163,29 +169,34 @@ const onSubmit = handleSubmit((values) => {
                                             {{ item.label }}
                                         </option>
                                     </Field>
-                                    <ErrorMessage name="ceremonyType" class="mt-1 ml-1 block text-[10px] font-bold text-red-500" />
+                                    <ErrorMessage name="ceremonyType"
+                                        class="mt-1 ml-1 block text-[10px] font-bold text-red-500" />
                                 </div>
 
                                 <!-- Tên nghi lễ -->
                                 <div class="space-y-1.5">
-                                    <label class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
+                                    <label
+                                        class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
                                         Tên nghi lễ <span class="text-red-400">*</span>
                                     </label>
                                     <Field name="ceremonyName" type="text" placeholder="Ví dụ: Lễ mừng thọ"
                                         validate-on-blur
                                         class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-500/5 transition-all shadow-sm" />
-                                    <ErrorMessage name="ceremonyName" class="mt-1 ml-1 block text-[10px] font-bold text-red-500" />
+                                    <ErrorMessage name="ceremonyName"
+                                        class="mt-1 ml-1 block text-[10px] font-bold text-red-500" />
                                 </div>
 
                                 <!-- Mô tả -->
                                 <div class="space-y-1.5">
-                                    <label class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
+                                    <label
+                                        class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
                                         Mô tả chi tiết <span class="text-red-400">*</span>
                                     </label>
                                     <Field as="textarea" name="description" rows="4" validate-on-blur
                                         placeholder="Ý nghĩa và các bước thực hiện..."
                                         class="w-full resize-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-500/5 transition-all leading-relaxed shadow-sm" />
-                                    <ErrorMessage name="description" class="mt-1 ml-1 block text-[10px] font-bold text-red-500" />
+                                    <ErrorMessage name="description"
+                                        class="mt-1 ml-1 block text-[10px] font-bold text-red-500" />
                                 </div>
                             </div>
 
@@ -197,8 +208,10 @@ const onSubmit = handleSubmit((values) => {
                                         <History :size="14" class="text-amber-600" />
                                     </div>
                                     <div class="flex flex-col">
-                                        <span class="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">Cập nhật lúc</span>
-                                        <span class="text-[10px] font-bold text-slate-600">{{ formatDate(ceremony.updatedAt || ceremony.createdAt) }}</span>
+                                        <span class="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">Cập
+                                            nhật lúc</span>
+                                        <span
+                                            class="text-[10px] font-bold text-slate-600">{{ formatDate(ceremony.updatedAt || ceremony.createdAt) }}</span>
                                     </div>
                                 </div>
                             </div>

@@ -23,8 +23,8 @@ export const authService = {
         return res.data;
     },
 
-    registerByInvitation: async (data: RegisterByInvitationReq): Promise<ApiResponse<void>> => {
-        const res = await api.post<ApiResponse<void>>('/auth/register-by-invitation', data);
+    registerByInvitation: async (token: string, data: RegisterByInvitationReq): Promise<ApiResponse<void>> => {
+        const res = await api.post<ApiResponse<void>>(`/auth/register-by-invitation/${token}`, data);
         return res.data;
     },
 

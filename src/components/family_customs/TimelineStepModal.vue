@@ -38,7 +38,7 @@ const validationSchema = toTypedSchema(
             .string()
             .trim()
             .min(1, 'Vui lòng nhập hướng dẫn chi tiết')
-            .max(3000, 'Hướng dẫn không được quá 3000 ký tự')
+            .max(2000, 'Hướng dẫn không được quá 2000 ký tự')
     })
 )
 

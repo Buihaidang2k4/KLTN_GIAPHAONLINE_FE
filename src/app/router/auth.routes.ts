@@ -35,5 +35,11 @@ export default [
         name: "ResetPasword",
         component: () => import("@/views/auth/ResetPasswordPage.vue"),
         meta: { guestOnly: true }
+    },
+    {
+        path: "/register-by-invitation/:token",
+        name: "RegisterByInvitation",
+        component: () => import("@/views/auth/RegisterForInvitationPage.vue"),
+        meta: { guestOnly: true }
     }
 ]

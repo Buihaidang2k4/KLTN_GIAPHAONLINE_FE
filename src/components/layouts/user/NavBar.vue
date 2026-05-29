@@ -62,9 +62,9 @@ const menuGroups: MenuGroup[] = [
   {
     title: "Quản lý",
     items: [
-      { name: "Quản lí lời mời", path: "/family/quan-li-loi-moi", icon: Mail, badge: 2 },
-      { name: "Quản lí thành viên", path: "/family/quan-li-thanh-vien", icon: ShieldCheck },
-      { name: "Quản lí gói dịch vụ", path: "/family/dich-vu", icon: Zap },
+      { name: "Quản lý lời mời", path: "/family/quan-li-loi-moi", icon: Mail, badge: 2 },
+      { name: "Quản lý thành viên", path: "/family/quan-li-thanh-vien", icon: ShieldCheck },
+      { name: "Quản lý gói dịch vụ", path: "/family/dich-vu", icon: Zap },
       { name: "Lịch sử thanh toán", path: "/family/lich-su-thanh-toan", icon: BadgeDollarSign },
     ],
   },
