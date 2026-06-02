@@ -11,7 +11,8 @@ import {
     Settings,
     ChevronLeft,
     ShieldCheck,
-    Key
+    Key,
+    MessageSquare
 } from 'lucide-vue-next'
 import { ref, computed } from 'vue'
 import logo from '@/assets/images/Logo_GiaPha.png'
@@ -46,6 +47,12 @@ const menuGroups = [
         items: [
             { icon: FolderOpen, label: 'Danh mục bài viết', to: '/system/categories' },
             { icon: FileText, label: 'Bài viết & Hướng dẫn', to: '/system/posts' },
+        ]
+    },
+    {
+        label: 'Quản lý Phản hồi',
+        items: [
+            { icon: MessageSquare, label: 'Quản lý phản hồi', to: '/system/feedbacks' },
         ]
     },
     {

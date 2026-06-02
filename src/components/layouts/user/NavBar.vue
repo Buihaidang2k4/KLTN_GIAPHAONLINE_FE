@@ -19,6 +19,7 @@ import {
   History,
   BadgeDollarSign,
   Zap,
+  Settings2,
 } from "lucide-vue-next"
 
 import background from '@/assets/images/bg_familyTree.jpg'
@@ -73,6 +74,7 @@ const menuGroups: MenuGroup[] = [
     items: [
       { name: "Tài khoản", path: "/family/tai-khoan", icon: UserPen },
       { name: "Lịch sử hoạt động", path: "/family/lich-su-hoat-dong", icon: History },
+      { name: "Phản hồi", path: "/family/phan-hoi", icon: Settings2 },
       // { name: "Cài đặt", path: "/family/cau-hinh", icon: Settings },
     ],
   },

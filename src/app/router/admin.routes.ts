@@ -51,6 +51,11 @@ export default [
                 name: "Permissions",
                 component: () => import("@/views/dashboard/DashboardPermissions.vue"),
             },
+            {
+                path: "feedbacks",
+                name: "Feedbacks",
+                component: () => import("@/views/dashboard/DashboardFeedbacks.vue"),
+            },
 
         ]
     },

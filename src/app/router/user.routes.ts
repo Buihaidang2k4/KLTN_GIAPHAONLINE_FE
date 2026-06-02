@@ -24,10 +24,9 @@ export default [
                 component: () => import("@/views/family/FamilyTreeContainerPage.vue"),
             },
             {
-                path: "xuat-file",
-                name: "FamilyExport",
-                component: () => import("@/views/family/FamilyExportPage.vue"),
-                meta: { permissions: ["FAM_EXPORT"] },
+                path: "phan-hoi",
+                name: "FamilyFeedback",
+                component: () => import("@/views/family/FamilyFeedbackPage.vue"),
             },
             {
                 path: "su-kien",
