@@ -104,8 +104,8 @@ const handleUpdate = (formData: any) => {
     summary: formData.summary || null,
     content: formData.content,
     contentFormat: 'HTML',
-    articleCategoryId: formData.categoryId || null,
-    isFeatured: oldArticle.isFeatured,
+    articleCategoryId: formData.articleCategoryId || null,
+    isFeatured: formData.isFeatured,
     thumbnail: formData.thumbnailFile || null,
   }
 

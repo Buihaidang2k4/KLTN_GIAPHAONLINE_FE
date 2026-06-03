@@ -9,7 +9,7 @@ interface ArticleRes {
     title: string
     summary?: string
     content: string
-    categoryId?: number | null
+    articleCategoryId?: number | null
     thumbnailUrl?: string
     tags?: string
     status: 'DRAFT' | 'PUBLISHED'
@@ -20,7 +20,7 @@ interface ArticleForm {
     title: string
     summary: string
     content: string
-    categoryId: number | null
+    articleCategoryId: number | null
     tags: string
     status: 'DRAFT' | 'PUBLISHED'
     isFeatured: boolean
@@ -41,7 +41,7 @@ const form = reactive<ArticleForm>({
     title: '',
     summary: '',
     content: '<p><br></p>',
-    categoryId: null,
+    articleCategoryId: null,
     tags: '',
     status: 'DRAFT',
     isFeatured: false,
@@ -72,22 +72,21 @@ const errors = reactive({ title: '', content: '' })
 const editorRef = ref()
 
 // Load dữ liệu article vào form + editor khi mở modal
-watch(() => props.article, (val) => {
+watch([() => props.article, categories], ([val]) => {
     if (!val) return
     form.title = val.title ?? ''
     form.summary = val.summary ?? ''
     form.content = val.content ?? '<p><br></p>'
-    form.categoryId = val.categoryId ?? null
+    form.articleCategoryId = val.articleCategoryId != null ? Number(val.articleCategoryId) : null
     form.tags = val.tags ?? ''
     form.status = val.status ?? 'DRAFT'
     form.isFeatured = val.isFeatured ?? false
-    // Reset file, hiển ảnh cũ nếu có
     thumbnailFile.value = null
     thumbnailPreview.value = val.thumbnailUrl || null
     if (fileInputRef.value) fileInputRef.value.value = ''
-    // Đồng bộ vào editor sau khi DOM render
     setTimeout(() => editorRef.value?.setHtml(form.content), 50)
 }, { immediate: true })
+
 
 const validate = () => {
     errors.title = form.title.trim() ? '' : 'Tiêu đề không được để trống'
@@ -172,10 +171,11 @@ const handleClose = () => {
                                 class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
                                 <Tag :size="13" class="text-blue-500" /> Danh mục bài viết
                             </label>
-                            <select v-model="form.categoryId"
+                            <select v-model="form.articleCategoryId"
                                 class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-500/5 transition-all bg-white">
-                                <option :value="null">Chọn danh mục...</option>
-                                <option v-for="cat in categories" :key="cat.articleCategoryId" :value="cat.articleCategoryId">
+                                <option :value="null" disabled>Chọn danh mục...</option>
+                                <option v-for="cat in categories" :key="cat.articleCategoryId"
+                                    :value="cat.articleCategoryId">
                                     {{ cat.name }}
                                 </option>
                             </select>
@@ -188,7 +188,8 @@ const handleClose = () => {
                                 <Image :size="13" class="text-blue-500" /> Ảnh thumbnail
                             </label>
                             <div v-if="thumbnailPreview" class="relative w-fit">
-                                <img :src="thumbnailPreview" alt="Preview" class="h-32 w-auto rounded-xl border border-slate-200 object-cover" />
+                                <img :src="thumbnailPreview" alt="Preview"
+                                    class="h-32 w-auto rounded-xl border border-slate-200 object-cover" />
                                 <button type="button" @click="removeThumbnail"
                                     class="absolute -top-2 -right-2 p-1 rounded-full bg-red-500 text-white shadow hover:bg-red-600 transition-colors">
                                     <Trash2 :size="12" />
@@ -199,21 +200,25 @@ const handleClose = () => {
                                 <Upload :size="18" />
                                 <span class="font-semibold">Nhấn để chọn ảnh thumbnail</span>
                             </div>
-                            <input ref="fileInputRef" type="file" accept="image/*" class="hidden" @change="handleFileChange" />
+                            <input ref="fileInputRef" type="file" accept="image/*" class="hidden"
+                                @change="handleFileChange" />
                         </div>
 
                         <!-- Trạng thái & Nổi bật -->
                         <div class="flex flex-col sm:flex-row gap-6">
                             <!-- Trạng thái -->
                             <div class="flex items-center gap-4 flex-1">
-                                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Trạng thái</label>
+                                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Trạng
+                                    thái</label>
                                 <div class="flex gap-3">
                                     <label class="flex items-center gap-2 cursor-pointer">
-                                        <input type="radio" v-model="form.status" value="DRAFT" class="accent-blue-500" />
+                                        <input type="radio" v-model="form.status" value="DRAFT"
+                                            class="accent-blue-500" />
                                         <span class="text-sm font-semibold text-slate-600">Nháp</span>
                                     </label>
                                     <label class="flex items-center gap-2 cursor-pointer">
-                                        <input type="radio" v-model="form.status" value="PUBLISHED" class="accent-blue-500" />
+                                        <input type="radio" v-model="form.status" value="PUBLISHED"
+                                            class="accent-blue-500" />
                                         <span class="text-sm font-semibold text-slate-600">Xuất bản</span>
                                     </label>
                                 </div>
@@ -221,10 +226,13 @@ const handleClose = () => {
 
                             <!-- Nổi bật -->
                             <div class="flex items-center gap-4 flex-1">
-                                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Nổi bật</label>
+                                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Nổi
+                                    bật</label>
                                 <label class="relative inline-flex items-center cursor-pointer">
                                     <input type="checkbox" v-model="form.isFeatured" class="sr-only peer" />
-                                    <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                    <div
+                                        class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600">
+                                    </div>
                                     <span class="ml-3 text-sm font-semibold text-slate-600">
                                         {{ form.isFeatured ? 'Có' : 'Không' }}
                                     </span>
@@ -242,7 +250,8 @@ const handleClose = () => {
                             <WangEditor ref="editorRef" v-model="form.content"
                                 upload-image-url="/api/v1/articles/upload-image" />
                             <p v-if="errors.content" class="text-[10px] font-bold text-red-500 ml-1">
-                                {{ errors.content }}</p>
+                                {{ errors.content }}
+                            </p>
                         </div>
                     </div>
 

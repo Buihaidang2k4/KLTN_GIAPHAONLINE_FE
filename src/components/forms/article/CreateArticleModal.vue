@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, reactive, computed } from 'vue'
 import { X, Sparkles, FileText, Tag, Image, AlignLeft, Upload, Trash2 } from 'lucide-vue-next'
-import WangEditor from '@/components/forms/article/templateEditor.vue'
 import { useArticleCategoriesQuery } from '@/hooks/queries/article_category/useArticleCategory'
 
 const props = defineProps<{
