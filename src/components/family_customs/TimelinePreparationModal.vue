@@ -1,7 +1,10 @@
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue'
-import { X, Save, Pencil, Trash2, Sparkles, Scroll, Gift, BookmarkCheck, History } from 'lucide-vue-next'
+import { computed, watch } from 'vue'
+import { X, Save, Pencil, Trash2, Sparkles, Scroll, Gift, BookmarkCheck, AlertCircle } from 'lucide-vue-next'
 import { notify } from '@/utils/notify'
+import { useForm } from 'vee-validate'
+import { toTypedSchema } from '@vee-validate/zod'
+import * as zod from 'zod'
 import type {
     CeremonyTimelinePreparationReq,
     CeremonyTimelinePreparationRes,
@@ -26,90 +29,111 @@ const emit = defineEmits<{
 }>()
 
 const timelineId = computed(() => props.timeline?.timelineId ?? null)
-const familyStore = useFamilyStore();
-const familyId = computed(() => familyStore.currentFamilyId);
-
+const familyStore = useFamilyStore()
+const familyId = computed(() => familyStore.currentFamilyId)
 
 const { data: preparationsData } = useCeremonyTimelinePreparationsQuery(timelineId)
 const { mutate: createPreparationMutation } = useCreateCeremonyTimelinePreparationMutation()
 const { mutate: updatePreparationMutation } = useUpdateCeremonyTimelinePreparationMutation()
 const { mutate: deletePreparationMutation } = useDeleteCeremonyTimelinePreparationMutation()
-const { canManageCeremony } = useFamilyPermissions(familyId);
+const { canManageCeremony } = useFamilyPermissions(familyId)
 
 const preparations = computed(() => preparationsData.value?.data?.items ?? [])
-const editingPreparationId = ref<number | null>(null)
 
-const emptyForm = (): CeremonyTimelinePreparationReq => ({
-    itemName: '',
-    itemType: '',
-    quantity: 1,
-    unit: '',
-    note: '',
-    required: true
+// 1. Định nghĩa Validation Schema bằng Zod
+const validationSchema = toTypedSchema(
+    zod.object({
+        preparationId: zod.number().nullable().optional(),
+        itemName: zod.string().trim().min(1, 'Vui lòng nhập tên lễ vật'),
+        itemType: zod.string().trim().min(1, 'Vui lòng chọn hoặc nhập loại lễ vật'),
+        quantity: zod.number({ invalid_type_error: 'Số lượng phải là số' }).min(1, 'Số lượng tối thiểu là 1'),
+        unit: zod.string().trim().min(1, 'Vui lòng nhập đơn vị tính'),
+        note: zod.string().trim().optional().default(''),
+        required: zod.boolean().default(true)
+    })
+)
+
+// 2. Cấu hình Form với Vee-Validate
+const { values, errors, defineField, handleSubmit: validateAndSubmit, resetForm, setValues } = useForm({
+    validationSchema,
+    initialValues: {
+        preparationId: null,
+        itemName: '',
+        itemType: '',
+        quantity: 1,
+        unit: '',
+        note: '',
+        required: true
+    }
 })
 
-const form = reactive<CeremonyTimelinePreparationReq>(emptyForm())
-const isEditing = computed(() => editingPreparationId.value !== null)
+// Sử dụng defineField để v-model đồng bộ mượt mà với Vee-Validate
+const [itemName] = defineField('itemName')
+const [itemType] = defineField('itemType')
+const [quantity] = defineField('quantity')
+const [unit] = defineField('unit')
+const [note] = defineField('note')
+const [required] = defineField('required')
 
-const resetForm = () => {
-    editingPreparationId.value = null
-    Object.assign(form, emptyForm())
+const isEditing = computed(() => values.preparationId !== null)
+
+// Hàm reset form về trạng thái ban đầu
+const handleReset = () => {
+    resetForm({
+        values: {
+            preparationId: null,
+            itemName: '',
+            itemType: '',
+            quantity: 1,
+            unit: '',
+            note: '',
+            required: true
+        }
+    })
 }
 
 watch(
     () => props.show,
     (show) => {
-        if (show) {
-            resetForm()
-        }
+        if (show) handleReset()
     }
 )
 
 watch(
     () => props.timeline,
     () => {
-        resetForm()
+        handleReset()
     }
 )
 
-const validateForm = () => {
-    if (!timelineId.value) {
-        notify.error('Thông báo', 'Không tìm thấy bước cần quản lý lễ vật')
-        return false
-    }
-
-    if (!form.itemName.trim() || !form.itemType.trim() || !form.unit.trim() || form.quantity < 1) {
-        notify.error('Thông báo', 'Vui lòng nhập đầy đủ thông tin lễ vật')
-        return false
-    }
-
-    return true
-}
-
-const handleSubmit = () => {
+// 3. Xử lý Submit Form sau khi qua bộ lọc Validation
+const onSubmit = validateAndSubmit((formValues) => {
     if (!canManageCeremony.value) {
         notify.error("Thông báo", "Bạn không có quyền thực hiện thao tác này")
         return
     }
 
-    if (!validateForm() || !timelineId.value) return
-
-    const payload: CeremonyTimelinePreparationReq = {
-        itemName: form.itemName.trim(),
-        itemType: form.itemType.trim(),
-        quantity: Number(form.quantity),
-        unit: form.unit.trim(),
-        note: form.note.trim(),
-        required: form.required
+    if (!timelineId.value) {
+        notify.error('Thông báo', 'Không tìm thấy bước cần quản lý lễ vật')
+        return
     }
 
-    if (isEditing.value && editingPreparationId.value) {
+    const payload: CeremonyTimelinePreparationReq = {
+        itemName: formValues.itemName,
+        itemType: formValues.itemType,
+        quantity: Number(formValues.quantity),
+        unit: formValues.unit,
+        note: formValues.note || '',
+        required: formValues.required
+    }
+
+    if (isEditing.value && formValues.preparationId) {
         updatePreparationMutation(
-            { preparationId: editingPreparationId.value, data: payload },
+            { preparationId: formValues.preparationId, data: payload },
             {
                 onSuccess: () => {
                     notify.success('Thông báo', 'Cập nhật lễ vật thành công')
-                    resetForm()
+                    handleReset()
                 },
                 onError: (error: any) => {
                     console.error('update preparation error', error?.response?.data ?? error)
@@ -125,7 +149,7 @@ const handleSubmit = () => {
         {
             onSuccess: () => {
                 notify.success('Thông báo', 'Thêm lễ vật thành công')
-                resetForm()
+                handleReset()
             },
             onError: (error: any) => {
                 console.error('create preparation error', error?.response?.data ?? error)
@@ -133,21 +157,21 @@ const handleSubmit = () => {
             }
         }
     )
-}
+})
 
 const handleEdit = (item: CeremonyTimelinePreparationRes) => {
     if (!canManageCeremony.value) {
         notify.error("Thông báo", "Bạn không có quyền thực hiện thao tác này")
         return
     }
-    editingPreparationId.value = item.preparationId
-    Object.assign(form, {
-        timelineId: item.timelineId,
+    // Gán dữ liệu vào form thông qua setValues của vee-validate
+    setValues({
+        preparationId: item.preparationId,
         itemName: item.itemName,
         itemType: item.itemType,
         quantity: item.quantity,
         unit: item.unit,
-        note: item.note,
+        note: item.note ?? '',
         required: item.required
     })
 }
@@ -163,8 +187,8 @@ const handleDelete = (preparationId: number) => {
     deletePreparationMutation(preparationId, {
         onSuccess: () => {
             notify.success('Thông báo', 'Xóa lễ vật thành công')
-            if (editingPreparationId.value === preparationId) {
-                resetForm()
+            if (values.preparationId === preparationId) {
+                handleReset()
             }
         },
         onError: (error: any) => {
@@ -175,7 +199,7 @@ const handleDelete = (preparationId: number) => {
 }
 
 const handleClose = () => {
-    resetForm()
+    handleReset()
     emit('close')
 }
 </script>
@@ -184,14 +208,11 @@ const handleClose = () => {
     <Teleport to="body">
         <Transition name="fade">
             <div v-if="show" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-                <!-- Backdrop -->
                 <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]" @click="handleClose"></div>
 
-                <!-- Modal Container -->
                 <div
                     class="relative w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden rounded-[2.5rem] bg-[#fefaf6] shadow-2xl border border-amber-200/30 animate-in fade-in zoom-in duration-300">
 
-                    <!-- Subtle Ornaments -->
                     <div
                         class="absolute top-0 right-0 w-32 h-32 bg-[radial-gradient(circle_at_top_right,rgba(180,83,9,0.03),transparent)] pointer-events-none">
                     </div>
@@ -199,7 +220,6 @@ const handleClose = () => {
                         <Gift :size="120" />
                     </div>
 
-                    <!-- Header Section -->
                     <div class="relative shrink-0 px-8 pt-8 pb-4 text-center border-b border-amber-100/50">
                         <div
                             class="inline-flex items-center gap-1.5 mb-2 px-2.5 py-0.5 bg-amber-50 rounded-full border border-amber-100/50">
@@ -218,10 +238,8 @@ const handleClose = () => {
                         </button>
                     </div>
 
-                    <!-- Main Content -->
                     <div class="flex min-h-0 flex-1 flex-col md:flex-row">
 
-                        <!-- Left: List View -->
                         <div
                             class="flex min-h-0 flex-col md:w-[55%] border-b md:border-b-0 md:border-r border-amber-100/50">
                             <div class="shrink-0 px-6 py-4 bg-amber-50/20">
@@ -243,13 +261,12 @@ const handleClose = () => {
                                 <div v-else class="space-y-4">
                                     <div v-for="item in preparations" :key="item.preparationId" :class="[
                                         'relative rounded-[1.25rem] border p-5 transition-all duration-300 group',
-                                        editingPreparationId === item.preparationId
+                                        values.preparationId === item.preparationId
                                             ? 'border-amber-400 bg-white shadow-lg ring-4 ring-amber-500/5'
                                             : 'border-amber-200/40 bg-white hover:border-amber-300 hover:shadow-md'
                                     ]">
                                         <div class="flex items-start justify-between gap-4">
                                             <div class="min-w-0 flex-1">
-                                                <!-- Title and Badge -->
                                                 <div class="flex items-start gap-2 mb-2">
                                                     <p
                                                         class="font-black text-slate-900 text-base leading-none pt-1 truncate">
@@ -265,7 +282,6 @@ const handleClose = () => {
                                                     </span>
                                                 </div>
 
-                                                <!-- Metadata Grid -->
                                                 <div class="flex flex-wrap items-center gap-y-2 gap-x-4">
                                                     <div
                                                         class="flex items-center gap-1.5 px-2 py-1 bg-amber-50 rounded-lg border border-amber-100">
@@ -282,7 +298,6 @@ const handleClose = () => {
                                                     </div>
                                                 </div>
 
-                                                <!-- Note -->
                                                 <div v-if="item.note" class="mt-3 pl-3 border-l-2 border-amber-200/50">
                                                     <p
                                                         class="text-xs text-slate-500 font-medium leading-relaxed italic">
@@ -291,7 +306,6 @@ const handleClose = () => {
                                                 </div>
                                             </div>
 
-                                            <!-- Actions -->
                                             <div
                                                 class="flex shrink-0 gap-1.5 md:opacity-0 group-hover:opacity-100 transition-all duration-300">
                                                 <button type="button" @click="handleEdit(item)"
@@ -309,7 +323,6 @@ const handleClose = () => {
                             </div>
                         </div>
 
-                        <!-- Right: Entry Form -->
                         <div class="flex min-h-0 flex-col md:w-[45%]">
                             <div class="shrink-0 px-6 py-4 bg-slate-50/60 border-b border-amber-100/30">
                                 <div class="flex items-center gap-2">
@@ -322,16 +335,21 @@ const handleClose = () => {
 
                             <div class="custom-scrollbar flex-1 overflow-y-auto p-6">
                                 <div class="space-y-5">
-                                    <!-- Tên lễ vật -->
                                     <div class="space-y-1.5">
                                         <label
                                             class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
                                             <BookmarkCheck :size="14" class="text-amber-600/70" />
                                             Tên lễ vật <span class="text-red-400">*</span>
                                         </label>
-                                        <input v-model="form.itemName" type="text"
+                                        <input v-model="itemName" type="text"
                                             class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-500/5 transition-all shadow-sm"
+                                            :class="{ 'border-red-400 focus:border-red-400 focus:ring-red-500/5': errors.itemName }"
                                             placeholder="Ví dụ: Trầu cau" />
+                                        <div v-if="errors.itemName"
+                                            class="flex items-center gap-1 text-[10px] text-red-500 font-bold ml-1 animate-in fade-in slide-in-from-top-1 duration-200">
+                                            <AlertCircle :size="12" />
+                                            {{ errors.itemName }}
+                                        </div>
                                     </div>
 
                                     <div class="grid grid-cols-2 gap-4">
@@ -340,17 +358,30 @@ const handleClose = () => {
                                                 class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
                                                 Loại <span class="text-red-400">*</span>
                                             </label>
-                                            <input v-model="form.itemType" type="text"
+                                            <input v-model="itemType" type="text"
                                                 class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-500/5 transition-all shadow-sm"
+                                                :class="{ 'border-red-400 focus:border-red-400 focus:ring-red-500/5': errors.itemType }"
                                                 placeholder="Lễ vật" />
+                                            <div v-if="errors.itemType"
+                                                class="flex items-center gap-1 text-[10px] text-red-500 font-bold ml-1 animate-in fade-in slide-in-from-top-1 duration-200">
+                                                <AlertCircle :size="12" />
+                                                {{ errors.itemType }}
+                                            </div>
                                         </div>
+
                                         <div class="space-y-1.5">
                                             <label
                                                 class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
                                                 Số lượng <span class="text-red-400">*</span>
                                             </label>
-                                            <input v-model.number="form.quantity" type="number" min="1"
-                                                class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-500/5 transition-all shadow-sm" />
+                                            <input v-model.number="quantity" type="number" min="1"
+                                                class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-500/5 transition-all shadow-sm"
+                                                :class="{ 'border-red-400 focus:border-red-400 focus:ring-red-500/5': errors.quantity }" />
+                                            <div v-if="errors.quantity"
+                                                class="flex items-center gap-1 text-[10px] text-red-500 font-bold ml-1 animate-in fade-in slide-in-from-top-1 duration-200">
+                                                <AlertCircle :size="12" />
+                                                {{ errors.quantity }}
+                                            </div>
                                         </div>
                                     </div>
 
@@ -359,9 +390,15 @@ const handleClose = () => {
                                             class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
                                             Đơn vị tính <span class="text-red-400">*</span>
                                         </label>
-                                        <input v-model="form.unit" type="text"
+                                        <input v-model="unit" type="text"
                                             class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-500/5 transition-all shadow-sm"
+                                            :class="{ 'border-red-400 focus:border-red-400 focus:ring-red-500/5': errors.unit }"
                                             placeholder="Mâm, bộ, cái..." />
+                                        <div v-if="errors.unit"
+                                            class="flex items-center gap-1 text-[10px] text-red-500 font-bold ml-1 animate-in fade-in slide-in-from-top-1 duration-200">
+                                            <AlertCircle :size="12" />
+                                            {{ errors.unit }}
+                                        </div>
                                     </div>
 
                                     <div class="space-y-1.5">
@@ -369,7 +406,7 @@ const handleClose = () => {
                                             class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
                                             Ghi chú
                                         </label>
-                                        <textarea v-model="form.note" rows="3"
+                                        <textarea v-model="note" rows="3"
                                             class="w-full resize-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-500/5 transition-all leading-relaxed shadow-sm"
                                             placeholder="Thêm hướng dẫn chuẩn bị..."></textarea>
                                     </div>
@@ -377,11 +414,11 @@ const handleClose = () => {
                                     <label
                                         class="flex items-center gap-3 p-3 rounded-xl border border-amber-100 bg-amber-50/30 cursor-pointer hover:bg-amber-50 transition group">
                                         <div class="relative flex items-center justify-center">
-                                            <input v-model="form.required" type="checkbox"
+                                            <input v-model="required" type="checkbox"
                                                 class="peer h-5 w-5 opacity-0 absolute z-10 cursor-pointer" />
                                             <div
                                                 class="h-5 w-5 bg-white border-2 border-amber-200 rounded-md peer-checked:bg-amber-500 peer-checked:border-amber-500 transition-all flex items-center justify-center">
-                                                <X :size="14" class="text-white rotate-45" v-if="form.required" />
+                                                <X :size="14" class="text-white rotate-45" v-if="required" />
                                             </div>
                                         </div>
                                         <span class="text-xs font-bold text-amber-800/80 uppercase tracking-wider">Bắt
@@ -390,13 +427,12 @@ const handleClose = () => {
                                 </div>
                             </div>
 
-                            <!-- Footer Actions -->
                             <div class="shrink-0 flex gap-3 px-6 py-5 border-t border-amber-100/30 bg-white/50">
-                                <button v-if="isEditing" type="button" @click="resetForm"
+                                <button v-if="isEditing" type="button" @click="handleReset"
                                     class="flex-1 py-2.5 rounded-xl text-xs font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-all">
                                     Hủy bỏ
                                 </button>
-                                <button type="button" @click="handleSubmit"
+                                <button type="button" @click="onSubmit"
                                     class="flex-[2] flex items-center justify-center gap-2 py-2.5 rounded-xl bg-slate-900 text-white font-bold text-xs shadow-lg shadow-slate-200 hover:bg-slate-800 transition-all active:scale-[0.98]">
                                     <Save :size="14" />
                                     <span>{{ isEditing ? 'Lưu thay đổi' : 'Thêm lễ vật' }}</span>
@@ -405,7 +441,6 @@ const handleClose = () => {
                         </div>
                     </div>
 
-                    <!-- Decorative footer line -->
                     <div
                         class="h-1.5 w-full bg-[linear-gradient(90deg,transparent_0%,#d97706_50%,transparent_100%)] opacity-10">
                     </div>

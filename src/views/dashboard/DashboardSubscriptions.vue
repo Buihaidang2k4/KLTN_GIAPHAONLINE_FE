@@ -134,14 +134,13 @@ const handleDelete = async (plan: SubscriptionPlanRes) => {
   }
 }
 
-const toggleFilterActive = () => {
-  if (isActive.value === undefined) {
-    isActive.value = true
-  } else if (isActive.value === true) {
-    isActive.value = false
-  } else {
-    isActive.value = undefined
-  }
+
+const isFilterMenuOpen = ref(false)
+
+// Hàm xử lý khi chọn một trạng thái lọc cụ thể
+const handleSelectFilter = (status: boolean | undefined) => {
+  isActive.value = status
+  isFilterMenuOpen.value = false
 }
 
 </script>
@@ -179,12 +178,50 @@ const toggleFilterActive = () => {
             class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-indigo-500 transition-all text-sm font-medium" />
         </div>
 
-        <div class="flex items-center gap-2 w-full md:w-auto">
-          <button @click="toggleFilterActive"
-            class="flex-1 md:flex-none px-4 py-2.5 border rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all"
+        <div class="flex items-center gap-2 w-full md:w-auto relative">
+          <button @click="isFilterMenuOpen = !isFilterMenuOpen" type="button"
+            class="w-full md:w-auto px-4 py-2.5 border rounded-xl text-sm font-bold flex items-center justify-between md:justify-center gap-2 transition-all cursor-pointer select-none"
             :class="isActive === undefined ? 'border-slate-200 text-slate-600 hover:bg-slate-50' : 'border-indigo-600 bg-indigo-50 text-indigo-600'">
-            <Filter :size="16" /> Lọc: {{ isActive === undefined ? 'Tất cả' : (isActive ? 'Đang chạy' : 'Tạm dừng') }}
+            <div class="flex items-center gap-2">
+              <Filter :size="16" />
+              <span>Lọc: {{ isActive === undefined ? 'Tất cả' : (isActive ? 'Đang chạy' : 'Tạm dừng') }}</span>
+            </div>
+            <ChevronDown :size="16" class="transition-transform duration-200"
+              :class="{ 'rotate-180': isFilterMenuOpen }" />
           </button>
+
+          <div v-if="isFilterMenuOpen" @click="isFilterMenuOpen = false" class="fixed inset-0 z-30"></div>
+
+          <Transition enter-active-class="transition duration-100 ease-out"
+            enter-from-class="transform scale-95 opacity-0" enter-to-class="transform scale-100 opacity-100"
+            leave-active-class="transition duration-75 ease-in" leave-from-class="transform scale-100 opacity-100"
+            leave-to-class="transform scale-95 opacity-0">
+            <div v-if="isFilterMenuOpen"
+              class="absolute right-0 top-full mt-2 w-full md:w-48 bg-white border border-slate-200 rounded-xl shadow-xl z-40 py-1.5 overflow-hidden origin-top-right">
+
+              <button @click="handleSelectFilter(undefined)" type="button"
+                class="w-full px-4 py-2 text-left text-sm font-semibold flex items-center justify-between transition-colors cursor-pointer"
+                :class="isActive === undefined ? 'bg-slate-50 text-indigo-600' : 'text-slate-600 hover:bg-slate-50'">
+                Tất cả
+                <span v-if="isActive === undefined" class="w-1.5 h-1.5 bg-indigo-600 rounded-full"></span>
+              </button>
+
+              <button @click="handleSelectFilter(true)" type="button"
+                class="w-full px-4 py-2 text-left text-sm font-semibold flex items-center justify-between transition-colors cursor-pointer"
+                :class="isActive === true ? 'bg-slate-50 text-green-600' : 'text-slate-600 hover:bg-slate-50'">
+                Đang chạy
+                <span v-if="isActive === true" class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+              </button>
+
+              <button @click="handleSelectFilter(false)" type="button"
+                class="w-full px-4 py-2 text-left text-sm font-semibold flex items-center justify-between transition-colors cursor-pointer"
+                :class="isActive === false ? 'bg-slate-50 text-rose-600' : 'text-slate-600 hover:bg-slate-50'">
+                Tạm dừng
+                <span v-if="isActive === false" class="w-1.5 h-1.5 bg-rose-500 rounded-full"></span>
+              </button>
+
+            </div>
+          </Transition>
         </div>
       </div>
 

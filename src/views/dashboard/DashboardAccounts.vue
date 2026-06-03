@@ -329,7 +329,7 @@ const handleCreateSuccess = () => {
                             <td class="px-6 py-4">
                                 <div class="flex flex-col gap-0.5">
                                     <span :class="[
-                                        'inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black border uppercase tracking-widest w-fit',
+                                        'inline-flex items-center px-2.5 py-0.5 whitespace-nowrap rounded-full text-[10px] font-black border uppercase tracking-widest w-fit',
                                         user.accountStatus === 'ACTIVE'
                                             ? 'bg-green-50 text-green-700 border-green-100'
                                             : user.accountStatus === 'LOCKED'
@@ -381,7 +381,8 @@ const handleCreateSuccess = () => {
                                         <Trash2 class="w-4 h-4" />
                                     </button>
                                 </div>
-                                <span v-else class="text-xs text-rose-500 font-bold italic flex items-center justify-center gap-1">
+                                <span v-else
+                                    class="text-xs text-rose-500 font-bold italic flex items-center justify-center gap-1">
                                     Vô hiệu hóa
                                 </span>
                             </td>
@@ -412,26 +413,15 @@ const handleCreateSuccess = () => {
         </div>
 
         <!-- Modals -->
-        <UpdateStatusLockModal 
-            :show="isStatusModalOpen" 
-            :account="selectedAccount"
-            :is-loading="changeStatusMutation.isPending.value" 
-            @update="handleUpdateStatus"
-            @close="isStatusModalOpen = false" 
-        />
+        <UpdateStatusLockModal :show="isStatusModalOpen" :account="selectedAccount"
+            :is-loading="changeStatusMutation.isPending.value" @update="handleUpdateStatus"
+            @close="isStatusModalOpen = false" />
 
-        <UpdateAccountModal
-            :show="isEditModalOpen"
-            :account="editingAccount"
-            @success="handleEditSuccess"
-            @close="isEditModalOpen = false"
-        />
+        <UpdateAccountModal :show="isEditModalOpen" :account="editingAccount" @success="handleEditSuccess"
+            @close="isEditModalOpen = false" />
 
-        <CreateAccountModal
-            :show="isCreateModalOpen"
-            @success="handleCreateSuccess"
-            @close="isCreateModalOpen = false"
-        />
+        <CreateAccountModal :show="isCreateModalOpen" @success="handleCreateSuccess"
+            @close="isCreateModalOpen = false" />
     </div>
 </template>
 

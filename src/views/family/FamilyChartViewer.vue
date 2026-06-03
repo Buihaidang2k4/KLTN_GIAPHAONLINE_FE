@@ -582,7 +582,12 @@ const onEditNode = async (FormData: PersonReq) => {
           isModalUpdateChildrenOpen.value = false;
           selectedMember.value = null;
           notify.success("Thông báo", "Cập nhật thành viên thành công");
+
           refetchFamilyTree();
+
+          setTimeout(() => {
+            family.fit();
+          }, 100);
         },
         onError: () => {
           notify.error("Thông báo", "Cập nhật thành viên không thành công");
