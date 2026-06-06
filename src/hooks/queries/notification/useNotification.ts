@@ -9,17 +9,15 @@ export const notificationKey = {
     lists: () => [...notificationKey.all, 'list'] as const,
 
     list: (
-        recipientAccountId: MaybeRefOrGetter<number | null | undefined>,
         params?: MaybeRefOrGetter<PageParams>,
         isUnread?: boolean
     ) => [
-        ...notificationKey.lists(),
-        toValue(recipientAccountId),
-        isUnread ? 'unread' : 'all',
-        toValue(params)?.page ?? 0,
-        toValue(params)?.size ?? 10,
-        toValue(params)?.sort ?? ''
-    ],
+            ...notificationKey.lists(),
+            isUnread ? 'unread' : 'all',
+            toValue(params)?.page ?? 0,
+            toValue(params)?.size ?? 10,
+            toValue(params)?.sort ?? ''
+        ],
 
     counts: () => [...notificationKey.all, 'count'] as const,
 
@@ -40,34 +38,16 @@ function normalizeParams(params?: MaybeRefOrGetter<PageParams>) {
 }
 
 export const useNotificationsQuery = (
-    recipientAccountId: MaybeRefOrGetter<number | null | undefined>,
     params?: MaybeRefOrGetter<PageParams>
 ) => {
-    const enabled = computed(() => !!toValue(recipientAccountId))
     const normalizedParams = computed(() => normalizeParams(params))
-    const resolvedRecipientId = computed(() => toValue(recipientAccountId))
 
     return useQuery({
-        queryKey: computed(() => notificationKey.list(resolvedRecipientId, normalizedParams, false)),
-        queryFn: () => notificationService.getNotifications(resolvedRecipientId, normalizedParams),
-        enabled: enabled
+        queryKey: computed(() => notificationKey.list(normalizedParams)),
+        queryFn: () => notificationService.getNotifications(normalizedParams),
     })
 }
 
-export const useUnreadNotificationsQuery = (
-    recipientAccountId: MaybeRefOrGetter<number | null | undefined>,
-    params?: MaybeRefOrGetter<PageParams>
-) => {
-    const enabled = computed(() => !!toValue(recipientAccountId))
-    const normalizedParams = computed(() => normalizeParams(params))
-    const resolvedRecipientId = computed(() => toValue(recipientAccountId))
-
-    return useQuery({
-        queryKey: computed(() => notificationKey.list(resolvedRecipientId, normalizedParams, true)),
-        queryFn: () => notificationService.getUnreadNotifications(resolvedRecipientId, normalizedParams),
-        enabled: enabled
-    })
-}
 
 export const useUnreadCountQuery = (
     recipientAccountId: MaybeRefOrGetter<number | null | undefined>
@@ -88,11 +68,9 @@ export const useMarkAsReadMutation = () => {
     return useMutation({
         mutationFn: ({
             notificationId,
-            recipientAccountId
         }: {
             notificationId: number
-            recipientAccountId: number | null | undefined
-        }) => notificationService.markAsRead(notificationId, recipientAccountId),
+        }) => notificationService.markAsRead(notificationId),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: notificationKey.all })
         }
@@ -116,11 +94,9 @@ export const useDeleteNotificationMutation = () => {
     return useMutation({
         mutationFn: ({
             notificationId,
-            recipientAccountId
         }: {
             notificationId: number
-            recipientAccountId: number | null | undefined
-        }) => notificationService.deleteNotification(notificationId, recipientAccountId),
+        }) => notificationService.deleteNotification(notificationId),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: notificationKey.all })
         }

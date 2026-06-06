@@ -6,7 +6,7 @@ import {
 } from 'lucide-vue-next'
 import { useLogoutMutation } from '@/hooks/queries/auth/useLogoutMutation';
 import ConfirmForm from '@/components/forms/common/ConfirmForm.vue';
-import SystemNotification from '@/components/notification/System_Notification.vue';
+import NotificationDropdown from '@/components/notification/NotificationDropdown.vue';
 
 const isDark = ref(false)
 const isProfileOpen = ref(false)
@@ -59,7 +59,7 @@ const handleLogout = () => {
             </button>
 
             <!-- NOTIFICATION -->
-            <SystemNotification />
+            <NotificationDropdown />
 
             <!-- DIVIDER -->
             <div class="w-px h-4 bg-gray-200"></div>

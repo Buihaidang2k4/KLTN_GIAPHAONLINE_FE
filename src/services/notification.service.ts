@@ -6,13 +6,11 @@ import { toValue, type MaybeRefOrGetter } from "vue";
 
 export const notificationService = {
     getNotifications: async (
-        recipientAccountId: MaybeRefOrGetter<number | null | undefined>,
         params?: MaybeRefOrGetter<PageParams>
     ): Promise<ApiResponse<PageResponse<NotificationRes>>> => {
         const resolvedParams = toValue(params);
         const res = await api.get<ApiResponse<PageResponse<NotificationRes>>>('/notifications', {
             params: {
-                recipientAccountId: toValue(recipientAccountId),
                 page: resolvedParams?.page ?? 0,
                 size: resolvedParams?.size ?? 10,
                 sort: resolvedParams?.sort
@@ -21,21 +19,6 @@ export const notificationService = {
         return res.data;
     },
 
-    getUnreadNotifications: async (
-        recipientAccountId: MaybeRefOrGetter<number | null | undefined>,
-        params?: MaybeRefOrGetter<PageParams>
-    ): Promise<ApiResponse<PageResponse<NotificationRes>>> => {
-        const resolvedParams = toValue(params);
-        const res = await api.get<ApiResponse<PageResponse<NotificationRes>>>('/notifications/unread', {
-            params: {
-                recipientAccountId: toValue(recipientAccountId),
-                page: resolvedParams?.page ?? 0,
-                size: resolvedParams?.size ?? 10,
-                sort: resolvedParams?.sort
-            }
-        });
-        return res.data;
-    },
 
     countUnreadNotifications: async (
         recipientAccountId: MaybeRefOrGetter<number | null | undefined>
@@ -50,13 +33,8 @@ export const notificationService = {
 
     markAsRead: async (
         notificationId: MaybeRefOrGetter<number>,
-        recipientAccountId: MaybeRefOrGetter<number | null | undefined>
     ): Promise<ApiResponse<NotificationRes>> => {
-        const res = await api.patch<ApiResponse<NotificationRes>>(`/notifications/${toValue(notificationId)}/read`, null, {
-            params: {
-                recipientAccountId: toValue(recipientAccountId)
-            }
-        });
+        const res = await api.patch<ApiResponse<NotificationRes>>(`/notifications/${toValue(notificationId)}/read`);
         return res.data;
     },
 
@@ -67,13 +45,8 @@ export const notificationService = {
 
     deleteNotification: async (
         notificationId: MaybeRefOrGetter<number>,
-        recipientAccountId: MaybeRefOrGetter<number | null | undefined>
     ): Promise<ApiResponse<void>> => {
-        const res = await api.delete<ApiResponse<void>>(`/notifications/${toValue(notificationId)}`, {
-            params: {
-                recipientAccountId: toValue(recipientAccountId)
-            }
-        });
+        const res = await api.delete<ApiResponse<void>>(`/notifications/${toValue(notificationId)}`);
         return res.data;
     },
 }

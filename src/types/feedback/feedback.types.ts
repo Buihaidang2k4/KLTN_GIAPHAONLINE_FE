@@ -1,6 +1,6 @@
 export type FeedbackType = 'BUG_REPORT' | 'FEATURE_REQUEST' | 'UI_FEEDBACK' | 'OTHER' | string;
 
-export type FeedbackStatus = 'PENDING' | 'HANDLED' | 'REJECTED' | string;
+export type FeedbackStatus = 'PENDING' | 'REJECTED' | 'PROCESSING' | 'RESOLVED';
 
 export interface FeedbackRes {
     feedbackId: number;

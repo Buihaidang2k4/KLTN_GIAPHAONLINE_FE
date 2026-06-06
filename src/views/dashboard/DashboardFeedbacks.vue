@@ -114,7 +114,8 @@ const getTypeClass = (type: FeedbackType) => {
 const getStatusLabel = (status: FeedbackStatus) => {
   const map: Record<string, string> = {
     PENDING: 'Chờ xử lý',
-    HANDLED: 'Đã xử lý',
+    PROCESSING: 'Đang xử lý',
+    RESOLVED: 'Đã xử lý',
     REJECTED: 'Từ chối'
   }
 
@@ -123,8 +124,9 @@ const getStatusLabel = (status: FeedbackStatus) => {
 
 const getStatusClass = (status: FeedbackStatus) => {
   const map: Record<string, string> = {
-    PENDING: 'bg-amber-50 text-amber-700 ring-amber-200',
-    HANDLED: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
+    PENDING: 'bg-slate-50 text-slate-600 ring-slate-200',
+    PROCESSING: 'bg-amber-50 text-amber-700 ring-amber-200',
+    RESOLVED: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
     REJECTED: 'bg-red-50 text-red-700 ring-red-200'
   }
 
@@ -150,7 +152,8 @@ const getStatusClass = (status: FeedbackStatus) => {
           </div>
         </div>
 
-        <div class="inline-flex items-center gap-2 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-black text-emerald-700 ring-1 ring-emerald-100">
+        <div
+          class="inline-flex items-center gap-2 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-black text-emerald-700 ring-1 ring-emerald-100">
           <CheckCircle2 :size="18" />
           Tổng: {{ totalElements }} phản hồi
         </div>
@@ -165,12 +168,14 @@ const getStatusClass = (status: FeedbackStatus) => {
       <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div v-if="isLoading" class="flex min-h-72 items-center justify-center">
           <div class="text-center">
-            <div class="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-emerald-500"></div>
+            <div class="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-emerald-500">
+            </div>
             <p class="mt-4 text-sm font-semibold text-slate-500">Đang tải danh sách phản hồi...</p>
           </div>
         </div>
 
-        <div v-else-if="feedbacks.length === 0" class="flex min-h-72 flex-col items-center justify-center px-6 text-center">
+        <div v-else-if="feedbacks.length === 0"
+          class="flex min-h-72 flex-col items-center justify-center px-6 text-center">
           <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-500">
             <MessageSquare :size="26" />
           </div>
@@ -196,7 +201,8 @@ const getStatusClass = (status: FeedbackStatus) => {
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
-              <tr v-for="(feedback, index) in feedbacks" :key="feedback.feedbackId" class="transition hover:bg-emerald-50/30">
+              <tr v-for="(feedback, index) in feedbacks" :key="feedback.feedbackId"
+                class="transition hover:bg-emerald-50/30">
                 <td class="px-5 py-4 text-sm font-bold text-slate-500">
                   {{ index + 1 + currentPage * pagination.size }}
                 </td>
@@ -259,8 +265,8 @@ const getStatusClass = (status: FeedbackStatus) => {
       </div>
     </div>
 
-    <ViewFeedbackModel :show="isOpenViewModel" :feedback="selectedFeedback"
-      :is-loading="isLoadingFeedbackDetail" @close="closeViewModel" />
+    <ViewFeedbackModel :show="isOpenViewModel" :feedback="selectedFeedback" :is-loading="isLoadingFeedbackDetail"
+      @close="closeViewModel" />
 
     <HandleFeedbackModel :show="isOpenHandleModel" :feedback="selectedFeedback"
       :is-loading="isLoadingFeedbackDetail || isHandlingFeedback" @close="closeHandleModel"

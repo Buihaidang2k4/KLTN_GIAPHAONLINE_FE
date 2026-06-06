@@ -19,7 +19,7 @@ export function useWebSocket() {
             // sub
             stompClient.subscribe('/user/queue/notifications', (message) => {
                 const notification = JSON.parse(message.body)
-                notifications.value.unshift(notification) // put newest first
+                notifications.value.unshift(notification) 
                 console.log("Notification:", notification)
             })
         }

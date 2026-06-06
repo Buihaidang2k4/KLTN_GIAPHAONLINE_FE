@@ -18,7 +18,8 @@ const emit = defineEmits<{
 }>()
 
 const statuses: { value: FeedbackStatus; label: string }[] = [
-    { value: 'HANDLED', label: 'Đã xử lý' },
+    { value: 'PROCESSING', label: 'Đang xử lý' },
+    { value: 'RESOLVED', label: 'Đã xử lý' },
     { value: 'REJECTED', label: 'Từ chối' },
     { value: 'PENDING', label: 'Chờ xử lý' }
 ]
@@ -32,7 +33,7 @@ const validationSchema = toTypedSchema(
 
 const { handleSubmit, resetForm, meta } = useForm<FeedbackHandleReq>({
     initialValues: {
-        status: 'HANDLED',
+        status: 'PROCESSING',
         adminResponse: ''
     },
     validationSchema
@@ -43,7 +44,7 @@ watch(
     (feedback) => {
         resetForm({
             values: {
-                status: feedback?.status === 'PENDING' ? 'HANDLED' : feedback?.status ?? 'HANDLED',
+                status: feedback?.status === 'PENDING' ? 'PROCESSING' : feedback?.status ?? 'PROCESSING',
                 adminResponse: feedback?.adminResponse ?? ''
             }
         })

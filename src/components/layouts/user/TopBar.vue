@@ -10,7 +10,6 @@ import {
   Home,
   Users,
 } from 'lucide-vue-next'
-import Topbar_Notification from '@/components/family_tree/topbar/Topbar_Notification.vue'
 import { useProfileQuery } from '@/hooks/queries/auth/useProfileQuery'
 import { useLogoutMutation } from '@/hooks/queries/auth/useLogoutMutation';
 import ConfirmForm from '@/components/forms/common/ConfirmForm.vue';
@@ -19,6 +18,7 @@ import { useAccount } from '@/composables/accounts/useAccount';
 import { useFamilyStore } from '@/store/family/useFamilyStore';
 import { useFamiliesCurrentAccountQuery } from '@/hooks/queries/family/family/useFamily';
 import background from '@/assets/images/bg_familyTree.jpg'
+import NotificationDropdown from '@/components/notification/NotificationDropdown.vue'
 
 const { user: profileData } = useProfileQuery();
 const accountId = computed(() => profileData?.value?.accountId ?? null)
@@ -218,7 +218,7 @@ const selectFamily = (familyId: number) => {
           <Globe :size="20" />
         </button>
 
-        <Topbar_Notification />
+        <NotificationDropdown />
       </div>
 
       <!-- Separator -->
