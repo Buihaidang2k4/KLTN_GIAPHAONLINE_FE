@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { FamilyMemberRes } from '@/types/family/family-member.types'
+import type { FamilyMemberRes, FamilyMemberRoleType } from '@/types/family/family-member.types'
 import FamilyMemberItem from '@/components/family_manage/FamilyMemberItem.vue'
 
 defineProps<{
@@ -8,7 +8,8 @@ defineProps<{
 }>()
 
 const emit = defineEmits<{
-    (e: 'remove', id: number): void
+    remove: [id: number],
+    updateMemberRole: [familyId: number, memberId: number, newRole: FamilyMemberRoleType]
 }>()
 
 </script>
@@ -36,7 +37,9 @@ const emit = defineEmits<{
 
         <div class="divide-y divide-slate-100">
             <FamilyMemberItem v-for="member in members" :key="member.accountId" :member="member"
-                @remove="emit('remove', member.accountId)" :get-status="getStatus" />
+                @remove="emit('remove', member.accountId)"
+                @update-member-role="(familyId, memberId, newRole) => emit('updateMemberRole', familyId, memberId, newRole)"
+                :get-status="getStatus" />
         </div>
 
     </div>

@@ -9,6 +9,7 @@ import type {
 import type { ApiResponse } from "@/types/api-response.types"
 import { notify } from "@/utils/notify"
 import { QUERY_KEYS } from "@/hooks/keys/query-keys"
+import { familyMemberKey } from "../family_member/useFamilyMember"
 
 // ==================== Query Keys ====================
 
@@ -102,13 +103,10 @@ export function useAcceptInvitationMutation() {
         mutationFn: (token: string) => familyInvitationService.acceptInvitation(token),
 
         onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: invitationKey.receiveds()
-            })
-
-            queryClient.invalidateQueries({
-                queryKey: QUERY_KEYS.FAMILY.all
-            })
+            queryClient.invalidateQueries({ queryKey: invitationKey.receiveds(), refetchType: 'all' });
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.FAMILY.all, refetchType: 'all' });
+            queryClient.invalidateQueries({ queryKey: familyMemberKey.all, refetchType: 'all' });
+            queryClient.invalidateQueries({ queryKey: familyMemberKey.lists(), refetchType: 'all' });
 
             notify.success("Thông báo", "Chấp nhận lời mời thành công")
         }

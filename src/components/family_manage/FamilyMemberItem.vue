@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { FamilyMemberRes } from "@/types/family/family-member.types"
+import type { FamilyMemberRes, FamilyMemberRoleType } from "@/types/family/family-member.types"
 import { formatDate } from "@/utils/format-date"
 import { Mail, Settings, Trash2 } from "lucide-vue-next"
 
@@ -9,7 +9,8 @@ defineProps<{
 }>()
 
 const emit = defineEmits<{
-    (e: "remove", memberId: number): void
+    remove: [id: number],
+    updateMemberRole: [familyId: number, memberId: number, newRole: FamilyMemberRoleType]
 }>()
 
 const isAdmin = (member: FamilyMemberRes) => member.roleName === "FAMILY_ADMIN"
@@ -104,7 +105,7 @@ const getStatusClass = (status: FamilyMemberRes["status"]) => {
 
         <div class="col-span-4 md:col-span-1 flex items-center justify-end gap-1">
             <template v-if="!isAdmin(member)">
-                <button type="button"
+                <button type="button" @click="emit('updateMemberRole', member.familyId, member.accountId, member.roleName)"
                     class="p-2 text-slate-400 hover:text-[#d4a373] hover:bg-orange-50 rounded-lg transition-colors">
                     <Settings :size="18" />
                 </button>

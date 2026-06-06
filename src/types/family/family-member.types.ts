@@ -20,3 +20,9 @@ export interface FamilyMemberRes {
     createdAt: string;
     updatedAt: string;
 }
+
+export type FamilyMemberRoleType = 'FAMILY_ADMIN' | 'FAMILY_VIEWER' | 'FAMILY_EDITOR';
+
+export interface UpdateFamilyMemberRoleReq {
+    roleName: FamilyMemberRoleType
+}

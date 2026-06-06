@@ -1,11 +1,11 @@
-<script setup>
+<script setup lang="ts">
 import { ref, shallowRef, onBeforeUnmount, watch } from 'vue'
 import '@wangeditor/editor/dist/css/style.css'
 import { Editor, Toolbar } from '@wangeditor/editor-for-vue'
 import { i18nChangeLanguage } from '@wangeditor/editor'
 
 // Chuyển ngôn ngữ sang tiếng Việt cho thân thiện
-i18nChangeLanguage('en') 
+i18nChangeLanguage('en')
 
 const props = defineProps({
     modelValue: {
@@ -123,11 +123,11 @@ const editorConfig = {
 }
 
 // Event handlers
-function handleCreated(editor) {
+function handleCreated(editor: any) {
     editorRef.value = editor
 }
 
-function handleChange(editor) {
+function handleChange(editor: any) {
     const html = editor.getHtml()
     valueHtml.value = html
     emit('update:modelValue', html)

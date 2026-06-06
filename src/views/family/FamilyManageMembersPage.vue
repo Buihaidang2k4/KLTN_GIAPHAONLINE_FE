@@ -2,19 +2,20 @@
 import { computed, ref } from "vue"
 
 import { useFamilyMembers } from "@/composables/family_members/useFamilyMembers"
-import { useFamilyMembersQuery, useRemoveMemberMutation } from "@/hooks/queries/family/family_member/useFamilyMember"
+import { useFamilyMembersQuery, useRemoveMemberMutation, useUpdateMemberRoleMutation } from "@/hooks/queries/family/family_member/useFamilyMember"
 import { useInviteMemberMutation } from "@/hooks/queries/family/family_invitaion/useFamilyInvitation"
 
 import FamilyMemberList from "@/components/family_manage/FamilyMemberList.vue"
 import AddFamilyMemberForm from "@/components/forms/common/AddFamilyInvitaionMemberForm.vue"
 import type { CreateFamilyInvitationReq } from "@/types/family/family-invitation.types"
-import type { FamilyMemberRes } from "@/types/family/family-member.types"
+import type { FamilyMemberRes, FamilyMemberRoleType } from "@/types/family/family-member.types"
 import { useRouter } from "vue-router"
 import { useFamilyStore } from "@/store/family/useFamilyStore"
 import { useFamilyPermissions } from "@/composables/family/useFamilyPermissions"
 import { notify } from "@/utils/notify"
 import { useMyInfoQuery } from "@/hooks/queries/account/useAccount"
 import { useFamilySubscriptionStore } from "@/store/family/useFamilySubscriptionStore"
+import UpdateMemberRoleForm from "@/components/forms/family_member/UpdateMemberRoleForm.vue"
 
 const searchKeyword = ref("")
 const router = useRouter();
@@ -39,6 +40,10 @@ const familyMembers = computed<FamilyMemberRes[]>(() => familyMembersData.value?
 const { safeMembers, getMemberStatusLabel } = useFamilyMembers(familyMembers)
 const removeMememberMutation = useRemoveMemberMutation();
 const { data: currentAccount } = useMyInfoQuery();
+const updateMemeberRoleMutation = useUpdateMemberRoleMutation();
+const inviteMember = useInviteMemberMutation();
+
+
 const currentAccountId = computed(() => currentAccount.value?.data?.accountId);
 
 const filteredMembers = computed(() => {
@@ -60,10 +65,24 @@ const filteredMembers = computed(() => {
 })
 
 const isShowFormAddMember = ref(false);
+const isShowFormUpdateMemberRole = ref(false);
+const selectedMemberForUpdate = ref<FamilyMemberRes | null>(null)
 
 const openForm = withPermission(canManageMember, () => isShowFormAddMember.value = true)
 const closeFrom = () => isShowFormAddMember.value = false;
-const inviteMember = useInviteMemberMutation();
+const handleOpenUpdateMemberRole = withPermission(canManageMember, (familyIdParam: number, memberId: number) => {
+    const member = familyMembers.value.find((item) => item.familyId === familyIdParam && item.accountId === memberId)
+
+    if (!member) return
+
+    selectedMemberForUpdate.value = member
+    isShowFormUpdateMemberRole.value = true
+})
+const closeFromUpdateRole = () => {
+    selectedMemberForUpdate.value = null
+    isShowFormUpdateMemberRole.value = false
+};
+
 
 
 function goToInvitationDetail() {
@@ -71,9 +90,7 @@ function goToInvitationDetail() {
 }
 
 function handleAddMemberSubmit(form: CreateFamilyInvitationReq) {
-   // Chỉ check quota admin khi mời với role FAMILY_ADMIN
     if (form.roleName === 'FAMILY_ADMIN' && !subStore.guardAddAdmin()) return;
-
 
     if (!familyId.value) return;
     closeFrom();
@@ -86,19 +103,38 @@ function handleAddMemberSubmit(form: CreateFamilyInvitationReq) {
 }
 
 
+function handleUpdateRoleSubmit(newRole: FamilyMemberRoleType) {
+    if (!familyId.value || !selectedMemberForUpdate.value) return;
+
+    const targetId = selectedMemberForUpdate.value.accountId;
+    closeFromUpdateRole();
+
+    updateMemeberRoleMutation.mutate({
+        familyId: familyId.value,
+        targetAccountId: targetId,
+        data: {
+            roleName: newRole
+        }
+    })
+}
+
 const handleRemoveMemeber = withPermission(canManageMember, (memeberId: number) => {
+    if (!familyId.value) {
+        notify.error("Lỗi", "Không xác định được gia đình hiện tại")
+        return
+    }
+
     if (memeberId === currentAccountId.value) {
         notify.error("Lỗi", "Bạn không thể tự mình xóa tài khoản của mình")
-        return;
+        return
     }
 
     if (window.confirm("Bạn có muốn xóa thành viên này không")) {
         removeMememberMutation.mutate({
-            familyId: familyId.value!,
-            targetAccountId: memeberId,
-            actorAccountId: currentAccountId.value!
+            familyId: familyId.value,
+            targetAccountId: memeberId
         }, {
-            onSuccess: () => notify.success("Thông báo", "Xóa thành công thành viên ")
+            onSuccess: () => notify.success("Thông báo", "Xóa thành công thành viên")
         })
     }
 })
@@ -139,6 +175,10 @@ function handleSearch() {
 
                     <AddFamilyMemberForm v-if="isShowFormAddMember" @close="closeFrom"
                         @submit="handleAddMemberSubmit" />
+
+                    <UpdateMemberRoleForm v-if="isShowFormUpdateMemberRole && selectedMemberForUpdate"
+                        :member="selectedMemberForUpdate" @close="closeFromUpdateRole"
+                        @submit="handleUpdateRoleSubmit" />
                 </div>
             </div>
 
@@ -167,7 +207,7 @@ function handleSearch() {
 
                 <div v-else class="p-4 sm:p-6">
                     <FamilyMemberList :members="filteredMembers" :get-status="getMemberStatusLabel"
-                        @remove="handleRemoveMemeber" />
+                        @remove="handleRemoveMemeber" @update-member-role="handleOpenUpdateMemberRole" />
                 </div>
             </div>
         </div>
