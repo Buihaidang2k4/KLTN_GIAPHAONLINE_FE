@@ -52,8 +52,6 @@ const menuGroups: MenuGroup[] = [
     title: "Nội dung gia đình",
     items: [
       { name: "Danh sách gia phả", path: "/family/danh-sach", icon: TreePine },
-      // { name: "Chuyên mục bài viết", path: "/family/danh-muc-bai-viet", icon: Hash },
-      // { name: "Bài viết", path: "/family/bai-viet", icon: FileText },
       { name: "Sự kiện", path: "/family/su-kien", icon: CalendarDays },
       { name: "Album", path: "/family/thu-vien-anh", icon: Image },
       { name: "Thành tích / giải thưởng", path: "/family/thanh-tich", icon: Medal },

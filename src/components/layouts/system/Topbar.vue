@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import {
-    Bell, Sun, Moon, User, LogOut, Settings,
+    Sun, Moon, User, LogOut, Settings,
     ChevronDown, ShieldCheck
 } from 'lucide-vue-next'
 import { useLogoutMutation } from '@/hooks/queries/auth/useLogoutMutation';
 import ConfirmForm from '@/components/forms/common/ConfirmForm.vue';
+import SystemNotification from '@/components/notification/System_Notification.vue';
 
 const isDark = ref(false)
-const notificationCount = ref(3)
 const isProfileOpen = ref(false)
 const isConfirmLogoutOpen = ref(false)
 
@@ -59,17 +59,7 @@ const handleLogout = () => {
             </button>
 
             <!-- NOTIFICATION -->
-            <button
-                class="relative w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:bg-gray-100 transition"
-            >
-                <Bell :size="17" />
-                <span
-                    v-if="notificationCount > 0"
-                    class="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 bg-red-500 text-white text-[9px] rounded-full flex items-center justify-center"
-                >
-                    {{ notificationCount }}
-                </span>
-            </button>
+            <SystemNotification />
 
             <!-- DIVIDER -->
             <div class="w-px h-4 bg-gray-200"></div>
