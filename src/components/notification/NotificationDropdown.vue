@@ -135,7 +135,7 @@ const getIconColor = (type?: string) => {
             class="relative w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:bg-gray-100 transition focus:outline-none">
             <Bell :size="17" />
             <span v-if="unreadCount > 0"
-                class="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 bg-rose-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center animate-pulse">
+                class="absolute -top-1 -right-1 min-w-4 h-4 px-1 bg-rose-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center animate-pulse">
                 {{ unreadCount }}
             </span>
         </button>
@@ -166,13 +166,13 @@ const getIconColor = (type?: string) => {
                 </div>
 
                 <!-- Notification List -->
-                <div class="max-h-[350px] overflow-y-auto divide-y divide-slate-100">
+                <div class="max-h-87.5 overflow-y-auto divide-y divide-slate-100">
                     <template v-if="realtimeNotifications.length > 0">
                         <div v-for="(item, index) in realtimeNotifications" :key="index"
                             class="p-4 hover:bg-slate-50/50 transition cursor-pointer flex gap-3 items-center group"
                             :class="{ 'bg-amber-50/20': !item.isRead }" @click="markAsRead(item.notificationId)">
                             <!-- Icon -->
-                            <div class="flex-shrink-0">
+                            <div class="shrink-0">
                                 <div class="w-8 h-8 rounded-lg flex items-center justify-center"
                                     :class="getIconColor(item.type)">
                                     <component :is="getIcon(item.type)" :size="16" />
@@ -184,7 +184,7 @@ const getIconColor = (type?: string) => {
                                 <div class="flex items-start justify-between gap-1 mb-1">
                                     <h4 class="text-xs font-semibold text-slate-800 truncate flex items-center gap-1.5"
                                         :class="{ 'font-bold': !item.isRead }">
-                                        <span v-if="!item.isRead" class="relative flex h-2 w-2 flex-shrink-0">
+                                        <span v-if="!item.isRead" class="relative flex h-2 w-2 shrink-0">
                                             <span
                                                 class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
                                             <span class="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
@@ -201,7 +201,7 @@ const getIconColor = (type?: string) => {
                             </div>
 
                             <!-- Action -->
-                            <div class="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div class="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <button @click.stop="deleteNotification(item.notificationId)"
                                     class="p-1 text-slate-300 hover:text-rose-500 rounded transition"
                                     title="Xóa thông báo">

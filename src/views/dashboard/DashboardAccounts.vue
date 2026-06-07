@@ -166,7 +166,7 @@ const handleCreateSuccess = () => {
 </script>
 
 <template>
-    <div class="p-6 bg-gray-50 min-h-screen">
+    <div class="min-h-screen bg-gray-50 p-6">
         <!-- Header Section -->
         <div class="flex flex-col md:flex-row md:items-center justify-between mb-8">
             <div>
@@ -186,7 +186,7 @@ const handleCreateSuccess = () => {
         </div>
 
         <!-- Stats Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
+        <div class="mb-8 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
             <div class="bg-white p-5 rounded-xl shadow-sm border border-amber-100">
                 <div class="text-amber-500 font-semibold mb-2 uppercase text-[10px] tracking-wider">Tổng tài khoản</div>
                 <div class="text-2xl font-bold text-gray-800">
@@ -230,15 +230,15 @@ const handleCreateSuccess = () => {
         </div>
 
         <!-- Main Table Container -->
-        <div class="bg-white rounded-xl shadow-sm border border-amber-100 overflow-hidden">
+        <div class="overflow-hidden rounded-xl border border-amber-100 bg-white shadow-sm">
             <div
-                class="p-4 border-b border-gray-100 flex flex-col md:flex-row gap-4 items-center justify-between bg-white">
-                <div class="relative w-full md:w-96">
+                class="flex flex-col gap-4 border-b border-gray-100 bg-white p-4 md:flex-row md:items-center md:justify-between">
+                <div class="relative w-full md:w-80 lg:w-96">
                     <Search class="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input v-model="searchQuery" type="text" placeholder="Tìm kiếm theo tên hoặc email..."
                         class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all text-sm" />
                 </div>
-                <div class="flex items-center gap-2">
+                <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
                     <span class="text-sm text-gray-500">Lọc theo trạng thái:</span>
                     <select v-model="filterStatus"
                         class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none cursor-pointer">
@@ -251,8 +251,8 @@ const handleCreateSuccess = () => {
                 </div>
             </div>
 
-            <div class="overflow-x-auto">
-                <table class="w-full text-left">
+            <div class="overflow-x-auto scrollbar-thin scrollbar-thumb-amber-200 scrollbar-track-gray-100">
+                <table class="min-w-275 w-full text-left">
                     <thead>
                         <tr class="bg-amber-50/50 text-amber-900 text-xs font-bold uppercase tracking-widest">
                             <th class="px-6 py-4 text-center w-12">ID</th>
@@ -275,12 +275,12 @@ const handleCreateSuccess = () => {
                                 <div class="flex items-center gap-3">
                                     <!-- Avatar fallback if null -->
                                     <div v-if="user.avatarUrl"
-                                        class="w-10 h-10 rounded-full overflow-hidden border border-amber-200 shadow-sm flex-shrink-0">
+                                        class="w-10 h-10 rounded-full overflow-hidden border border-amber-200 shadow-sm shrink-0">
                                         <img :src="user.avatarUrl" :alt="user.fullName"
                                             class="w-full h-full object-cover" />
                                     </div>
                                     <div v-else
-                                        class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 font-bold uppercase shadow-sm border border-amber-200 flex-shrink-0 text-sm">
+                                        class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 font-bold uppercase shadow-sm border border-amber-200 shrink-0 text-sm">
                                         {{ user.fullName ? user.fullName.charAt(0) : '?' }}
                                     </div>
                                     <div class="min-w-0">
@@ -345,7 +345,7 @@ const handleCreateSuccess = () => {
                                         }}
                                     </span>
                                     <span v-if="user.accountStatus === 'LOCKED' && user.lockReason"
-                                        class="text-[9px] text-red-500 italic max-w-[150px] truncate flex items-center gap-1 font-semibold"
+                                        class="text-[9px] text-red-500 italic max-w-37.5 truncate flex items-center gap-1 font-semibold"
                                         :title="user.lockReason">
                                         <Lock class="w-2.5 h-2.5" />
                                         Lý do: {{ user.lockReason }}
@@ -401,14 +401,14 @@ const handleCreateSuccess = () => {
 
             <!-- Pagination Footer -->
             <div
-                class="p-4 bg-gray-50 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                class="flex flex-col items-center justify-between gap-4 border-t border-gray-100 bg-gray-50 p-4 sm:flex-row">
                 <p class="text-xs font-medium text-gray-500 italic">
                     Hiển thị từ {{ totalElements === 0 ? 0 : pagination.page * pagination.size + 1 }} đến
                     {{ Math.min((pagination.page + 1) * pagination.size, totalElements) }} trong tổng số
                     {{ totalElements }} tài khoản
                 </p>
                 <AppPagination :page="currentPage" :total-pages="pagination.totalPages" :has-next="hasNextPage"
-                    :has-prev="hasPrevPage" @next="nextPage" @prev="prevPage" class="!mt-0" />
+                    :has-prev="hasPrevPage" @next="nextPage" @prev="prevPage" class="mt-0!" />
             </div>
         </div>
 

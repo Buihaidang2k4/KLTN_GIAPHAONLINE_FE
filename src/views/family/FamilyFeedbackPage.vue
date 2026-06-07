@@ -3,10 +3,10 @@ import AppPagination from '@/components/forms/common/AppPagination.vue';
 import CreateFeedbackModel from '@/components/forms/feedback/CreateFeedbackModel.vue';
 import ViewFeedbackModel from '@/components/forms/feedback/ViewFeedbackModel.vue';
 import { usePagination } from '@/composables/common/usePagination';
-import { useCreateFeedbackMutation, useFeedbackQuery, useFeedbacksByAccountQuery } from '@/hooks/queries/feedback/useFeedbacks';
+import { useCreateFeedbackMutation, useDeleteFeedbackMutation, useFeedbackQuery, useFeedbacksByAccountQuery } from '@/hooks/queries/feedback/useFeedbacks';
 import type { FeedbackReq, FeedbackType } from '@/types/feedback/feedback.types';
 import { useDebounce } from '@vueuse/core';
-import { Eye, MessageSquare, Plus, Search } from 'lucide-vue-next';
+import { Eye, MessageSquare, Plus, Search, Trash2 } from 'lucide-vue-next';
 import { computed, ref, watch } from 'vue';
 
 const keyword = ref('');
@@ -35,6 +35,7 @@ const normalizedParams = computed(() => ({
 const feedbackQuery = useFeedbacksByAccountQuery(normalizedParams);
 const { data: feedbackData, isLoading } = feedbackQuery;
 const { mutate: createFeedback, isPending: isCreatingFeedback } = useCreateFeedbackMutation();
+const { mutate: deleteFeedback, isPending: isDeletingFeedback } = useDeleteFeedbackMutation();
 const { data: feedbackById, isLoading: isLoadingFeedbackDetail } = useFeedbackQuery(selectedFeedbackId);
 const feedbacks = computed(() => feedbackData.value?.data?.items ?? []);
 const totalElements = computed(() => feedbackData.value?.data?.totalElements ?? 0);
@@ -71,6 +72,16 @@ const submitFeedback = (payload: FeedbackReq) => {
     createFeedback(payload, {
         onSuccess: () => {
             isOpenModel.value = false;
+            feedbackQuery.refetch();
+        }
+    });
+};
+
+const handleDeleteFeedback = (feedbackId: number) => {
+    if (!window.confirm('Bạn có chắc muốn xóa phản hồi này không?')) return;
+
+    deleteFeedback(feedbackId, {
+        onSuccess: () => {
             feedbackQuery.refetch();
         }
     });
@@ -186,8 +197,8 @@ const getStatusClass = (status: string) => {
                     </button>
                 </div>
 
-                <div v-else class="overflow-x-auto">
-                    <table class="w-full min-w-[920px] text-left">
+                <div v-else class="overflow-x-auto max-w-full">
+                    <table class="w-full min-w-230 text-left">
                         <thead class="bg-slate-50 text-xs font-black uppercase tracking-wide text-slate-500">
                             <tr>
                                 <th class="w-20 px-5 py-4">STT</th>
@@ -206,16 +217,17 @@ const getStatusClass = (status: string) => {
                                 <td class="px-5 py-4 text-sm font-bold text-slate-500">
                                     {{ index + 1 + currentPage * pagination.size }}
                                 </td>
-                                <td class="max-w-[220px] px-5 py-4">
+                                <td class="max-w-55 px-5 py-4">
                                     <p class="truncate text-sm font-black text-slate-900">{{ feedback.subject }}</p>
                                 </td>
                                 <td class="px-5 py-4">
-                                    <span class="inline-flex rounded-full px-3 py-1 text-xs font-black ring-1"
+                                    <span
+                                        class="inline-flex rounded-full px-3 py-1 text-xs font-black ring-1 whitespace-nowrap"
                                         :class="getTypeClass(feedback.type)">
                                         {{ getTypeLabel(feedback.type) }}
                                     </span>
                                 </td>
-                                <td class="max-w-[280px] px-5 py-4">
+                                <td class="max-w-70 px-5 py-4">
                                     <p class="line-clamp-2 text-sm font-medium leading-6 text-slate-600">
                                         {{ feedback.content }}
                                     </p>
@@ -224,23 +236,33 @@ const getStatusClass = (status: string) => {
                                     {{ new Date(feedback.createdAt).toLocaleDateString('vi-VN') }}
                                 </td>
                                 <td class="px-5 py-4">
-                                    <span class="inline-flex rounded-full px-3 py-1 text-xs font-black ring-1"
+                                    <span
+                                        class="inline-flex rounded-full px-3 py-1 text-xs font-black ring-1 whitespace-nowrap"
                                         :class="getStatusClass(feedback.status)">
                                         {{ getStatusLabel(feedback.status) }}
                                     </span>
                                 </td>
-                                <td class="max-w-[260px] px-5 py-4">
+                                <td class="max-w-65 px-5 py-4">
                                     <p class="line-clamp-2 text-sm font-medium leading-6 text-slate-600">
                                         {{ feedback.adminResponse || 'Chưa có phản hồi' }}
                                     </p>
                                 </td>
                                 <td class="px-5 py-4 text-right">
-                                    <button type="button"
-                                        class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-700 shadow-sm transition hover:border-amber-200 hover:bg-amber-50 hover:text-amber-700"
-                                        @click="openViewModel(feedback.feedbackId)">
-                                        <Eye :size="15" />
-                                        Xem
-                                    </button>
+                                    <div class="flex flex-wrap items-center justify-end gap-2">
+                                        <button type="button"
+                                            class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-700 shadow-sm transition hover:border-amber-200 hover:bg-amber-50 hover:text-amber-700"
+                                            @click="openViewModel(feedback.feedbackId)">
+                                            <Eye :size="15" />
+                                            Xem
+                                        </button>
+                                        <button type="button"
+                                            class="inline-flex items-center gap-1.5 rounded-xl border border-red-200 bg-white px-3 py-2 text-xs font-black text-red-600 shadow-sm transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                            :disabled="isDeletingFeedback"
+                                            @click="handleDeleteFeedback(feedback.feedbackId)">
+                                            <Trash2 :size="15" />
+                                            Xóa
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         </tbody>
@@ -257,8 +279,8 @@ const getStatusClass = (status: string) => {
         <CreateFeedbackModel :show="isOpenModel" :is-loading="isCreatingFeedback" @close="closeModel"
             @submit="submitFeedback" />
 
-        <ViewFeedbackModel :show="isOpenViewModel" :feedback="selectedFeedback"
-            :is-loading="isLoadingFeedbackDetail" @close="closeViewModel" />
+        <ViewFeedbackModel :show="isOpenViewModel" :feedback="selectedFeedback" :is-loading="isLoadingFeedbackDetail"
+            @close="closeViewModel" />
     </div>
 
 </template>

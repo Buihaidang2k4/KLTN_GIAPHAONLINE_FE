@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import {
     Sun, Moon, User, LogOut, Settings,
     ChevronDown, ShieldCheck
@@ -11,6 +11,7 @@ import NotificationDropdown from '@/components/notification/NotificationDropdown
 const isDark = ref(false)
 const isProfileOpen = ref(false)
 const isConfirmLogoutOpen = ref(false)
+const profileRef = ref<HTMLElement | null>(null)
 
 const userProfile = ref({
     name: 'Admin',
@@ -22,6 +23,20 @@ const toggleProfile = () => {
     isProfileOpen.value = !isProfileOpen.value
 }
 
+const handleClickOutside = (event: MouseEvent) => {
+    if (profileRef.value && !profileRef.value.contains(event.target as Node)) {
+        isProfileOpen.value = false
+    }
+}
+
+onMounted(() => {
+    document.addEventListener('click', handleClickOutside)
+})
+
+onUnmounted(() => {
+    document.removeEventListener('click', handleClickOutside)
+})
+
 const { logout, isLoggingOut } = useLogoutMutation();
 
 const handleLogout = () => {
@@ -32,28 +47,29 @@ const handleLogout = () => {
 
 <template>
     <!-- TOPBAR -->
-    <header class="bg-white border-b border-slate-200 px-4 py-2 flex items-center justify-between">
+    <header
+        class="sticky top-0 z-30 flex w-full shrink-0 items-center justify-between gap-3 overflow-visible border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur-md shadow-sm">
 
         <!-- LEFT -->
-        <div class="flex items-center gap-2">
-            <div class="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center shadow-sm">
+        <div class="flex min-w-0 items-center gap-2">
+            <div
+                class="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-amber-500 to-orange-400 shadow-sm shadow-amber-200">
                 <ShieldCheck class="text-white" :size="18" />
             </div>
 
-            <div class="flex flex-col leading-tight">
-                <h2 class="text-sm font-bold text-gray-800">Quản trị hệ thống</h2>
-                <span class="text-[10px] text-gray-400">Hệ thống Gia phả Online</span>
+            <div class="flex min-w-0 flex-col leading-tight">
+                <h2 class="truncate text-sm font-semibold text-slate-800">Quản trị hệ thống</h2>
+                <span class="truncate text-[10px] uppercase tracking-[0.18em] text-slate-400">Hệ thống Gia phả
+                    Online</span>
             </div>
         </div>
 
         <!-- RIGHT -->
-        <div class="flex items-center gap-2">
+        <div class="flex min-w-0 flex-wrap items-center justify-end gap-2">
 
             <!-- DARK MODE -->
-            <button
-                @click="isDark = !isDark"
-                class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:bg-gray-100 transition"
-            >
+            <button @click="isDark = !isDark"
+                class="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-slate-700">
                 <Sun v-if="!isDark" :size="17" />
                 <Moon v-else :size="17" />
             </button>
@@ -65,15 +81,10 @@ const handleLogout = () => {
             <div class="w-px h-4 bg-gray-200"></div>
 
             <!-- PROFILE -->
-            <div class="relative">
-                <button
-                    @click="toggleProfile"
-                    class="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-gray-100 transition"
-                >
-                    <img
-                        :src="userProfile.avatar"
-                        class="w-8 h-8 rounded-lg object-cover border"
-                    />
+            <div class="relative" ref="profileRef">
+                <button @click="toggleProfile"
+                    class="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 shadow-sm transition hover:bg-slate-50">
+                    <img :src="userProfile.avatar" class="h-9 w-9 rounded-xl border border-slate-200 object-cover" />
 
                     <div class="hidden md:flex flex-col leading-tight text-left">
                         <span class="text-xs font-semibold text-gray-700">
@@ -84,33 +95,24 @@ const handleLogout = () => {
                         </span>
                     </div>
 
-                    <ChevronDown
-                        :size="14"
-                        class="text-gray-400 transition"
-                        :class="{ 'rotate-180': isProfileOpen }"
-                    />
+                    <ChevronDown :size="14" class="text-gray-400 transition" :class="{ 'rotate-180': isProfileOpen }" />
                 </button>
 
                 <!-- DROPDOWN -->
-                <div
-                    v-if="isProfileOpen"
-                    class="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-20"
-                >
-                    <div class="px-3 py-2 border-b text-[10px] text-gray-400 font-bold uppercase">
+                <div v-if="isProfileOpen"
+                    class="absolute right-0 top-full z-60 mt-2 w-56 rounded-2xl border border-slate-200 bg-white p-1 shadow-xl shadow-slate-200/70">
+                    <div
+                        class="border-b border-slate-100 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">
                         Tài khoản
                     </div>
 
                     <!-- ITEM -->
-                    <button
-                        class="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-50"
-                    >
+                    <button class="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-50">
                         <User :size="14" />
                         Hồ sơ cá nhân
                     </button>
 
-                    <button
-                        class="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-50"
-                    >
+                    <button class="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-50">
                         <Settings :size="14" />
                         Cài đặt
                     </button>
@@ -118,7 +120,7 @@ const handleLogout = () => {
                     <div class="h-px bg-gray-100 my-1"></div>
 
                     <button @click="handleLogout"
-                        class="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-500 hover:bg-red-50">
+                        class="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs text-red-500 transition hover:bg-red-50">
                         <LogOut :size="14" />
                         Đăng xuất
                     </button>

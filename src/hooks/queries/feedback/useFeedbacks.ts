@@ -128,3 +128,14 @@ export const useHandleFeedbackMutation = () => {
         }
     });
 };
+
+export const useDeleteFeedbackMutation = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (feedbackId: number) => feedbackService.delete(feedbackId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: feedbackKeys.all });
+        }
+    });
+};

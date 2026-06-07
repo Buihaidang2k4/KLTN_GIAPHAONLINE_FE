@@ -33,6 +33,13 @@ export const feedbackService = {
         return res.data;
     },
 
+    delete: async (
+        feedbackId: MaybeRefOrGetter<number>
+    ): Promise<ApiResponse<void>> => {
+        const res = await api.delete<ApiResponse<void>>(`${BASE_URL}/${toValue(feedbackId)}`);
+        return res.data;
+    },
+
     getById: async (
         feedbackId: MaybeRefOrGetter<number>
     ): Promise<ApiResponse<FeedbackRes>> => {
