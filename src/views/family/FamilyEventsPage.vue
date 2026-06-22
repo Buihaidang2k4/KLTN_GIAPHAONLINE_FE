@@ -6,10 +6,8 @@ import {
   Trash2,
   Search,
   MapPin,
-  Clock,
   Bell,
   CalendarDays,
-  Filter,
   Plus,
   RefreshCcw
 } from 'lucide-vue-next'
@@ -22,7 +20,6 @@ import { useFamilyStore } from '@/store/family/useFamilyStore'
 import AddOrUpdateEventForm from '@/components/forms/family_event/AddOrUpdateEventForm.vue'
 import { usePagination } from '@/composables/common/usePagination'
 import { useFamilyPermissions } from '@/composables/family/useFamilyPermissions'
-import { notify } from '@/utils/notify'
 
 const activeTab = ref<'ALL' | 'UPCOMING'>('ALL')
 const familyStore = useFamilyStore()
@@ -53,7 +50,8 @@ const getStatusClass = (status: NullableString) => {
 const getRepeatType = (type: NullableString) => {
   const map: Record<string, { label: string; class: string }> = {
     NONE: { label: 'Không lặp', class: 'bg-slate-100 text-slate-600' },
-    YEARLY: { label: 'Hằng năm', class: 'bg-purple-100 text-purple-600' }
+    YEARLY: { label: 'Hằng năm', class: 'bg-purple-100 text-purple-600' },
+    MONTHLY: { label: 'Hàng tháng', class: 'bg-blue-100 text-blue-600' },
   }
   return type && map[type]
     ? map[type]
@@ -295,7 +293,7 @@ const handleReload = () => { keyword.value = '' }
                 <div class="min-w-28">
                   <div class="flex items-center gap-2">
                     <span class="text-base font-bold text-slate-800">
-                      {{ event.day }}/{{ event.month }}
+                      {{ event.month ? `${event.day}/${event.month}` : event.day }}
                     </span>
 
                     <!-- chỉ hiện nếu âm -->

@@ -525,17 +525,16 @@ const handleUploadLink = async (formData: any) => {
               <div class="rounded-[1.75rem] border border-slate-200 bg-slate-50/70 p-3">
                 <div class="grid gap-3">
                   <div v-for="media in safeMedia" :key="media.albumMediaId"
-                    class="group flex items-center justify-between rounded-[1.25rem] border border-slate-200 bg-white px-4 py-3 shadow-sm transition hover:border-slate-300 hover:shadow-md">
-                    <div class="flex min-w-0 items-center gap-4">
+                    class="group flex min-w-0 items-center justify-between overflow-hidden rounded-[1.25rem] border border-slate-200 bg-white px-4 py-3 shadow-sm transition hover:border-slate-300 hover:shadow-md">
+                    <div class="flex min-w-0 flex-1 items-center gap-4 overflow-hidden">
                       <div
                         class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-indigo-100 bg-indigo-50 text-indigo-600 transition-colors group-hover:bg-indigo-100">
                         <Link :size="22" />
                       </div>
-                      <div class="min-w-0">
-                        <h4 class="line-clamp-1 font-black text-slate-800">{{ media.title || 'Liên kết không tên' }}
-                        </h4>
-                        <a :href="media.mediaUrl" target="_blank"
-                          class="mt-1 line-clamp-1 text-xs font-bold text-slate-400 hover:text-indigo-500 transition-colors">
+                      <div class="min-w-0 flex-1 overflow-hidden">
+                        <h4 class="truncate font-black text-slate-800">{{ media.title || 'Liên kết không tên' }}</h4>
+                        <a :href="media.mediaUrl" target="_blank" :title="media.mediaUrl"
+                          class="mt-1 block truncate text-xs font-bold text-indigo-400 hover:text-indigo-600 transition-colors">
                           {{ media.mediaUrl }}
                         </a>
                       </div>

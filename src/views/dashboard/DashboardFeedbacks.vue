@@ -135,8 +135,8 @@ const getStatusClass = (status: FeedbackStatus) => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-slate-50/70 p-4 md:p-8">
-    <div class="mx-auto max-w-7xl space-y-6">
+  <div class="bg-slate-50/70">
+    <div class="mx-auto max-w-7xl space-y-6 p-4 md:p-8">
       <div
         class="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:flex-row md:items-center md:justify-between">
         <div class="flex items-center gap-4">
@@ -185,71 +185,73 @@ const getStatusClass = (status: FeedbackStatus) => {
           </p>
         </div>
 
-        <div v-else class="overflow-x-auto">
-          <table class="w-full min-w-[1080px] text-left">
-            <thead class="bg-slate-50 text-xs font-black uppercase tracking-wide text-slate-500">
+        <div v-else class="overflow-x-auto rounded-2xl">
+          <table class="w-full text-left text-sm">
+            <thead class="sticky top-0 bg-slate-50 text-xs font-black uppercase tracking-wide text-slate-500">
               <tr>
-                <th class="w-20 px-5 py-4">STT</th>
-                <th class="px-5 py-4">Người gửi</th>
-                <th class="px-5 py-4">Tiêu đề</th>
-                <th class="px-5 py-4">Loại</th>
-                <th class="px-5 py-4">Nội dung</th>
-                <th class="px-5 py-4">Ngày gửi</th>
-                <th class="px-5 py-4">Trạng thái</th>
-                <th class="px-5 py-4">Phản hồi hệ thống</th>
-                <th class="px-5 py-4 text-right">Thao tác</th>
+                <th class="whitespace-nowrap px-4 py-4 sm:px-5">STT</th>
+                <th class="whitespace-nowrap px-4 py-4 sm:px-5">Người gửi</th>
+                <th class="hidden px-4 py-4 sm:px-5 lg:table-cell">Tiêu đề</th>
+                <th class="hidden px-4 py-4 sm:px-5 xl:table-cell">Loại</th>
+                <th class="hidden px-4 py-4 sm:px-5 xl:table-cell">Nội dung</th>
+                <th class="hidden px-4 py-4 sm:px-5 md:table-cell">Ngày gửi</th>
+                <th class="whitespace-nowrap px-4 py-4 sm:px-5">Trạng thái</th>
+                <th class="hidden px-4 py-4 sm:px-5 lg:table-cell">Phản hồi</th>
+                <th class="whitespace-nowrap px-4 py-4 text-right sm:px-5">Thao tác</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
               <tr v-for="(feedback, index) in feedbacks" :key="feedback.feedbackId"
                 class="transition hover:bg-emerald-50/30">
-                <td class="px-5 py-4 text-sm font-bold text-slate-500">
+                <td class="whitespace-nowrap px-4 py-4 text-xs font-bold text-slate-500 sm:px-5 sm:text-sm">
                   {{ index + 1 + currentPage * pagination.size }}
                 </td>
-                <td class="max-w-[180px] px-5 py-4">
-                  <p class="truncate text-sm font-semibold text-slate-600">{{ feedback.email || 'Không có' }}</p>
+                <td class="truncate px-4 py-4 text-xs font-semibold text-slate-600 sm:px-5 sm:text-sm">
+                  {{ feedback.email || 'Không có' }}
                 </td>
-                <td class="max-w-[220px] px-5 py-4">
-                  <p class="truncate text-sm font-black text-slate-900">{{ feedback.subject }}</p>
+                <td
+                  class="hidden truncate px-4 py-4 text-xs font-black text-slate-900 sm:px-5 lg:table-cell lg:text-sm">
+                  {{ feedback.subject }}
                 </td>
-                <td class="px-5 py-4">
-                  <span class="inline-flex rounded-full px-3 py-1 text-xs font-black ring-1"
+                <td class="hidden whitespace-nowrap px-4 py-4 sm:px-5 xl:table-cell">
+                  <span class="inline-flex rounded-full px-2 py-1 text-xs font-black ring-1"
                     :class="getTypeClass(feedback.type)">
                     {{ getTypeLabel(feedback.type) }}
                   </span>
                 </td>
-                <td class="max-w-[260px] px-5 py-4">
-                  <p class="line-clamp-2 text-sm font-medium leading-6 text-slate-600">
+                <td class="hidden px-4 py-4 sm:px-5 xl:table-cell">
+                  <p class="line-clamp-1 text-xs font-medium text-slate-600 lg:line-clamp-2">
                     {{ feedback.content }}
                   </p>
                 </td>
-                <td class="px-5 py-4 text-sm font-semibold text-slate-600">
+                <td
+                  class="hidden whitespace-nowrap px-4 py-4 text-xs font-semibold text-slate-600 sm:px-5 md:table-cell">
                   {{ new Date(feedback.createdAt).toLocaleDateString('vi-VN') }}
                 </td>
-                <td class="px-5 py-4">
-                  <span class="inline-flex rounded-full px-3 py-1 text-xs font-black ring-1"
+                <td class="whitespace-nowrap px-4 py-4 sm:px-5">
+                  <span class="inline-flex rounded-full px-2 py-1 text-xs font-black ring-1"
                     :class="getStatusClass(feedback.status)">
                     {{ getStatusLabel(feedback.status) }}
                   </span>
                 </td>
-                <td class="max-w-[240px] px-5 py-4">
-                  <p class="line-clamp-2 text-sm font-medium leading-6 text-slate-600">
-                    {{ feedback.adminResponse || 'Chưa có phản hồi' }}
+                <td class="hidden px-4 py-4 sm:px-5 lg:table-cell">
+                  <p class="line-clamp-1 text-xs font-medium text-slate-600 lg:line-clamp-2">
+                    {{ feedback.adminResponse || 'Chưa có' }}
                   </p>
                 </td>
-                <td class="px-5 py-4">
-                  <div class="flex justify-end gap-2">
+                <td class="px-4 py-4 sm:px-5">
+                  <div class="flex flex-col justify-end gap-1.5 sm:flex-row sm:gap-2">
                     <button type="button"
-                      class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-700 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
+                      class="inline-flex items-center justify-center gap-1 truncate rounded-xl border border-slate-200 bg-white px-2 py-2 text-xs font-black text-slate-700 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 sm:px-3"
                       @click="openViewModel(feedback.feedbackId)">
                       <Eye :size="15" />
-                      Xem
+                      <span class="hidden sm:inline">Xem</span>
                     </button>
                     <button type="button"
-                      class="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-3 py-2 text-xs font-black text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+                      class="inline-flex items-center justify-center gap-1 truncate rounded-xl bg-slate-900 px-2 py-2 text-xs font-black text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50 sm:px-3"
                       :disabled="isHandlingFeedback" @click="openHandleModel(feedback.feedbackId)">
                       <Wrench :size="15" />
-                      Xử lý
+                      <span class="hidden sm:inline">Xử lý</span>
                     </button>
                   </div>
                 </td>

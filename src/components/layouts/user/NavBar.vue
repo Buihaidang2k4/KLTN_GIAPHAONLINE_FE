@@ -53,7 +53,7 @@ const menuGroups: MenuGroup[] = [
     items: [
       { name: "Danh sách gia phả", path: "/family/danh-sach", icon: TreePine },
       { name: "Sự kiện", path: "/family/su-kien", icon: CalendarDays },
-      { name: "Album", path: "/family/thu-vien-anh", icon: Image },
+      { name: "Thư viện", path: "/family/thu-vien-anh", icon: Image },
       { name: "Thành tích / giải thưởng", path: "/family/thanh-tich", icon: Medal },
       { name: "Sổ tay phong tục", path: "/family/phong-tuc", icon: Columns3Cog },
     ],

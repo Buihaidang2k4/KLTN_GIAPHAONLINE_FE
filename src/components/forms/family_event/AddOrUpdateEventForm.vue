@@ -3,13 +3,8 @@ import { computed, watch } from 'vue'
 import { Field, ErrorMessage, useForm } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/zod'
 import { z } from 'zod'
-import { X, Save, Sparkles, CalendarDays, Bell, MapPin, Clock, History, Scroll, CalendarCheck } from 'lucide-vue-next'
-import type { FamilyEventReq, FamilyEventRes } from '@/types/family/family-event.types'
-
-type CalendarType = 'SOLAR' | 'LUNAR'
-type RepeatType = 'NONE' | 'YEARLY'
-type ReminderEventType = 'NONE' | 'DAY_1' | 'DAY_3' | 'DAY_7' | 'DAY_15' | 'MONTH_1'
-type FamilyEventStatus = 'ACTIVE' | 'INACTIVE'
+import { X, Save, Sparkles, CalendarDays, Bell, MapPin, Clock, Scroll, CalendarCheck } from 'lucide-vue-next'
+import type { CalendarType, FamilyEventReq, FamilyEventRes, FamilyEventStatus, ReminderEventType, RepeatType } from '@/types/family/family-event.types'
 
 const props = defineProps<{
     show: boolean
@@ -43,7 +38,7 @@ const validationSchema = toTypedSchema(
             value => value === '' || value === null ? undefined : Number(value),
             z
                 .number({
-                    error: 'Ngày không được để trống'
+                    invalid_type_error: 'Ngày không được để trống'
                 })
                 .min(1, 'Ngày phải từ 1 đến 31')
                 .max(31, 'Ngày phải từ 1 đến 31')
@@ -53,10 +48,11 @@ const validationSchema = toTypedSchema(
             value => value === '' || value === null ? undefined : Number(value),
             z
                 .number({
-                    error: 'Tháng không được để trống'
+                    invalid_type_error: 'Tháng không được để trống'
                 })
                 .min(1, 'Tháng phải từ 1 đến 12')
                 .max(12, 'Tháng phải từ 1 đến 12')
+                .optional()
         ),
 
         year: z
@@ -68,7 +64,7 @@ const validationSchema = toTypedSchema(
             .optional(),
 
         calendarType: z.enum(['SOLAR', 'LUNAR']),
-        repeatType: z.enum(['NONE', 'YEARLY']),
+        repeatType: z.enum(['NONE', 'YEARLY', 'MONTHLY']),
         reminderType: z.enum(['NONE', 'DAY_1', 'DAY_3', 'DAY_7', 'DAY_15', 'MONTH_1']),
         status: z.enum(['ACTIVE', 'INACTIVE']),
 
@@ -99,6 +95,13 @@ const validationSchema = toTypedSchema(
                     code: z.ZodIssueCode.custom,
                     path: ['year'],
                     message: 'Sự kiện không lặp cần nhập năm'
+                })
+            }
+            if (data.repeatType !== 'MONTHLY' && (data.month === undefined || data.month === null)) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    path: ['month'],
+                    message: 'Tháng không được để trống'
                 })
             }
         })
@@ -166,6 +169,9 @@ watch(
     repeatType => {
         if (repeatType === 'YEARLY') {
             setFieldValue('year', '')
+        } else if (repeatType === 'MONTHLY') {
+            setFieldValue('month', '')
+            setFieldValue('year', '')
         }
     }
 )
@@ -175,11 +181,11 @@ const onSubmit = handleSubmit(data => {
         eventName: data.eventName.trim(),
         eventTime: data.eventTime,
         day: String(data.day),
-        month: String(data.month),
-        year: data.repeatType === 'YEARLY' ? null : String(data.year),
+        month: data.repeatType === 'MONTHLY' ? "" : String(data.month),
+        year: (data.repeatType === 'YEARLY' || data.repeatType === 'MONTHLY') ? "" : String(data.year),
         calendarType: data.calendarType,
         repeatType: data.repeatType,
-        reminderType: data.reminderType,
+        reminderType: data.reminderType as ReminderEventType,
         status: data.status,
         location: data.location?.trim() || '',
         locationMapUrl: data.locationMapUrl?.trim() || '',
@@ -200,8 +206,9 @@ const handleClose = () => {
                 <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]" @click="handleClose"></div>
 
                 <!-- Modal Container -->
-                <div class="relative w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden rounded-[2.5rem] bg-[#fefaf6] shadow-2xl border border-amber-200/30 animate-in fade-in zoom-in duration-300">
-                    
+                <div
+                    class="relative w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden rounded-[2.5rem] bg-[#fefaf6] shadow-2xl border border-amber-200/30 animate-in fade-in zoom-in duration-300">
+
                     <!-- Subtle Decoration -->
                     <div class="absolute -top-12 -right-12 text-amber-900/[0.03] pointer-events-none">
                         <CalendarCheck :size="220" />
@@ -209,9 +216,11 @@ const handleClose = () => {
 
                     <!-- Header -->
                     <div class="relative shrink-0 px-8 pt-8 pb-4 text-center md:text-left">
-                        <div class="inline-flex items-center gap-1.5 mb-2 px-2.5 py-0.5 bg-amber-50 rounded-full border border-amber-100/50">
+                        <div
+                            class="inline-flex items-center gap-1.5 mb-2 px-2.5 py-0.5 bg-amber-50 rounded-full border border-amber-100/50">
                             <Sparkles :size="12" class="text-amber-600" />
-                            <span class="text-[9px] font-bold text-amber-700 uppercase tracking-widest">Sổ tay sự kiện</span>
+                            <span class="text-[9px] font-bold text-amber-700 uppercase tracking-widest">Sổ tay sự
+                                kiện</span>
                         </div>
                         <h2 class="text-2xl font-black text-slate-900 tracking-tight">
                             {{ title }}
@@ -220,7 +229,7 @@ const handleClose = () => {
                             Ghi chú và nhắc hẹn các ngày kỷ niệm, ngày lễ trọng đại để con cháu luôn nhớ về nguồn cội.
                         </p>
 
-                        <button @click="handleClose" 
+                        <button @click="handleClose"
                             class="absolute top-8 right-8 p-1.5 rounded-full hover:bg-amber-50 text-slate-400 hover:text-amber-600 transition-all active:scale-90">
                             <X :size="20" />
                         </button>
@@ -228,35 +237,40 @@ const handleClose = () => {
 
                     <!-- Form Body -->
                     <div class="custom-scrollbar flex-1 overflow-y-auto px-8 pb-4">
-                        <form id="eventForm" :key="mode + (event?.eventId ?? 'new')" @submit.prevent="onSubmit" class="space-y-6 pt-2">
-                            
+                        <form id="eventForm" :key="mode + (event?.eventId ?? 'new')" @submit.prevent="onSubmit"
+                            class="space-y-6 pt-2">
+
                             <!-- Tên sự kiện -->
                             <div class="space-y-1.5">
-                                <label class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
+                                <label
+                                    class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
                                     <CalendarDays :size="14" class="text-amber-600/70" />
                                     Tên sự kiện <span class="text-red-400">*</span>
                                 </label>
                                 <Field name="eventName" type="text" placeholder="VD: Ngày giỗ Tổ dòng họ Phan"
                                     validate-on-blur
                                     class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-500/5 transition-all shadow-sm" />
-                                <ErrorMessage name="eventName" class="mt-1 ml-1 block text-[10px] font-bold text-red-500" />
+                                <ErrorMessage name="eventName"
+                                    class="mt-1 ml-1 block text-[10px] font-bold text-red-500" />
                             </div>
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                                 <!-- Thời gian & Loại lịch -->
                                 <div class="space-y-1.5">
-                                    <label class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
+                                    <label
+                                        class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
                                         <Clock :size="14" class="text-amber-600/70" />
                                         Giờ diễn ra <span class="text-red-400">*</span>
                                     </label>
-                                    <Field name="eventTime" type="time" step="1"
-                                        validate-on-blur
+                                    <Field name="eventTime" type="time" step="1" validate-on-blur
                                         class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-500/5 transition-all shadow-sm" />
-                                    <ErrorMessage name="eventTime" class="mt-1 ml-1 block text-[10px] font-bold text-red-500" />
+                                    <ErrorMessage name="eventTime"
+                                        class="mt-1 ml-1 block text-[10px] font-bold text-red-500" />
                                 </div>
 
                                 <div class="space-y-1.5">
-                                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
+                                    <label
+                                        class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
                                         Loại lịch sử dụng
                                     </label>
                                     <Field as="select" name="calendarType"
@@ -268,52 +282,62 @@ const handleClose = () => {
 
                                 <!-- Ngày & Tháng -->
                                 <div class="space-y-1.5">
-                                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
+                                    <label
+                                        class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
                                         Ngày diễn ra <span class="text-red-400">*</span>
                                     </label>
-                                    <Field name="day" type="number" min="1" max="31" placeholder="Ngày"
-                                        validate-on-blur
+                                    <Field name="day" type="number" min="1" max="31" placeholder="Ngày" validate-on-blur
                                         class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-500/5 transition-all shadow-sm" />
-                                    <ErrorMessage name="day" class="mt-1 ml-1 block text-[10px] font-bold text-red-500" />
+                                    <ErrorMessage name="day"
+                                        class="mt-1 ml-1 block text-[10px] font-bold text-red-500" />
                                 </div>
 
                                 <div class="space-y-1.5">
-                                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
+                                    <label
+                                        class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
                                         Tháng diễn ra <span class="text-red-400">*</span>
                                     </label>
-                                    <Field name="month" type="number" min="1" max="12" placeholder="Tháng"
+                                    <Field name="month" type="number" min="1" max="12"
+                                        :disabled="values.repeatType === 'MONTHLY'"
+                                        :placeholder="values.repeatType === 'MONTHLY' ? 'Mặc định hằng tháng' : 'Tháng'"
                                         validate-on-blur
-                                        class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-500/5 transition-all shadow-sm" />
-                                    <ErrorMessage name="month" class="mt-1 ml-1 block text-[10px] font-bold text-red-500" />
+                                        class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-500/5 transition-all shadow-sm disabled:bg-slate-50 disabled:text-slate-400 disabled:border-slate-100" />
+                                    <ErrorMessage name="month"
+                                        class="mt-1 ml-1 block text-[10px] font-bold text-red-500" />
                                 </div>
 
                                 <!-- Lặp & Năm -->
                                 <div class="space-y-1.5">
-                                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
+                                    <label
+                                        class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
                                         Chu kỳ lặp lại
                                     </label>
                                     <Field as="select" name="repeatType"
                                         class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-500/5 transition-all shadow-sm appearance-none cursor-pointer">
                                         <option value="NONE">Chỉ diễn ra một lần</option>
                                         <option value="YEARLY">Lặp lại hằng năm</option>
+                                        <option value="MONTHLY">Lặp lại hàng tháng</option>
                                     </Field>
                                 </div>
 
                                 <div class="space-y-1.5">
-                                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
+                                    <label
+                                        class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
                                         Năm diễn ra
                                     </label>
                                     <Field name="year" type="number" min="1900" max="3000"
-                                        :disabled="values.repeatType === 'YEARLY'"
+                                        :disabled="values.repeatType === 'YEARLY' || values.repeatType === 'MONTHLY'"
                                         :placeholder="values.repeatType === 'YEARLY' ? 'Mặc định hằng năm' : '2026'"
                                         validate-on-blur
                                         class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-500/5 transition-all shadow-sm disabled:bg-slate-50 disabled:text-slate-400 disabled:border-slate-100" />
-                                    <ErrorMessage name="year" class="mt-1 ml-1 block text-[10px] font-bold text-red-500" />
+                                    <ErrorMessage name="year"
+                                        class="mt-1 ml-1 block text-[10px] font-bold text-red-500" />
                                 </div>
 
                                 <!-- Nhắc hẹn & Trạng thái -->
                                 <div class="space-y-1.5">
-                                    <label class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
+                                    <label
+                                        class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
                                         <Bell :size="14" class="text-amber-600/70" />
                                         Thông báo nhắc hẹn
                                     </label>
@@ -329,7 +353,8 @@ const handleClose = () => {
                                 </div>
 
                                 <div class="space-y-1.5">
-                                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
+                                    <label
+                                        class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
                                         Trạng thái hiển thị
                                     </label>
                                     <Field as="select" name="status"
@@ -342,19 +367,22 @@ const handleClose = () => {
 
                             <!-- Địa điểm -->
                             <div class="space-y-1.5">
-                                <label class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
+                                <label
+                                    class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
                                     <MapPin :size="14" class="text-amber-600/70" />
                                     Địa điểm tổ chức
                                 </label>
                                 <Field name="location" type="text" placeholder="VD: Nhà thờ họ Nguyễn, Duy Tiên, Hà Nam"
                                     validate-on-blur
                                     class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-500/5 transition-all shadow-sm" />
-                                <ErrorMessage name="location" class="mt-1 ml-1 block text-[10px] font-bold text-red-500" />
+                                <ErrorMessage name="location"
+                                    class="mt-1 ml-1 block text-[10px] font-bold text-red-500" />
                             </div>
 
                             <!-- Link bản đồ -->
                             <div class="space-y-1.5">
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
+                                <label
+                                    class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
                                     Đường dẫn bản đồ (Google Maps)
                                 </label>
                                 <Field name="locationMapUrl" type="text" placeholder="https://maps.google.com/..."
@@ -364,11 +392,13 @@ const handleClose = () => {
 
                             <!-- Ghi chú -->
                             <div class="space-y-1.5">
-                                <label class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
+                                <label
+                                    class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
                                     <Scroll :size="14" class="text-amber-600/70" />
                                     Ghi chú thêm
                                 </label>
-                                <Field as="textarea" name="note" rows="3" placeholder="Chi tiết về khâu chuẩn bị hoặc lưu ý đặc biệt cho thành viên..."
+                                <Field as="textarea" name="note" rows="3"
+                                    placeholder="Chi tiết về khâu chuẩn bị hoặc lưu ý đặc biệt cho thành viên..."
                                     validate-on-blur
                                     class="w-full resize-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-500/5 transition-all leading-relaxed shadow-sm" />
                             </div>
@@ -376,7 +406,8 @@ const handleClose = () => {
                     </div>
 
                     <!-- Fixed Footer Actions -->
-                    <div class="shrink-0 flex items-center justify-end gap-3 px-8 py-5 border-t border-amber-100/30 bg-[#fefaf6]/80 backdrop-blur-sm">
+                    <div
+                        class="shrink-0 flex items-center justify-end gap-3 px-8 py-5 border-t border-amber-100/30 bg-[#fefaf6]/80 backdrop-blur-sm">
                         <button type="button" @click="handleClose"
                             class="px-8 py-2.5 rounded-xl text-xs font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-all">
                             Quay lại
@@ -388,9 +419,11 @@ const handleClose = () => {
                             <span>{{ isLoading ? 'Đang lưu...' : mode === 'create' ? 'Ghi danh' : 'Cập nhật' }}</span>
                         </button>
                     </div>
-                    
+
                     <!-- Decorative footer line -->
-                    <div class="h-1.5 w-full bg-[linear-gradient(90deg,transparent_0%,#d97706_50%,transparent_100%)] opacity-10"></div>
+                    <div
+                        class="h-1.5 w-full bg-[linear-gradient(90deg,transparent_0%,#d97706_50%,transparent_100%)] opacity-10">
+                    </div>
                 </div>
             </div>
         </Transition>
