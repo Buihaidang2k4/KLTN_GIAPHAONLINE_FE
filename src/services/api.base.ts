@@ -23,11 +23,21 @@ api.interceptors.response.use(
         if (!orginalRequest._retry && error.response?.status === 401) {
             orginalRequest._retry = true;
 
+            // Bỏ qua interceptor cho chính các request auth như login, refresh-token
+            if (orginalRequest.url?.includes('/auth/login') || orginalRequest.url?.includes('/auth/refresh-token')) {
+                return Promise.reject(error);
+            }
+
             try {
                 await authService.refreshToken();
                 return api(orginalRequest);
-            } catch (error) {
-                // window.location.href = '/login';
+            } catch (refreshErr) {
+                // Xóa sạch user trong LocalStorage để tránh router loop
+                localStorage.removeItem("current_user");
+                if (window.location.pathname !== '/login') {
+                    window.location.href = '/login';
+                }
+                return Promise.reject(refreshErr);
             }
         }
 

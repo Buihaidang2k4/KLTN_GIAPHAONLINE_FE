@@ -2,7 +2,6 @@
 import { ref, onMounted, computed, watch, nextTick } from "vue";
 import FamilyTree from "@balkangraph/familytree.js";
 import bg_familytree from "@/assets/images/bg_familyTree.jpg";
-import picture_dragon_frame from "@/assets/images/dragon_picture_frame.png";
 import { notify } from "@/utils/notify";
 import { useFamilyStore } from "@/store/family/useFamilyStore";
 import AddSiblingsModal from "@/components/forms/family_tree/AddSiblingsModal.vue";

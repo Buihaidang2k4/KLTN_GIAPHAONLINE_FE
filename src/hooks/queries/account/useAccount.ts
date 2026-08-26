@@ -91,6 +91,8 @@ export function useUpdateAccountMutation() {
 
 
 export function useChangePasswordMutation() {
+    const queryClient = useQueryClient()
+
     return useMutation({
         mutationFn: ({
             accountId,
@@ -101,7 +103,12 @@ export function useChangePasswordMutation() {
         }) => accountService.changePassword(accountId, data),
 
         onSuccess: () => {
-            notify.success("Thông báo", "Đổi mật khẩu thành công")
+            notify.success("Thông báo", "Đổi mật khẩu thành công. Vui lòng đăng nhập lại.")
+            localStorage.removeItem("current_user")
+            queryClient.clear()
+            setTimeout(() => {
+                window.location.href = "/login"
+            }, 800)
         },
 
         onError: () => {

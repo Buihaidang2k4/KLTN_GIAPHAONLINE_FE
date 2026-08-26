@@ -206,7 +206,7 @@ const viewDetail = async (category: FamilyCategoryRes) => {
             </div>
 
             <!-- Grid of Family Cards -->
-            <div v-if="safeFamilyCategory.length" class="grid grid-cols-1 gap-4 pb-16 sm:grid-cols-2 xl:grid-cols-3">
+            <div v-if="safeFamilyCategory.length" class="grid grid-cols-1 gap-4 pb-16 sm:grid-cols-2 xl:grid-cols-4">
                 <div v-for="family in safeFamilyCategory" :key="family.familyCategoryId"
                     class="group relative flex min-h-[328px] flex-col overflow-hidden rounded-[22px] border border-slate-200/70 bg-white shadow-[0_2px_8px_rgba(45,39,31,0.04),0_18px_48px_-8px_rgba(45,39,31,0.12)] ring-1 ring-inset ring-white/60 transition-all duration-500 ease-out hover:-translate-y-1 hover:border-amber-200/50 hover:shadow-[0_20px_56px_-12px_rgba(45,39,31,0.18)]">
                     <!-- Family Image -->
